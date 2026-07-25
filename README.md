@@ -1,5 +1,7 @@
 # Black Flow Advisor
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 Independent, read-only recognition baseline for the map phase of Arknights
 Integrated Strategies: Black Flow.
 
