@@ -1,0 +1,132 @@
+# Black Flow Advisor
+
+Independent, read-only recognition baseline for the map phase of Arknights
+Integrated Strategies: Black Flow.
+
+This repository intentionally does **not** copy, fork, or depend on any existing
+Black Flow route-planning project. MaaFramework is treated only as an optional
+official capture/orchestration host.
+
+## Current scope
+
+- Normalize variable-size PC screenshots (including a Windows title bar) to a
+  reversible 1280x720 client coordinate system.
+- Classify map, toolbox-detail and movement-selector UI states.
+- Wait for a stable frame and deduplicate unchanged captures.
+- Detect circular map nodes inside a configured map ROI.
+- Fit nodes to discrete rows and columns.
+- Reconstruct orthogonal road edges using corridor evidence.
+- Classify node crops when locally supplied templates are available.
+- Inspect a fixed parts-panel grid and classify occupied slots from local
+  templates.
+- Emit JSON, an annotated PNG, confidence scores, and validation issues.
+- Merge overlapping partial graph observations only when at least two
+  compatible nodes establish a safe grid translation.
+- Refuse to mark a result as planner-ready without human verification.
+
+No planner, game input, ADB clicking, account automation, or bundled game
+assets are included in this milestone. Real screenshots stay under ignored
+`data/private/`.
+
+## Run locally
+
+The current workspace already has Python 3.12, NumPy, OpenCV and Pillow:
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m blackflow_vision.cli synthesize examples/synthetic-map.png
+python -m blackflow_vision.cli recognize-map `
+  data/private/raw/2026-07-26/layer01_map_normal_full.png `
+  --config config/recognition.default.json `
+  --pc-frame `
+  --output data/output/layer01
+python -m blackflow_vision.cli recognize-path-ui `
+  data/private/raw/2026-07-26/layer03_map_normal_full.png `
+  --output data/output/path-ui/layer03
+python -m blackflow_vision.cli synthesize-parts `
+  examples/synthetic-parts.png `
+  --templates examples/synthetic-part-templates
+python -m unittest discover -s tests -v
+```
+
+Outputs:
+
+- `map-state.json`: machine-readable recognition result.
+- `annotated.png`: nodes, grid coordinates, edges and confidence overlay.
+- `road-mask.png`: debug view of pixels considered road evidence.
+- `path-mask.png`: independently recognized path UI evidence.
+- `path-skeleton.png`: one-pixel topology derived from the path UI.
+- `path-ui-annotated.png`: cyan path pixels, yellow forest candidates and
+  green provisional undirected edges.
+
+Part recognition uses:
+
+```powershell
+python -m blackflow_vision.cli recognize-parts `
+  examples/parts.png `
+  --config config/parts.default.json `
+  --templates data/private/part-templates `
+  --output data/output/parts
+```
+
+## Real-time read-only capture
+
+The live entry point locates the PC window by title and uses the official
+MaaFramework Win32 background screenshot controller. FramePool and PrintWindow
+are offered together so the framework can select a compatible method.
+
+```powershell
+$env:PYTHONPATH = "src;."
+python -m integration.maafw.live_capture `
+  --window-title "明日方舟" `
+  --output data/output/live
+```
+
+The loop samples every 250 ms, waits for three stable frames, classifies the UI
+state, and writes only the latest accepted screenshot and state JSON. It does
+not issue input events.
+
+## Controlled V0 assumptions and hard stops
+
+- The game client is 16:9 after removing desktop chrome.
+- Map graph axes remain orthogonal at the supported zoom levels.
+- An obscured or unknown page is never sent to map recognition.
+- Cropped viewport boundaries remain unresolved until another overlapping
+  observation supplies evidence.
+- Recognition is advisory; uncertain fields require correction.
+- The current circle/road detector is a synthetic baseline. On the six-image
+  calibration seed it identifies the UI state, but does not yet reconstruct
+  reliable real-map roads. `planner_ready` therefore remains false.
+
+Real game screenshots and derived crops belong under `data/private/`, which is
+ignored by Git. Do not commit proprietary game assets or user screenshots.
+
+## MaaFramework boundary
+
+`maafw_project/resource/pipeline/recognition.json` describes read-only Custom
+Recognition nodes with `DoNothing`. `integration/maafw/agent_adapter.py`
+contains an import-safe adapter around the recognition core.
+`integration/maafw/agent_main.py` registers the exact
+MaaFramework 5.12.2 Python callback contract.
+
+The local development environment pins official `MaaFw==5.12.2`. The Agent
+returns recognition detail only; no custom action or controller input is
+registered. The recognition core remains runnable and testable without
+MaaFramework.
+
+## Private calibration seed
+
+The six user-supplied screenshots are stored locally under
+`data/private/raw/2026-07-26/` with a SHA-256 manifest. They cover all three
+layers, toolbox detail, movement selection, and a panned partial layer-three
+view. They are calibration inputs, not a statistically valid test set.
+
+## Next evidence needed
+
+The next milestone needs lossless frame sequences, not just isolated images:
+
+- 10-20 short sequences while panning each map direction, including overlap.
+- 30-50 complete map screenshots across layers and zoom states.
+- 10-20 toolbox and movement-selector screenshots.
+- At least 5 examples for each common node/part class.
+- Separate runs for train/tuning and final holdout evaluation.

@@ -1,0 +1,13 @@
+{
+  "target_width": 1280,
+  "target_height": 720,
+  "strict_size": true,
+  "panel_roi": [820, 90, 380, 540],
+  "rows": 5,
+  "columns": 2,
+  "slot_padding": 12,
+  "template_size": 96,
+  "template_threshold": 0.82,
+  "empty_stddev_threshold": 8.0
+}
+

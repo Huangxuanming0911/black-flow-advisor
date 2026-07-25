@@ -1,0 +1,2 @@
+"""MaaFramework integration boundary."""
+

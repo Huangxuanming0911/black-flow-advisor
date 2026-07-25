@@ -1,0 +1,20 @@
+{
+  "BlackFlow.RecognizeMap": {
+    "recognition": "Custom",
+    "custom_recognition": "BlackFlow.MapRecognize",
+    "custom_recognition_param": {
+      "config": "config/recognition.default.json",
+      "planner_ready": false
+    },
+    "action": "DoNothing"
+  },
+  "BlackFlow.RecognizeParts": {
+    "recognition": "Custom",
+    "custom_recognition": "BlackFlow.PartRecognize",
+    "custom_recognition_param": {
+      "config": "config/parts.default.json",
+      "planner_ready": false
+    },
+    "action": "DoNothing"
+  }
+}

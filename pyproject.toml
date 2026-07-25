@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "black-flow-advisor"
+version = "0.1.0"
+description = "A read-only, independently implemented recognition baseline for Arknights Black Flow maps."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy>=1.26",
+  "opencv-python-headless>=4.9",
+  "Pillow>=10",
+]
+
+[project.optional-dependencies]
+dev = []
+maa = ["MaaFw==5.12.2"]
+
+[project.scripts]
+blackflow-recognize = "blackflow_vision.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

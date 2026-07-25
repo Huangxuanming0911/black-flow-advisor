@@ -1,0 +1,23 @@
+{
+  "target_width": 1280,
+  "target_height": 720,
+  "strict_size": true,
+  "map_roi": [80, 70, 1000, 570],
+  "node_radius_min": 13,
+  "node_radius_max": 34,
+  "node_min_distance": 42,
+  "hough_dp": 1.2,
+  "hough_param1": 100,
+  "hough_param2": 24,
+  "axis_cluster_tolerance": 14,
+  "node_crop_size": 56,
+  "node_template_threshold": 0.82,
+  "road_value_min": 145,
+  "road_saturation_max": 105,
+  "road_half_width": 5,
+  "road_endpoint_margin": 24,
+  "road_occupancy_threshold": 0.42,
+  "minimum_node_confidence": 0.7,
+  "minimum_edge_confidence": 0.8
+}
+
