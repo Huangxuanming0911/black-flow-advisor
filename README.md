@@ -160,6 +160,15 @@ rather than enforced, so partial screenshots may legitimately contain several
 components. Private screenshots and extracted icon templates remain under
 `data/private/` and are not published.
 
+## Black Flow planning knowledge base
+
+`data/knowledge/black-flow-rules.v0.1.json` contains planner-facing node
+effects, all currently documented parts, movement models, the three ending
+routes and stage-to-region assignments. Its `vision_bridge` maps recognized
+Chinese node labels to rule IDs while preserving ambiguity for unrevealed
+nodes. See `docs/black-flow-knowledge.zh-CN.md` for the Chinese review and
+sources; run `python tools/validate_knowledge_base.py` to validate the data.
+
 ## Controlled V0 assumptions and hard stops
 
 - The game client is 16:9 after removing desktop chrome.
