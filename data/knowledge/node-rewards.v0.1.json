@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "theme": "沉沦者的黑流树海",
   "collected_at": "2026-07-26",
   "scope": "节点直接收益与可选收益；不把零件估值混入资源数量",
@@ -32,6 +32,53 @@
     "unknown_event": "unknown_event",
     "unknown_combat": "unknown_combat"
   },
+  "expectation_semantics": {
+    "expected": "节点首次完成后，当前已知概率模型贡献的数学期望",
+    "minimum_maximum": "仅覆盖当前已知组件；存在待定组件时不是完整总收益边界",
+    "pending": "仍缺概率或数值、不能并入完整期望的结算组件数量"
+  },
+  "forced_encounters": [
+    {
+      "id": "pursuit_on_ap_exhaustion",
+      "name_zh": "追猎",
+      "trigger": {
+        "action_points": 0,
+        "unless_node_kinds": ["exit_end", "exit_path"]
+      },
+      "default_variant": "normal",
+      "variants": {
+        "normal": {
+          "name_zh": "普通追猎",
+          "rewards": {
+            "hope": {"kind": "exact", "value": 0},
+            "originium_ingots": {"kind": "exact", "value": 0},
+            "command_xp": {"kind": "exact", "value": 0},
+            "collectibles": {"kind": "exact", "value": 0},
+            "recruitment_tickets": {
+              "kind": "exact",
+              "value": 1,
+              "summary": "胜利固定获得1张招募券"
+            },
+            "parts": {"kind": "exact", "value": 0}
+          },
+          "additional_effects": [
+            {
+              "id": "probe_vanguard",
+              "summary": "获得1层“探测先锋”；下一层初始行动力-1"
+            }
+          ]
+        },
+        "boss": {
+          "name_zh": "险路恶敌追猎",
+          "inherit_node_reward": "enemy",
+          "summary": "按对应险路恶敌的正常领袖战奖励结算"
+        }
+      },
+      "summary": "追猎是行动力耗尽触发的强制遭遇，不是地图节点。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    }
+  ],
   "node_rewards": [
     {
       "id": "forest",
@@ -46,11 +93,39 @@
       "name_zh": "作战",
       "rewards": {
         "hope": {"kind": "indirect", "summary": "指挥经验升级后间接获得"},
-        "originium_ingots": {"kind": "variable", "summary": "基础值随区域/关卡变化"},
+        "originium_ingots": {
+          "kind": "variable",
+          "summary": "基础结算待补；已知期望仅计算两个独立宝箱点",
+          "known_distribution": {
+            "category": "in_stage_pickup",
+            "minimum": 0,
+            "maximum": 20,
+            "expected": 1.028846,
+            "summary": "关卡内成功获取恶笼草/畸变恶笼草/箱型恶笼草的额外增量"
+          }
+        },
         "command_xp": {"kind": "variable", "summary": "基础值随区域/关卡变化"},
         "collectibles": {"kind": "possible", "summary": "随机战利品可能出现"},
         "recruitment_tickets": {"kind": "possible", "summary": "随机战利品可能出现"},
-        "parts": {"kind": "possible", "summary": "战后零件奖励机会"}
+        "parts": {
+          "kind": "possible",
+          "summary": "战后奖励池待补；已知期望仅计算两个独立宝箱点",
+          "known_distribution": {
+            "category": "in_stage_pickup",
+            "minimum": 0,
+            "maximum": 2,
+            "expected": 0.067308,
+            "summary": "关卡内成功获取丰饶树冢的额外零件增量"
+          }
+        }
+      },
+      "completion_model": {
+        "coverage": "partial",
+        "known_components": ["battle_chests"],
+        "pending_components": [
+          "base_battle_settlement",
+          "post_battle_random_reward_pool"
+        ]
       },
       "summary": "固定获得区域对应的经验与源石锭，并从战后随机奖励中取得其他资源。",
       "sources": ["prts_main"],
@@ -61,11 +136,39 @@
       "name_zh": "紧急作战",
       "rewards": {
         "hope": {"kind": "indirect", "summary": "指挥经验升级后间接获得"},
-        "originium_ingots": {"kind": "variable", "summary": "高于普通作战，数值随区域/关卡变化"},
+        "originium_ingots": {
+          "kind": "variable",
+          "summary": "基础结算待补；宝箱刷新与普通作战相同",
+          "known_distribution": {
+            "category": "in_stage_pickup",
+            "minimum": 0,
+            "maximum": 20,
+            "expected": 1.028846,
+            "summary": "关卡内成功获取恶笼草/畸变恶笼草/箱型恶笼草的额外增量"
+          }
+        },
         "command_xp": {"kind": "variable", "summary": "高于普通作战，数值随区域/关卡变化"},
         "collectibles": {"kind": "possible", "summary": "更高档随机战利品"},
         "recruitment_tickets": {"kind": "possible", "summary": "随机战利品可能出现"},
-        "parts": {"kind": "possible", "summary": "战后零件奖励机会"}
+        "parts": {
+          "kind": "possible",
+          "summary": "战后奖励池待补；宝箱刷新与普通作战相同",
+          "known_distribution": {
+            "category": "in_stage_pickup",
+            "minimum": 0,
+            "maximum": 2,
+            "expected": 0.067308,
+            "summary": "关卡内成功获取丰饶树冢的额外零件增量"
+          }
+        }
+      },
+      "completion_model": {
+        "coverage": "partial",
+        "known_components": ["battle_chests"],
+        "pending_components": [
+          "base_battle_settlement",
+          "post_battle_random_reward_pool"
+        ]
       },
       "summary": "收益类别与普通作战相近，但整体奖励更高。",
       "sources": ["prts_main"],
@@ -83,20 +186,6 @@
         "parts": {"kind": "possible", "summary": "战后零件奖励机会"}
       },
       "summary": "领袖战基础奖励随关卡变化；部分区域还会把剩余行动力转为希望。",
-      "sources": ["prts_main"],
-      "confidence": "high"
-    },
-    {
-      "id": "pursuit",
-      "name_zh": "追猎",
-      "rewards": {
-        "recruitment_tickets": {"kind": "conditional_exact", "value": 1, "summary": "普通追猎胜利固定1张"},
-        "originium_ingots": {"kind": "conditional", "minimum": 0, "summary": "普通追猎为0；领袖追猎按领袖战结算"},
-        "command_xp": {"kind": "conditional", "minimum": 0, "summary": "普通追猎为0；领袖追猎按领袖战结算"},
-        "collectibles": {"kind": "conditional", "minimum": 0, "summary": "普通追猎为0；领袖追猎按领袖战结算"},
-        "parts": {"kind": "conditional", "minimum": 0, "summary": "普通追猎为0；领袖追猎按领袖战结算"}
-      },
-      "summary": "普通追猎仅给1张招募券；领袖追猎按正常领袖战奖励结算。",
       "sources": ["prts_main"],
       "confidence": "high"
     },

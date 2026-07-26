@@ -42,6 +42,37 @@ class NodeRewardKnowledgeTests(unittest.TestCase):
         self.assertEqual(len(ids), len(set(ids)))
         for node in self.payload["node_rewards"]:
             self.assertLessEqual(set(node["rewards"]), dimensions)
+        self.assertNotIn("pursuit", ids)
+
+    def test_pursuit_is_a_forced_encounter_not_a_node(self) -> None:
+        forced = {
+            item["id"]: item
+            for item in self.payload["forced_encounters"]
+        }
+        pursuit = forced["pursuit_on_ap_exhaustion"]
+        self.assertEqual(pursuit["trigger"]["action_points"], 0)
+        self.assertEqual(
+            pursuit["variants"]["normal"]["rewards"][
+                "recruitment_tickets"
+            ]["value"],
+            1,
+        )
+
+    def test_combat_has_a_partial_known_expectation(self) -> None:
+        catalog = {
+            item["id"]: item for item in self.payload["node_rewards"]
+        }
+        combat = catalog["combat"]["rewards"]
+        self.assertAlmostEqual(
+            combat["originium_ingots"]["known_distribution"][
+                "expected"
+            ],
+            1.028846,
+        )
+        self.assertAlmostEqual(
+            combat["parts"]["known_distribution"]["expected"],
+            0.067308,
+        )
 
     def test_key_black_flow_rewards_are_structured(self) -> None:
         catalog = {

@@ -257,7 +257,7 @@ class RoutePlannerTests(unittest.TestCase):
                 RouteAction("node_r0c2"),
             ),
             RULES,
-            initial_action_points=2,
+            initial_action_points=3,
             reward_knowledge=_reward_knowledge(),
         )
         self.assertTrue(result.valid)
@@ -313,7 +313,7 @@ class RoutePlannerTests(unittest.TestCase):
             "node_r0c0",
             (RouteAction("node_r0c1"),),
             RULES,
-            initial_action_points=1,
+            initial_action_points=2,
             reward_knowledge=_reward_knowledge(),
         )
         self.assertTrue(result.valid)
@@ -323,6 +323,78 @@ class RoutePlannerTests(unittest.TestCase):
                 for estimate in result.resource_estimates.values()
             )
         )
+
+    def test_action_point_exhaustion_triggers_normal_pursuit(self) -> None:
+        graph = PlannerGraph.from_unified_dict(
+            {
+                "nodes": [
+                    {
+                        "node_id": "node_r0c0",
+                        "kind": "current",
+                        "center": [0, 0],
+                    },
+                    {
+                        "node_id": "node_r0c1",
+                        "kind": "forest",
+                        "center": [100, 0],
+                    },
+                ],
+                "edges": [
+                    {"first": "node_r0c0", "second": "node_r0c1"},
+                ],
+            }
+        )
+        result = simulate_route(
+            graph,
+            "node_r0c0",
+            (RouteAction("node_r0c1"),),
+            RULES,
+            initial_action_points=1,
+            reward_knowledge=_reward_knowledge(),
+        )
+        self.assertTrue(result.valid)
+        self.assertEqual(result.forced_encounters, ["普通追猎"])
+        tickets = result.resource_estimates["recruitment_tickets"]
+        self.assertEqual((tickets.minimum, tickets.maximum), (1, 1))
+        self.assertEqual(tickets.expected, 1)
+        self.assertIn("探测先锋", result.warnings[0])
+
+    def test_combat_reports_known_chest_expectation_separately(self) -> None:
+        graph = PlannerGraph.from_unified_dict(
+            {
+                "nodes": [
+                    {
+                        "node_id": "node_r0c0",
+                        "kind": "current",
+                        "center": [0, 0],
+                    },
+                    {
+                        "node_id": "node_r0c1",
+                        "kind": "combat",
+                        "center": [100, 0],
+                    },
+                ],
+                "edges": [
+                    {"first": "node_r0c0", "second": "node_r0c1"},
+                ],
+            }
+        )
+        result = simulate_route(
+            graph,
+            "node_r0c0",
+            (RouteAction("node_r0c1"),),
+            RULES,
+            initial_action_points=2,
+            reward_knowledge=_reward_knowledge(),
+        )
+        ingots = result.resource_estimates["originium_ingots"]
+        parts = result.resource_estimates["parts"]
+        self.assertAlmostEqual(ingots.expected, 1.028846)
+        self.assertEqual((ingots.minimum, ingots.maximum), (0, 20))
+        self.assertEqual(ingots.pending, 1)
+        self.assertAlmostEqual(parts.expected, 0.067308)
+        self.assertEqual((parts.minimum, parts.maximum), (0, 2))
+        self.assertEqual(parts.pending, 1)
 
 
 if __name__ == "__main__":

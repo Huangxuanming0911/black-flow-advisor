@@ -30,7 +30,6 @@ _ONE_SHOT_KINDS = {
     "resident_occupied",
     "portal",
     "scout",
-    "pursuit",
     "exit_end",
     "exit_path",
 }
@@ -153,6 +152,7 @@ class RouteStep:
 class ResourceEstimate:
     minimum: int = 0
     maximum: int = 0
+    expected: float = 0.0
     pending: int = 0
     notes: list[str] = field(default_factory=list)
 
@@ -170,6 +170,7 @@ class RouteSimulation:
     completed_nodes: set[str] = field(default_factory=set)
     reward_opportunities: dict[str, int] = field(default_factory=dict)
     resource_estimates: dict[str, ResourceEstimate] = field(default_factory=dict)
+    forced_encounters: list[str] = field(default_factory=list)
     parts: dict[str, PartState] = field(default_factory=dict)
     part_value_min: int = 0
     part_value_max: int = 0
@@ -434,6 +435,16 @@ def simulate_route(
             )
         )
         result.warnings.extend(step_warnings)
+        if (
+            result.action_points == 0
+            and kind not in {"exit_end", "exit_path"}
+            and not result.forced_encounters
+        ):
+            forced_combat = _settle_forced_encounter(
+                result,
+                reward_knowledge=reward_knowledge,
+            )
+            combat_count += forced_combat
 
     _settle_dynamic_part_values(
         result,
@@ -454,6 +465,7 @@ def _add_exact_resource(
         return
     estimate.minimum += value
     estimate.maximum += value
+    estimate.expected += value
     if note and note not in estimate.notes:
         estimate.notes.append(note)
 
@@ -476,39 +488,96 @@ def _settle_reward_catalog(
     if node_rule is None:
         return
     for resource, raw in node_rule.get("rewards", {}).items():
-        estimate = result.resource_estimates.get(str(resource))
-        if estimate is None:
-            continue
-        rule_kind = str(raw.get("kind", "possible"))
-        if rule_kind == "exact":
-            value = int(raw.get("value", 0))
-            estimate.minimum += value
-            estimate.maximum += value
-            if resource == "hope":
-                result.hope += value
-            elif resource == "originium_ingots":
-                result.originium_ingots += value
-            elif resource == "collectibles":
-                result.guaranteed_collectibles += value
-        elif rule_kind == "conditional_exact":
-            estimate.maximum += int(raw.get("value", 0))
+        _settle_reward_entry(
+            result,
+            str(resource),
+            raw,
+        )
+
+
+def _settle_reward_entry(
+    result: RouteSimulation,
+    resource: str,
+    raw: Mapping[str, Any],
+) -> None:
+    estimate = result.resource_estimates.get(resource)
+    if estimate is None:
+        return
+    rule_kind = str(raw.get("kind", "possible"))
+    if rule_kind == "exact":
+        value = int(raw.get("value", 0))
+        estimate.minimum += value
+        estimate.maximum += value
+        estimate.expected += value
+        if resource == "hope":
+            result.hope += value
+        elif resource == "originium_ingots":
+            result.originium_ingots += value
+        elif resource == "collectibles":
+            result.guaranteed_collectibles += value
+    elif rule_kind == "conditional_exact":
+        estimate.maximum += int(raw.get("value", 0))
+        estimate.pending += 1
+    elif rule_kind in {"choice", "conditional"}:
+        estimate.minimum += int(raw.get("minimum", 0))
+        maximum = raw.get("maximum")
+        if maximum is None:
             estimate.pending += 1
-        elif rule_kind in {"choice", "conditional"}:
-            estimate.minimum += int(raw.get("minimum", 0))
-            maximum = raw.get("maximum")
-            if maximum is None:
-                estimate.pending += 1
-            else:
-                estimate.maximum += int(maximum)
-        elif rule_kind == "remaining_ap":
-            value = max(0, result.action_points)
-            estimate.minimum += value
-            estimate.maximum += value
-        elif rule_kind in {"possible", "variable", "indirect"}:
-            estimate.pending += 1
-        note = str(raw.get("summary", "")).strip()
-        if note and note not in estimate.notes:
-            estimate.notes.append(note)
+        else:
+            estimate.maximum += int(maximum)
+    elif rule_kind == "remaining_ap":
+        value = max(0, result.action_points)
+        estimate.minimum += value
+        estimate.maximum += value
+        estimate.expected += value
+    elif rule_kind in {"possible", "variable", "indirect"}:
+        estimate.pending += 1
+
+    distribution = raw.get("known_distribution")
+    if isinstance(distribution, Mapping):
+        estimate.minimum += int(distribution.get("minimum", 0))
+        estimate.maximum += int(distribution.get("maximum", 0))
+        estimate.expected += float(distribution.get("expected", 0))
+        distribution_note = str(distribution.get("summary", "")).strip()
+        if distribution_note and distribution_note not in estimate.notes:
+            estimate.notes.append(distribution_note)
+    note = str(raw.get("summary", "")).strip()
+    if note and note not in estimate.notes:
+        estimate.notes.append(note)
+
+
+def _settle_forced_encounter(
+    result: RouteSimulation,
+    *,
+    reward_knowledge: Mapping[str, Any] | None,
+) -> int:
+    if not reward_knowledge:
+        return 0
+    rules = reward_knowledge.get("forced_encounters", ())
+    rule = next(
+        (
+            item
+            for item in rules
+            if item.get("id") == "pursuit_on_ap_exhaustion"
+        ),
+        None,
+    )
+    if rule is None:
+        return 0
+    variant_id = str(rule.get("default_variant", "normal"))
+    variant = rule.get("variants", {}).get(variant_id, {})
+    label = str(variant.get("name_zh", rule.get("name_zh", "追猎")))
+    result.forced_encounters.append(label)
+    result.reward_opportunities[
+        f"强制遭遇：{label}"
+    ] = result.reward_opportunities.get(f"强制遭遇：{label}", 0) + 1
+    for resource, raw in variant.get("rewards", {}).items():
+        _settle_reward_entry(result, str(resource), raw)
+    for effect in variant.get("additional_effects", ()):
+        note = str(effect.get("summary", "")).strip()
+        if note and note not in result.warnings:
+            result.warnings.append(note)
+    return 1
 
 
 def _settle_node(
