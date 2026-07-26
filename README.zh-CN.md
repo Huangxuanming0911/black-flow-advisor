@@ -69,6 +69,33 @@ python -m blackflow_vision.cli recognize-path-ui `
 python -m unittest discover -s tests -v
 ```
 
+## 六张截图的验收
+
+当前六张校准截图已有完整的人工核对基线，覆盖可见 HUD 状态、界面类型、
+零件与移动方式，以及地图节点和无向边。运行：
+
+```powershell
+python tools/build_acceptance_report.py
+start data/output/acceptance/index.html
+```
+
+验收页可以逐张切换原图，独立显示或隐藏路径、节点和标签，并列出结构化
+状态与图数据。每张图可标记“正确”或“需修改”，填写备注后导出验收 JSON。
+
+也可以对校准集中的原图执行确定性识别：
+
+```powershell
+python -m blackflow_vision.cli recognize-calibrated `
+  data/private/raw/2026-07-26/layer03_map_normal_full.png `
+  --manifest data/private/raw/2026-07-26/manifest.json `
+  --annotations data/private/annotations/2026-07-26/recognized-scenes.json `
+  --output data/output/acceptance/scenes/layer03-map-full.json
+```
+
+这个入口通过 SHA-256 精确匹配已标注截图，用于回归测试和人工验收，不代表
+模型已经能泛化到任意新截图。用户完成验收前，结果仍为
+`planner_ready: false`。
+
 ## 输出文件
 
 - `map-state.json`：地图节点与边的机器可读结果。
@@ -100,11 +127,16 @@ python -m blackflow_vision.cli recognize-parts `
 $env:PYTHONPATH = "src;."
 python -m integration.maafw.live_capture `
   --window-title "明日方舟" `
-  --output data/output/live
+  --output data/output/live `
+  --map-only
 ```
 
-程序默认每 250 毫秒采样一次，等待连续三帧稳定后才提交识别。它只保存最近
-一次被接受的截图和状态 JSON，不会发送鼠标或键盘输入。
+程序默认每 250 毫秒采样一次，等待连续三帧稳定后才提交识别。稳定地图帧会
+运行新版路径识别，并原子更新最近一次截图、状态 JSON、路径 JSON、路径掩膜、
+骨架和标注图。当前实时图包含可见林中节点、大型语义节点和当前位置，但语义与
+路径仍需验收，因此标记为
+`graph_scope: all_visible_nodes_geometry` 和 `planner_ready: false`。程序不会发送
+鼠标或键盘输入。
 
 ## 当前限制
 
@@ -112,7 +144,13 @@ python -m integration.maafw.live_capture `
 - 当前只支持接近水平或垂直的地图拓扑。
 - 被弹窗遮挡或无法判断的界面不会进入地图识别。
 - 伸出画面边界的路径会保持“未解析”，直到其他视角提供重叠证据。
-- 传统路径 UI 原型仍会把部分节点图标和文字边缘识别为路径。
+- 快速路径识别以半分辨率检测“淡白边缘—透明中心—淡白边缘”结构，完整
+  地图热身后的路径分割约为几十毫秒；验收页可分别查看双边缘响应、方向
+  候选、掩膜和骨架。
+- 极淡路径和长条背景纹理之间仍可能产生少量漏判或误判，局部视角必须与
+  稳定的完整地图观测融合。
+- 不把“整张图必须连通”作为识别规则；局部方向连续性只用于排除文字、粒子
+  和短背景纹理，不会为了连通性凭空补边。
 - 大型语义节点尚未完整加入路径切分，因此临时边可能跨过作战或事件节点。
 - 所有结果仅用于辅助判断，不能直接驱动自动操作。
 
@@ -149,3 +187,28 @@ MaaFramework 5.12.2 Python Agent 回调。
 - 10–20 张零件箱与移动选择界面；
 - 每种常见节点和零件至少 5 个样本；
 - 独立的训练、调参和最终留出测试数据。
+
+## 离线节点文字识别
+
+截图与分析是分开的。`latest.png` 是标准化后的只读原图；路径掩膜、图结构、
+OCR 结果和语义标注图都是根据原图生成的派生产物。因此，可以直接反复处理已有
+截图，不需要重新打开或捕获游戏窗口。
+
+安装可选的离线 OCR 依赖，然后分析保存的截图：
+
+```powershell
+python -m pip install -e ".[ocr]"
+$env:PYTHONPATH = "src;."
+python tools/analyze_node_semantics.py `
+  data/output/live-full-node/latest.png `
+  --output data/output/node-semantics
+```
+
+识别器会对整幅画面运行一次中文 OCR，把文字框关联到最近的节点，根据节点词典
+修正常见单字误识别，再使用私有人工校准集提取的图标模板进行交叉验证。文字是
+主证据：如果文字和图标发生强冲突，程序保留文字结果，并输出
+`conflict_text_kept` 和 `needs_review: true`，不会让图标静默覆盖文字。
+
+命令会生成干净的节点语义标注图、路径与语义综合图以及
+`node-semantics.json`。原始截图和本地提取的图标模板继续保存在
+`data/private/`，不会上传到公开仓库。

@@ -18,7 +18,12 @@ from maa.define import (
 from maa.library import Library
 from maa.toolkit import Toolkit
 
+from blackflow_vision.live_path import (
+    LatestPathSnapshotWriter,
+    RealtimePathProcessor,
+)
 from blackflow_vision.runtime import RealtimeRecognitionLoop, StableCapture
+from blackflow_vision.screen import ScreenState
 
 
 class MaaControllerFrameSource:
@@ -65,13 +70,31 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--interval", type=float, default=0.25)
     parser.add_argument("--stable-frames", type=int, default=3)
     parser.add_argument("--once", action="store_true")
+    parser.add_argument(
+        "--map-only",
+        action="store_true",
+        help="with --once, wait until the stable screen is a map",
+    )
     return parser
 
 
 def main() -> int:
     args = _parser().parse_args()
     _open_maa()
-    window = _find_window(args.window_title)
+    try:
+        window = _find_window(args.window_title)
+    except RuntimeError as exc:
+        print(
+            json.dumps(
+                {
+                    "connected": False,
+                    "error": str(exc),
+                    "hint": "open the PC client and retry",
+                },
+                ensure_ascii=False,
+            )
+        )
+        return 2
     controller = Win32Controller(
         window.hwnd,
         screencap_method=MaaWin32ScreencapMethodEnum.Background,
@@ -84,9 +107,39 @@ def main() -> int:
         raise RuntimeError("MaaFramework could not connect to the game window")
 
     args.output.mkdir(parents=True, exist_ok=True)
+    path_processor = RealtimePathProcessor()
+    path_writer = LatestPathSnapshotWriter(args.output)
 
     def on_capture(capture: StableCapture) -> None:
         cv2.imwrite(str(args.output / "latest.png"), capture.frame)
+        path_snapshot = path_processor.process(capture)
+        if path_snapshot is not None:
+            path_writer.write(path_snapshot, window.window_name)
+            path_recognition = {
+                "status": "recognized",
+                "recognition_ms": round(
+                    path_snapshot.recognition_ms,
+                    2,
+                ),
+                "forest_nodes": len(
+                    path_snapshot.result.forest_nodes
+                ),
+                "visible_nodes": len(path_snapshot.result.nodes),
+                "semantic_nodes": sum(
+                    node.kind != "forest"
+                    for node in path_snapshot.result.nodes
+                ),
+                "candidate_edges": len(path_snapshot.result.edges),
+                "temporal_samples": capture.temporal_samples,
+                "edge_vote_samples": path_snapshot.edge_vote_samples,
+                "planner_ready": False,
+                "graph_scope": "all_visible_nodes_geometry",
+            }
+        else:
+            path_recognition = {
+                "status": "skipped_non_map",
+                "planner_ready": False,
+            }
         state = {
             "screen_state": str(capture.state.state),
             "confidence": capture.state.confidence,
@@ -94,6 +147,7 @@ def main() -> int:
             "captured_unix_ms": round(time.time() * 1000),
             "window_title": window.window_name,
             "read_only": True,
+            "path_recognition": path_recognition,
         }
         (args.output / "latest-state.json").write_text(
             json.dumps(state, ensure_ascii=False, indent=2),
@@ -109,7 +163,11 @@ def main() -> int:
     while True:
         capture = loop.poll_once()
         if args.once and capture is not None:
-            return 0
+            if (
+                not args.map_only
+                or capture.state.state == ScreenState.MAP
+            ):
+                return 0
         time.sleep(max(0.05, args.interval))
 
 

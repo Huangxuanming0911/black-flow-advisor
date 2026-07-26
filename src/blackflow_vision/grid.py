@@ -129,7 +129,11 @@ def reconstruct_edges(
                 node.center,
                 other.center,
                 config.road_half_width,
-                config.road_endpoint_margin,
+                max(
+                    config.road_endpoint_margin,
+                    node.radius + 8,
+                    other.radius + 8,
+                ),
             )
             if occupancy < config.road_occupancy_threshold:
                 continue
@@ -183,4 +187,3 @@ def corridor_occupancy(
     if pixels.size == 0:
         return 0.0
     return float(np.mean(pixels > 0))
-
