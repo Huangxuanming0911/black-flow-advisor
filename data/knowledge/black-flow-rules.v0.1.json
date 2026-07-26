@@ -1,0 +1,1145 @@
+{
+  "schema_version": "0.1.0",
+  "theme": {
+    "id": "integrated_strategies_black_flow",
+    "name_zh": "沉沦者的黑流树海",
+    "release_date_cn": "2026-07-17",
+    "collected_at": "2026-07-26",
+    "status": "provisional_new_release",
+    "notice": "资料页仍在快速编辑；规划器必须保留来源、置信度与待验证标记。"
+  },
+  "confidence_levels": {
+    "high": "由当前版本的 PRTS/BWIKI 机制资料明确记载，或被多个资料源交叉印证",
+    "medium": "由较完整的社区实测攻略给出，但尚缺官方或多来源完整交叉验证",
+    "inferred": "为了算法建模从 UI 文案或格数推导，必须通过实机验证"
+  },
+  "sources": [
+    {
+      "id": "prts_main",
+      "title": "PRTS：集成战略「沉沦者的黑流树海」",
+      "url": "https://prts.wiki/w/沉沦者的黑流树海",
+      "kind": "community_wiki",
+      "retrieved": "2026-07-26"
+    },
+    {
+      "id": "prts_parts",
+      "title": "PRTS：沉沦者的黑流树海/引擎配件目录",
+      "url": "https://prts.wiki/w/沉沦者的黑流树海/引擎配件目录",
+      "kind": "community_wiki",
+      "retrieved": "2026-07-26"
+    },
+    {
+      "id": "bwiki_main",
+      "title": "明日方舟 BWIKI：沉沦者的黑流树海",
+      "url": "https://wiki.biligame.com/arknights/沉沦者的黑流树海",
+      "kind": "community_wiki",
+      "retrieved": "2026-07-26"
+    },
+    {
+      "id": "bwiki_stages",
+      "title": "明日方舟 BWIKI：沉沦者的黑流树海/关卡",
+      "url": "https://wiki.biligame.com/arknights/沉沦者的黑流树海/关卡",
+      "kind": "community_wiki",
+      "retrieved": "2026-07-26"
+    },
+    {
+      "id": "yituliu_endings",
+      "title": "明日方舟一图流：集成战略结局一览",
+      "url": "https://ark.yituliu.cn/information/integratedStrategies",
+      "kind": "community_guide",
+      "retrieved": "2026-07-26"
+    },
+    {
+      "id": "community_endings",
+      "title": "黑流树海一二三结局触发步骤实测整理",
+      "url": "https://www.sina.cn/news/detail/5321883478393227.html",
+      "kind": "community_report",
+      "retrieved": "2026-07-26"
+    },
+    {
+      "id": "official_patch_20260720",
+      "title": "《明日方舟》07月20日23:30闪断更新公告",
+      "url": "https://ak.hypergryph.com/news/9683",
+      "kind": "official",
+      "retrieved": "2026-07-26"
+    }
+  ],
+  "vision_bridge": {
+    "strategy": "优先按 OCR 中文节点名映射；无法确定时退回视觉粗分类的候选集合",
+    "node_name_to_rule_id": {
+      "林间空地": "forest",
+      "林中节点": "forest",
+      "作战": "combat",
+      "紧急作战": "emergency_combat",
+      "险路恶敌": "enemy",
+      "不期而遇": "event",
+      "安全的角落": "safe_house",
+      "命运所指": "fate",
+      "得偿所愿": "wish",
+      "狭路相逢": "encounter",
+      "诡意行商": "rogue_trader",
+      "失与得": "lost_and_found",
+      "险路尽头": "exit_end",
+      "险路小径": "exit_path",
+      "秘境行商": "secret_trader",
+      "应急助力": "emergency_support",
+      "曲折密道": "tunnel",
+      "羽瞰点": "overlook",
+      "“居民”据点": "resident_base",
+      "误入奇境": "portal",
+      "先行一步": "scout"
+    },
+    "vision_kind_candidates": {
+      "forest": ["forest"],
+      "combat": ["combat"],
+      "emergency_combat": ["emergency_combat"],
+      "enemy": ["enemy"],
+      "encounter": ["encounter"],
+      "tunnel": ["tunnel"],
+      "shop": ["secret_trader"],
+      "special_shop": ["rogue_trader"],
+      "unknown_combat": ["combat", "emergency_combat", "resident_base"],
+      "unknown_event": [
+        "event",
+        "safe_house",
+        "fate",
+        "wish",
+        "encounter",
+        "rogue_trader",
+        "lost_and_found",
+        "exit_end",
+        "exit_path",
+        "secret_trader",
+        "emergency_support",
+        "portal",
+        "scout"
+      ],
+      "event": [
+        "event",
+        "safe_house",
+        "fate",
+        "wish",
+        "lost_and_found",
+        "exit_end",
+        "exit_path",
+        "emergency_support",
+        "portal",
+        "scout"
+      ],
+      "current": ["current_position"]
+    }
+  },
+  "core_state": {
+    "normal_mode_initial": {
+      "target_life": 8,
+      "hope": 6,
+      "originium_ingots": 6,
+      "operator_capacity": 6,
+      "retained_recruitment_ticket_capacity": 3,
+      "action_points": 6,
+      "part_box_capacity": 10,
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    "planner_resources": [
+      {
+        "id": "action_points",
+        "name_zh": "行动力",
+        "role": "地图移动预算；耗尽且未离层会触发追猎"
+      },
+      {
+        "id": "target_life",
+        "name_zh": "目标生命值",
+        "role": "失败风险与部分事件/实托邦代价"
+      },
+      {
+        "id": "shield",
+        "name_zh": "护盾",
+        "role": "抵扣生命损失；部分实托邦途经节点会扣减"
+      },
+      {
+        "id": "hope",
+        "name_zh": "希望",
+        "role": "招募与进阶干员；部分出口会把剩余行动力转成希望"
+      },
+      {
+        "id": "originium_ingots",
+        "name_zh": "源石锭",
+        "role": "商店、应急助力、结局事件与其他节点消费"
+      },
+      {
+        "id": "parts",
+        "name_zh": "零件",
+        "role": "移动、被动增益或交易；零件箱满时无法移动"
+      },
+      {
+        "id": "collectibles",
+        "name_zh": "收藏品",
+        "role": "构筑增益及结局路线条件"
+      },
+      {
+        "id": "recruitment_tickets",
+        "name_zh": "招募券",
+        "role": "招募资源；可留存，险路尽头可取出"
+      },
+      {
+        "id": "command_xp",
+        "name_zh": "指挥经验",
+        "role": "提升指挥等级并获得希望等成长"
+      }
+    ],
+    "global_rules": [
+      {
+        "id": "part_box_blocks_movement_when_full",
+        "effect": "零件箱超过容量时无法移动，必须先处理零件",
+        "sources": ["prts_main"],
+        "confidence": "high"
+      },
+      {
+        "id": "repeatable_node_entry_cost",
+        "effect": "原地再次进入可重复节点也消耗1行动力",
+        "sources": ["prts_main"],
+        "confidence": "high"
+      },
+      {
+        "id": "pursuit_on_ap_exhaustion",
+        "effect": "行动力耗尽且未抵达出口时触发追猎；通关后可继续，但普通追猎奖励很低并获得会降低下一层初始行动力的探测先锋",
+        "sources": ["prts_main", "bwiki_main"],
+        "confidence": "high"
+      }
+    ]
+  },
+  "movement_modes": [
+    {
+      "id": "walk",
+      "name_zh": "徒步跋涉",
+      "part_id": null,
+      "target_rule": {
+        "type": "path_reachable",
+        "description": "沿当前无向路径图移动到连通节点"
+      },
+      "action_point_cost": {
+        "type": "per_gridpoint",
+        "value": 1
+      },
+      "can_cross_unfinished_nodes": false,
+      "uses": null,
+      "sources": ["prts_main", "bwiki_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "tunnel_transfer",
+      "name_zh": "曲折密道传送",
+      "part_id": null,
+      "target_rule": {
+        "type": "paired_node",
+        "node_kind": "tunnel"
+      },
+      "action_point_cost": {
+        "type": "fixed",
+        "value": 0,
+        "note": "抵达入口本身仍可能需要支付此前移动的行动力"
+      },
+      "can_cross_unfinished_nodes": true,
+      "uses": null,
+      "sources": ["prts_main", "bwiki_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "scrap_wheel",
+      "name_zh": "报废轮子",
+      "part_id": "scrap_wheel",
+      "target_rule": {
+        "type": "orthogonal_distance",
+        "max": 2
+      },
+      "action_point_cost": {
+        "type": "fixed",
+        "value": 1
+      },
+      "can_cross_unfinished_nodes": true,
+      "uses": 1,
+      "sources": ["prts_parts", "prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "scrap_prosthesis",
+      "name_zh": "报废假肢",
+      "part_id": "scrap_prosthesis",
+      "target_rule": {
+        "type": "chebyshev_radius",
+        "max": 1,
+        "description": "相邻8格"
+      },
+      "action_point_cost": {
+        "type": "fixed",
+        "value": 1
+      },
+      "can_cross_unfinished_nodes": true,
+      "uses": 1,
+      "sources": ["prts_parts", "prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "standard_engine",
+      "name_zh": "标准引擎",
+      "part_id": "standard_engine",
+      "target_rule": {
+        "type": "chebyshev_radius",
+        "max": 1,
+        "description": "相邻8格"
+      },
+      "action_point_cost": {
+        "type": "fixed",
+        "value": 1
+      },
+      "can_cross_unfinished_nodes": true,
+      "uses": 3,
+      "sources": ["prts_parts", "prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "heavy_spring",
+      "name_zh": "重弹簧",
+      "part_id": "heavy_spring",
+      "target_rule": {
+        "type": "manhattan_radius",
+        "max": 2,
+        "description": "周围12格；坐标解释由12格数量推导"
+      },
+      "action_point_cost": {
+        "type": "fixed",
+        "value": 0
+      },
+      "can_cross_unfinished_nodes": true,
+      "uses": 1,
+      "carried_to_next_region": false,
+      "sources": ["prts_parts", "prts_main"],
+      "confidence": "inferred"
+    },
+    {
+      "id": "air_cushion_base",
+      "name_zh": "气垫底座",
+      "part_id": "air_cushion_base",
+      "target_rule": {
+        "type": "manhattan_radius",
+        "max": 2,
+        "description": "周围12格；坐标解释由12格数量推导"
+      },
+      "action_point_cost": {
+        "type": "fixed",
+        "value": 1
+      },
+      "can_cross_unfinished_nodes": true,
+      "uses": 2,
+      "sources": ["prts_parts", "prts_main"],
+      "confidence": "inferred"
+    },
+    {
+      "id": "prototype_exoskeleton",
+      "name_zh": "试作外骨骼",
+      "part_id": "prototype_exoskeleton",
+      "target_rule": {
+        "type": "orthogonal_distance",
+        "max": 3
+      },
+      "action_point_cost": {
+        "type": "fixed",
+        "value": 1
+      },
+      "can_cross_unfinished_nodes": true,
+      "uses": 2,
+      "sources": ["prts_parts", "prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "little_octo",
+      "name_zh": "小八界",
+      "part_id": "little_octo",
+      "target_rule": {
+        "type": "random_any",
+        "node_filter": "non_combat"
+      },
+      "action_point_cost": {
+        "type": "fixed",
+        "value": 0
+      },
+      "can_cross_unfinished_nodes": true,
+      "uses": 1,
+      "carried_to_next_region": false,
+      "sources": ["prts_parts"],
+      "confidence": "high"
+    },
+    {
+      "id": "disposable_jetpack",
+      "name_zh": "一次性喷气背包",
+      "part_id": "disposable_jetpack",
+      "target_rule": {
+        "type": "any_node"
+      },
+      "action_point_cost": {
+        "type": "fixed",
+        "value": 0
+      },
+      "can_cross_unfinished_nodes": true,
+      "uses": 1,
+      "sources": ["prts_parts"],
+      "confidence": "high"
+    },
+    {
+      "id": "mothers_thaw",
+      "name_zh": "老妈妈的融雪",
+      "part_id": "mothers_thaw",
+      "target_rule": {
+        "type": "any_node",
+        "node_filter": "non_combat"
+      },
+      "action_point_cost": {
+        "type": "fixed",
+        "value": 1
+      },
+      "can_cross_unfinished_nodes": true,
+      "uses": 1,
+      "post_effects": [
+        {
+          "resource": "hope",
+          "delta": 2
+        }
+      ],
+      "sources": ["prts_parts"],
+      "confidence": "high"
+    },
+    {
+      "id": "cannot_tentacle",
+      "name_zh": "坎诺特的触须",
+      "part_id": "cannot_tentacle",
+      "target_rule": {
+        "type": "any_node",
+        "node_filter": "merchant"
+      },
+      "action_point_cost": {
+        "type": "fixed",
+        "value": 1
+      },
+      "can_cross_unfinished_nodes": true,
+      "uses": 2,
+      "post_effects": [
+        {
+          "resource": "originium_ingots",
+          "delta": 4
+        }
+      ],
+      "sources": ["prts_parts"],
+      "confidence": "high"
+    },
+    {
+      "id": "structural_principle",
+      "name_zh": "结构性原理",
+      "part_id": "structural_principle",
+      "target_rule": {
+        "type": "any_node"
+      },
+      "action_point_cost": {
+        "type": "fixed",
+        "value": 1
+      },
+      "can_cross_unfinished_nodes": true,
+      "uses": 3,
+      "sources": ["prts_parts"],
+      "confidence": "high"
+    },
+    {
+      "id": "simple_remote",
+      "name_zh": "“简易遥控器”",
+      "part_id": "simple_remote",
+      "target_rule": {
+        "type": "chebyshev_radius",
+        "max": 1,
+        "description": "相邻8格"
+      },
+      "action_point_cost": {
+        "type": "fixed",
+        "value": 0
+      },
+      "can_cross_unfinished_nodes": true,
+      "uses": 1,
+      "post_effects": [
+        {
+          "resource": "action_points",
+          "delta": 3
+        }
+      ],
+      "sources": ["prts_parts"],
+      "confidence": "high"
+    }
+  ],
+  "node_types": [
+    {
+      "id": "forest",
+      "name_zh": "林间空地",
+      "category": "empty",
+      "repeatable": true,
+      "effects": [],
+      "planner_tags": ["transit_only"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "combat",
+      "name_zh": "作战",
+      "category": "combat",
+      "repeatable": false,
+      "effects": ["随机普通战斗；胜利获得随机奖励"],
+      "planner_tags": ["risk", "reward", "command_xp"],
+      "sources": ["prts_main", "bwiki_stages"],
+      "confidence": "high"
+    },
+    {
+      "id": "emergency_combat",
+      "name_zh": "紧急作战",
+      "category": "combat",
+      "repeatable": false,
+      "effects": ["强化战斗；通常比普通作战奖励更高"],
+      "planner_tags": ["high_risk", "high_reward", "command_xp"],
+      "sources": ["prts_main", "bwiki_stages"],
+      "confidence": "high"
+    },
+    {
+      "id": "enemy",
+      "name_zh": "险路恶敌",
+      "category": "boss_exit",
+      "repeatable": false,
+      "effects": ["领袖战；部分区域的强制出口；剩余行动力转化为希望"],
+      "planner_tags": ["boss", "exit", "ap_to_hope"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "event",
+      "name_zh": "不期而遇",
+      "category": "event",
+      "repeatable": false,
+      "effects": ["从当前区域的事件池触发随机事件；部分结局事件有前置条件"],
+      "planner_tags": ["stochastic", "ending_route"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "safe_house",
+      "name_zh": "安全的角落",
+      "category": "rest",
+      "repeatable": false,
+      "effects": ["从随机三个增益中选择一个"],
+      "availability": {
+        "excluded_regions": [1]
+      },
+      "planner_tags": ["sustain"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "fate",
+      "name_zh": "命运所指",
+      "category": "ending_event",
+      "repeatable": false,
+      "effects": ["关键剧情或结局路线抉择"],
+      "planner_tags": ["ending_route", "priority_if_targeted"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "wish",
+      "name_zh": "得偿所愿",
+      "category": "reward",
+      "repeatable": false,
+      "effects": ["获得一个免费收藏品"],
+      "planner_tags": ["collectible_reward"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "encounter",
+      "name_zh": "狭路相逢",
+      "category": "challenge",
+      "repeatable": false,
+      "effects": [
+        "选择限时公平战斗",
+        "左侧目标偏零件奖励，中间目标偏高稀有零件，右侧目标偏收藏品；均附带招募券",
+        "失败不损失目标生命或护盾"
+      ],
+      "availability": {
+        "excluded_regions": [1, 6]
+      },
+      "planner_tags": ["selectable_reward", "low_failure_penalty"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "rogue_trader",
+      "name_zh": "诡意行商",
+      "category": "merchant",
+      "repeatable": true,
+      "effects": ["购买道具、收藏品、零件；科技树解锁后可刷新和出售零件"],
+      "planner_tags": ["shop", "ending_route", "repeatable_costs_ap"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "lost_and_found",
+      "name_zh": "失与得",
+      "category": "exchange",
+      "repeatable": false,
+      "effects": ["交换收藏品；科技树解锁后可交换零件"],
+      "availability": {
+        "excluded_regions": [1, 6]
+      },
+      "planner_tags": ["inventory_transform", "ending_route"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "exit_end",
+      "name_zh": "险路尽头",
+      "category": "exit",
+      "repeatable": true,
+      "effects": [
+        "获得1件加工品",
+        "剩余行动力等量转化为希望",
+        "可取出留存招募券",
+        "随后进入下一层"
+      ],
+      "planner_tags": ["exit", "ap_to_hope", "recruitment"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "exit_path",
+      "name_zh": "险路小径",
+      "category": "exit",
+      "repeatable": true,
+      "effects": [
+        "获得1件珍贵加工品",
+        "把剩余行动力带入下一层",
+        "不能取出留存招募券"
+      ],
+      "planner_tags": ["exit", "carry_ap", "valuable_part"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "secret_trader",
+      "name_zh": "秘境行商",
+      "category": "merchant",
+      "repeatable": true,
+      "effects": ["买卖零件；消耗种子培育当局零件或跨局增益"],
+      "planner_tags": ["part_shop", "seed_growth", "repeatable_costs_ap"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "emergency_support",
+      "name_zh": "应急助力",
+      "category": "support",
+      "repeatable": false,
+      "effects": ["雇佣最多3名已进阶临时干员；完成任意一场作战后离队"],
+      "availability": {
+        "excluded_regions": [1, 6]
+      },
+      "planner_tags": ["temporary_power", "ingot_cost"],
+      "sources": ["prts_main", "bwiki_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "tunnel",
+      "name_zh": "曲折密道",
+      "category": "transport",
+      "repeatable": true,
+      "effects": ["与配对密道间零行动力传送"],
+      "planner_tags": ["zero_ap_transfer"],
+      "sources": ["prts_main", "bwiki_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "overlook",
+      "name_zh": "羽瞰点",
+      "category": "scout",
+      "repeatable": true,
+      "effects": [
+        "生成时揭示附近节点",
+        "首次前往扩大视野并获得行动力",
+        "之后再次前往仍可获得1行动力"
+      ],
+      "planner_tags": ["vision", "renewable_ap"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "resident_base",
+      "name_zh": "“居民”据点",
+      "category": "dynamic_combat",
+      "repeatable": false,
+      "effects": [
+        "保密等级4以上可能出现",
+        "生成会移动并占领节点的流窜居民",
+        "击败据点可驱逐当前区域全部流窜居民"
+      ],
+      "availability": {
+        "minimum_difficulty": 4,
+        "excluded_regions": [1, 6]
+      },
+      "planner_tags": ["dynamic_obstacle", "combat", "global_cleanup"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "portal",
+      "name_zh": "误入奇境",
+      "category": "special_region",
+      "repeatable": false,
+      "effects": [
+        "消耗1个加工品进入黑潭并获得黑潭专用行动力",
+        "林间行动力离开黑潭后恢复",
+        "进出黑潭不会使不可带至下一层的加工品损坏"
+      ],
+      "availability": {
+        "requires_talent_unlock": true,
+        "excluded_regions": [1, 2, 6]
+      },
+      "planner_tags": ["optional_submap", "part_cost", "high_reward"],
+      "sources": ["prts_main", "bwiki_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "scout",
+      "name_zh": "先行一步",
+      "category": "scout_operator",
+      "repeatable": false,
+      "effects": [
+        "暂时派遣1名干员，下一层归队并通常获得进阶",
+        "不派遣可选择获得2希望",
+        "第三结局特殊选项会改变归队奖励"
+      ],
+      "availability": {
+        "requires_talent_unlock": true,
+        "excluded_regions": [1, 5, 6]
+      },
+      "planner_tags": ["operator_upgrade", "ending_route"],
+      "sources": ["prts_main"],
+      "confidence": "high"
+    }
+  ],
+  "unknown_node_aliases": [
+    {
+      "label": "未知的凶戾",
+      "possible_kinds": ["combat", "emergency_combat", "resident_base"]
+    },
+    {
+      "label": "未知的诡秘",
+      "possible_kinds": [
+        "event",
+        "safe_house",
+        "wish",
+        "encounter",
+        "rogue_trader",
+        "lost_and_found",
+        "exit_end",
+        "exit_path",
+        "secret_trader",
+        "emergency_support",
+        "portal",
+        "scout"
+      ]
+    }
+  ],
+  "parts": {
+    "categories": {
+      "natural": "交易型零件；估价随行为变化或用于特殊事件",
+      "processed": "提供地图移动能力，通常有使用次数",
+      "concept": "携带后按条件触发被动效果"
+    },
+    "items": [
+      {
+        "id": "seed",
+        "name_zh": "种子",
+        "category": "natural",
+        "rarity": 1,
+        "effect": "可在秘境行商培育，产出随机零件或襁褓生灵",
+        "planner_tags": ["future_value", "secret_trader"]
+      },
+      {
+        "id": "blood_mushroom",
+        "name_zh": "血蕈",
+        "category": "natural",
+        "rarity": 1,
+        "effect": "每次作战后估价+2",
+        "planner_tags": ["sell_value", "combat_scaling"]
+      },
+      {
+        "id": "mist_grass",
+        "name_zh": "雾滚草",
+        "category": "natural",
+        "rarity": 1,
+        "effect": "每次揭示节点信息时估价+1",
+        "planner_tags": ["sell_value", "vision_scaling"]
+      },
+      {
+        "id": "echo_corn",
+        "name_zh": "回声玉米",
+        "category": "natural",
+        "rarity": 2,
+        "effect": "每次招募干员时估价+3",
+        "planner_tags": ["sell_value", "recruit_scaling"]
+      },
+      {
+        "id": "wave",
+        "name_zh": "浪花",
+        "category": "natural",
+        "rarity": 1,
+        "effect": "每次移动后估价随机变化；资料记载单次在-8与+11间变化，范围0至999",
+        "planner_tags": ["sell_value", "stochastic"]
+      },
+      {
+        "id": "frost_crystal_tree",
+        "name_zh": "霜晶树",
+        "category": "natural",
+        "rarity": 2,
+        "effect": "完美作战后估价+4；非完美作战后损坏",
+        "planner_tags": ["sell_value", "perfect_combat_risk"]
+      },
+      {
+        "id": "prolific_moss",
+        "name_zh": "多生苔藓",
+        "category": "natural",
+        "rarity": 2,
+        "effect": "获得时得到3个枯苔藓球；每次获得零件时估价+1",
+        "planner_tags": ["box_pressure", "sell_value", "part_gain_scaling"]
+      },
+      {
+        "id": "withered_moss_ball",
+        "name_zh": "枯苔藓球",
+        "category": "natural",
+        "rarity": 1,
+        "effect": "低估价交易物",
+        "planner_tags": ["box_pressure", "low_value"]
+      },
+      {
+        "id": "board_vine",
+        "name_zh": "板藤",
+        "category": "natural",
+        "rarity": 3,
+        "effect": "每次获得零件时估价+4",
+        "planner_tags": ["sell_value", "part_gain_scaling"]
+      },
+      {
+        "id": "homesick_fruit",
+        "name_zh": "恋家果",
+        "category": "natural",
+        "rarity": 3,
+        "effect": "每次移动后估价-2",
+        "planner_tags": ["sell_soon", "movement_decay"]
+      },
+      {
+        "id": "shining_truffle",
+        "name_zh": "光彩松露",
+        "category": "natural",
+        "rarity": 3,
+        "effect": "高估价交易物",
+        "planner_tags": ["high_sell_value"]
+      },
+      {
+        "id": "cage_controller",
+        "name_zh": "笼控器",
+        "category": "natural",
+        "rarity": 3,
+        "effect": "在若干不期而遇事件中提供特殊选项，可关联行动力、源石锭与结局外资源",
+        "planner_tags": ["event_key"]
+      },
+      {
+        "id": "scrap_wheel",
+        "name_zh": "报废轮子",
+        "category": "processed",
+        "rarity": 1,
+        "movement_mode": "scrap_wheel"
+      },
+      {
+        "id": "scrap_prosthesis",
+        "name_zh": "报废假肢",
+        "category": "processed",
+        "rarity": 1,
+        "movement_mode": "scrap_prosthesis"
+      },
+      {
+        "id": "standard_engine",
+        "name_zh": "标准引擎",
+        "category": "processed",
+        "rarity": 1,
+        "movement_mode": "standard_engine"
+      },
+      {
+        "id": "heavy_spring",
+        "name_zh": "重弹簧",
+        "category": "processed",
+        "rarity": 2,
+        "movement_mode": "heavy_spring"
+      },
+      {
+        "id": "air_cushion_base",
+        "name_zh": "气垫底座",
+        "category": "processed",
+        "rarity": 1,
+        "movement_mode": "air_cushion_base"
+      },
+      {
+        "id": "prototype_exoskeleton",
+        "name_zh": "试作外骨骼",
+        "category": "processed",
+        "rarity": 1,
+        "movement_mode": "prototype_exoskeleton"
+      },
+      {
+        "id": "little_octo",
+        "name_zh": "小八界",
+        "category": "processed",
+        "rarity": 1,
+        "movement_mode": "little_octo"
+      },
+      {
+        "id": "disposable_jetpack",
+        "name_zh": "一次性喷气背包",
+        "category": "processed",
+        "rarity": 2,
+        "movement_mode": "disposable_jetpack"
+      },
+      {
+        "id": "mothers_thaw",
+        "name_zh": "老妈妈的融雪",
+        "category": "processed",
+        "rarity": 2,
+        "movement_mode": "mothers_thaw"
+      },
+      {
+        "id": "cannot_tentacle",
+        "name_zh": "坎诺特的触须",
+        "category": "processed",
+        "rarity": 2,
+        "movement_mode": "cannot_tentacle"
+      },
+      {
+        "id": "structural_principle",
+        "name_zh": "结构性原理",
+        "category": "processed",
+        "rarity": 3,
+        "movement_mode": "structural_principle"
+      },
+      {
+        "id": "simple_remote",
+        "name_zh": "“简易遥控器”",
+        "category": "processed",
+        "rarity": 3,
+        "movement_mode": "simple_remote"
+      },
+      {
+        "id": "white_model_bird",
+        "name_zh": "白模鸟",
+        "category": "concept",
+        "rarity": 2,
+        "effect": "用加工品移动到作战节点时，本场攻速+50，战后获得随机收藏品；触发1次",
+        "planner_tags": ["processed_move_synergy", "combat_reward"]
+      },
+      {
+        "id": "white_model_dog",
+        "name_zh": "白模狗",
+        "category": "concept",
+        "rarity": 2,
+        "effect": "用加工品移动到非作战节点时获得随机收藏品；触发1次",
+        "planner_tags": ["processed_move_synergy", "noncombat_reward"]
+      },
+      {
+        "id": "white_model_fish",
+        "name_zh": "白模鱼",
+        "category": "concept",
+        "rarity": 2,
+        "effect": "用加工品移动到任意节点时获得3护盾；触发1次",
+        "planner_tags": ["processed_move_synergy", "shield"]
+      },
+      {
+        "id": "painted_liberi",
+        "name_zh": "涂装黎博利",
+        "category": "concept",
+        "rarity": 2,
+        "effect": "用加工品移动到作战节点时，本场攻速+35",
+        "planner_tags": ["processed_move_synergy", "combat_power"]
+      },
+      {
+        "id": "painted_perro",
+        "name_zh": "涂装佩洛",
+        "category": "concept",
+        "rarity": 2,
+        "effect": "用加工品移动到得偿所愿时，获得1个随机收藏品",
+        "planner_tags": ["processed_move_synergy", "wish_bonus"]
+      },
+      {
+        "id": "painted_aegir",
+        "name_zh": "涂装阿戈尔",
+        "category": "concept",
+        "rarity": 2,
+        "effect": "用加工品移动到失与得时，获得2个随机收藏品",
+        "planner_tags": ["processed_move_synergy", "exchange_bonus"]
+      }
+    ],
+    "sources": ["prts_parts"],
+    "confidence": "high"
+  },
+  "endings": [
+    {
+      "id": "ending_1",
+      "name_zh": "强制重启",
+      "boss_stage": ["永无安宁", "痛苦将息"],
+      "required": [
+        "未持有怦然信标",
+        "完成第V层对应最终关卡"
+      ],
+      "route_priority": "默认路线",
+      "sources": ["prts_main", "yituliu_endings", "community_endings"],
+      "confidence": "high"
+    },
+    {
+      "id": "ending_2",
+      "name_zh": "维度重构",
+      "boss_stage": ["混沌源阶理论"],
+      "unlock_prerequisite": "至少完成一次第一结局",
+      "required": [
+        "在不期而遇“线人”选择“我受雇于梅兰德”获得沙盘α，或在诡意行商购买沙盘β",
+        "第V层进入三个命运所指中的真实节点",
+        "在“窥视箱中”选择保护证据并进入最终关卡",
+        "未持有怦然信标"
+      ],
+      "route_hints": [
+        "同时持有沙盘α与沙盘β时，真实命运所指会带有特殊标识",
+        "只持有一个沙盘时，误入假节点可支付50源石锭揭示真实节点，因此需要额外行动力与资金容错"
+      ],
+      "sources": ["prts_main", "yituliu_endings", "community_endings"],
+      "confidence": "medium"
+    },
+    {
+      "id": "ending_3",
+      "name_zh": "纠缠，调和",
+      "boss_stage": ["畸症"],
+      "unlock_prerequisite": "完成任意结局，并在生命游戏解锁先行一步",
+      "required": [
+        "第II至IV层进入先行一步",
+        "选择“尝试探索树的源头”并派遣一名干员",
+        "下一层获得怦然信标",
+        "通过第V层后进入第VI层并完成畸症"
+      ],
+      "beacon_effect": {
+        "enemy_max_hp_percent": 20,
+        "friendly_max_hp_percent": -40
+      },
+      "optional_boss_weakening": [
+        {
+          "marker": "神明之殇",
+          "node_kind": "event",
+          "event": "泪之聚落",
+          "cost": "当前全部源石锭",
+          "collectible": "击坠“神明”"
+        },
+        {
+          "marker": "文明之尽",
+          "node_kind": "lost_and_found",
+          "event": "回滚文明",
+          "cost": "随机2件自然物",
+          "collectible": "焚毁“文明”"
+        },
+        {
+          "marker": "光明之末",
+          "node_kind": "combat",
+          "event": "无效验尸",
+          "cost": "完成固定战斗",
+          "collectible": "湮灭“光明”",
+          "known_alias_conflict": "部分社区攻略写作“湮没‘光明’”"
+        }
+      ],
+      "sources": ["prts_main", "yituliu_endings", "community_endings"],
+      "confidence": "high"
+    }
+  ],
+  "combat_catalog": {
+    "normal_and_emergency_by_region": {
+      "1": ["猎犬病原", "遗忘时间", "急不可耐", "灌水贤者"],
+      "2": ["虫虫游戏厅", "无主地", "本性难移", "远北猎场", "枝头陷阱"],
+      "3": ["预算否决", "生存习性", "辟路行进", "趁火打劫", "焦土之家", "黑色逆流"],
+      "4": ["未来见闻", "种植园惊魂", "选边站", "诞生礼", "暴力押运", "长刀寒夜", "侵占家园"],
+      "5": ["一步之遥", "物欲遮天", "恶意讨薪", "送别仪式", "彼处水如酒", "丛林法则", "过度繁殖"],
+      "6": ["命运共享", "同域共存"]
+    },
+    "boss_by_region": {
+      "3": ["铁腕迷思", "光荣远征", "狂热敬虔"],
+      "5": ["永无安宁", "混沌源阶理论"],
+      "6": ["畸症"]
+    },
+    "pursuit_by_region": {
+      "1": ["血夜回魂", "毛绒游戏", "在劫难逃"],
+      "2": ["咩的朋友", "外显尖牙", "一视同仁"],
+      "3": ["哀悼铁腕", "赤金厄运", "冰冷流亡"],
+      "5": ["痛苦将息"]
+    },
+    "special": {
+      "ending_3_marked_combat": ["无效验尸"],
+      "face_off": ["搏杀", "共斗"],
+      "merchant_or_special_challenges": ["死箱", "活木", "湖中魇", "强买强卖", "进退趋同", "枯枝", "败叶", "“闹乐”", "“纵怒”", "“灭身”"]
+    },
+    "planner_limit": "当前仅提供关卡归属与类别；未建立阵容相关胜率和关卡难度评分。",
+    "sources": ["prts_main", "bwiki_stages"],
+    "confidence": "high"
+  },
+  "dynamic_map_effects": [
+    {
+      "id": "resident_movement",
+      "effect": "流窜居民在玩家每次移动后沿连通路径移动1格，占领节点后阻断徒步穿越",
+      "planning_impact": "需要把居民位置纳入随时间变化的图状态，而不是静态节点属性",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "eutopia_policy",
+      "effect": "受实托邦影响的节点可能在途经时扣源石锭、护盾或生命；摧毁理想源可消除",
+      "planning_impact": "边/节点代价需要按当前实托邦范围动态加权",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "hidden_information",
+      "effect": "未完成节点会阻挡后方节点的观测；加工品可以跨越未完成节点",
+      "planning_impact": "这是部分可观测图规划问题，需要维护未知节点的概率模型",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    }
+  ],
+  "open_questions": [
+    {
+      "id": "processed_default_ap_cost",
+      "question": "未明确写“无需行动力”的加工品，是否在所有特殊场景中都固定消耗1行动力？",
+      "current_assumption": 1,
+      "validation": "实机逐件装载并记录移动确认页"
+    },
+    {
+      "id": "twelve_cell_geometry",
+      "question": "周围12格是否严格等价于曼哈顿距离不超过2？",
+      "current_assumption": "manhattan_radius_2",
+      "validation": "在地图中央与边缘节点分别截图可选目标高亮"
+    },
+    {
+      "id": "event_probabilities",
+      "question": "不期而遇、商店商品、零件掉落和出口生成的概率分布尚未知",
+      "current_assumption": null,
+      "validation": "累计多局日志并进行频率估计"
+    },
+    {
+      "id": "combat_value_model",
+      "question": "作战节点价值依赖当前阵容、藏品和难度，暂不能仅凭关卡名给出胜率",
+      "current_assumption": null,
+      "validation": "建立队伍状态特征与人工风险标签数据集"
+    }
+  ]
+}

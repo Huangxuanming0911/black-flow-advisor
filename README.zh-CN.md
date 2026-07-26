@@ -221,3 +221,11 @@ python tools/analyze_node_semantics.py `
 像素证据；节点文字、网格距离和“应当连通”的假设都不会创建路径。连通性仅作为
 诊断信息输出而非强约束，因此局部截图可以合理地包含多个连通分量。原始截图和
 本地提取的图标模板继续保存在 `data/private/`，不会上传到公开仓库。
+
+## 黑流树海规划知识库
+
+当前规则资料已经整理为
+`data/knowledge/black-flow-rules.v0.1.json`，包括节点资源效果、全部零件、
+移动方式、三条结局路线和作战关卡层级。中文说明及来源见
+`docs/black-flow-knowledge.zh-CN.md`。运行
+`python tools/validate_knowledge_base.py` 可检查引用、数量和视觉映射是否一致。
