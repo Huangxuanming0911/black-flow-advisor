@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 
 import cv2
+import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -20,6 +21,7 @@ from blackflow_vision.path_ui import (  # noqa: E402
     annotate_path_ui,
 )
 from blackflow_vision.screen import normalize_pc_frame  # noqa: E402
+from blackflow_vision.scene_graph import build_unified_map_graph  # noqa: E402
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -66,6 +68,7 @@ def main() -> int:
         normalized,
         path_result.nodes,
     )
+    unified_graph = build_unified_map_graph(path_result, semantics)
 
     args.output.mkdir(parents=True, exist_ok=True)
     clean = annotate_node_semantics(normalized, semantics)
@@ -76,6 +79,28 @@ def main() -> int:
         skeleton,
     )
     graph = annotate_node_semantics(graph, semantics)
+    clean_graph = annotate_path_ui(
+        normalized,
+        path_result,
+        np.zeros_like(path_mask),
+        np.zeros_like(skeleton),
+    )
+    clean_graph = annotate_node_semantics(clean_graph, semantics)
+    cv2.rectangle(clean_graph, (590, 72), (1025, 108), (0, 0, 0), -1)
+    cv2.putText(
+        clean_graph,
+        (
+            f"EDGES {len(unified_graph.edges)}  "
+            f"COMPONENTS {len(unified_graph.connected_components)}  "
+            f"ISOLATED {len(unified_graph.isolated_nodes)}"
+        ),
+        (600, 96),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.52,
+        (230, 230, 230),
+        1,
+        cv2.LINE_AA,
+    )
     cv2.imwrite(
         str(args.output / "node-semantics-annotated.png"),
         clean,
@@ -83,6 +108,10 @@ def main() -> int:
     cv2.imwrite(
         str(args.output / "node-semantics-graph.png"),
         graph,
+    )
+    cv2.imwrite(
+        str(args.output / "unified-map-graph.png"),
+        clean_graph,
     )
     payload = semantics.to_dict()
     payload.update(
@@ -104,6 +133,18 @@ def main() -> int:
         json.dumps(payload, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    (args.output / "unified-map-graph.json").write_text(
+        json.dumps(
+            {
+                **unified_graph.to_dict(),
+                "source_image": str(args.image),
+                "source_transform": payload["source_transform"],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
     print(
         json.dumps(
             {
@@ -115,6 +156,11 @@ def main() -> int:
                 "needs_review": sum(
                     node.needs_review for node in semantics.nodes
                 ),
+                "edges": len(unified_graph.edges),
+                "connected_components": len(
+                    unified_graph.connected_components
+                ),
+                "isolated_nodes": len(unified_graph.isolated_nodes),
                 "ocr_elapsed_ms": semantics.ocr_elapsed_ms,
                 "icon_templates": templates.available,
                 "output": str(args.output),

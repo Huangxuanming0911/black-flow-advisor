@@ -145,9 +145,20 @@ derived from the private reviewed dataset. Text remains authoritative: a
 strong text/icon conflict is reported as `conflict_text_kept` and
 `needs_review: true`; the icon never silently overwrites readable text.
 
-The command writes a clean semantic annotation, a combined path/semantic
-annotation and `node-semantics.json`. Private screenshots and extracted icon
-templates remain under `data/private/` and are not published.
+The command writes:
+
+- `node-semantics-annotated.png`: clean node labels and semantic types.
+- `unified-map-graph.png`: paths, stable node IDs and semantic labels together.
+- `node-semantics.json`: OCR and icon cross-validation details.
+- `unified-map-graph.json`: planner-facing nodes, undirected edges, adjacency
+  lists, connected components, isolated nodes and ambiguity diagnostics.
+
+The unified graph joins the two stages by stable node ID. Its edges still come
+only from direct path-UI evidence; semantic labels, grid proximity and global
+connectivity never create a path. Connectivity is reported as a diagnostic
+rather than enforced, so partial screenshots may legitimately contain several
+components. Private screenshots and extracted icon templates remain under
+`data/private/` and are not published.
 
 ## Controlled V0 assumptions and hard stops
 
