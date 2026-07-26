@@ -64,13 +64,6 @@ RULES = {
         maximum=None,
         ap_cost=1,
     ),
-    "tunnel_transfer": MovementRule(
-        mode_id="tunnel_transfer",
-        part_id=None,
-        target_type="paired_node",
-        maximum=None,
-        ap_cost=0,
-    ),
     "structural_principle": MovementRule(
         mode_id="structural_principle",
         part_id="structural_principle",
@@ -98,20 +91,14 @@ class RoutePlannerTests(unittest.TestCase):
         self.assertEqual(result.action_points, 2)
         self.assertEqual(result.reward_opportunities["羽瞰点行动力"], 2)
 
-    def test_tunnels_pair_and_transfer_for_zero_ap(self) -> None:
+    def test_arrival_at_tunnel_forces_zero_ap_transfer(self) -> None:
         graph = _graph()
         pairs = pair_tunnels(graph)
         self.assertEqual(pairs["node_r1c0"], "node_r2c2")
         result = simulate_route(
             graph,
             "node_r0c0",
-            (
-                RouteAction("node_r1c0"),
-                RouteAction(
-                    "node_r2c2",
-                    mode_id="tunnel_transfer",
-                ),
-            ),
+            (RouteAction("node_r1c0"),),
             RULES,
             initial_action_points=2,
             tunnel_pairs=pairs,
@@ -119,6 +106,30 @@ class RoutePlannerTests(unittest.TestCase):
         self.assertTrue(result.valid)
         self.assertEqual(result.action_points, 1)
         self.assertEqual(result.current_node, "node_r2c2")
+        self.assertEqual(result.steps[0].selected_target, "node_r1c0")
+        self.assertEqual(result.steps[0].target, "node_r2c2")
+        self.assertTrue(result.steps[0].auto_teleport)
+
+    def test_tunnel_transfer_cannot_be_selected_as_a_move(self) -> None:
+        rules = {
+            **RULES,
+            "tunnel_transfer": MovementRule(
+                mode_id="tunnel_transfer",
+                part_id=None,
+                target_type="paired_node",
+                maximum=None,
+                ap_cost=0,
+            ),
+        }
+        result = simulate_route(
+            _graph(),
+            "node_r0c0",
+            (RouteAction("node_r2c2", mode_id="tunnel_transfer"),),
+            rules,
+            initial_action_points=2,
+        )
+        self.assertFalse(result.valid)
+        self.assertIn("不是可选移动方式", result.errors[0])
 
     def test_resident_base_is_a_combat_and_cleanup_opportunity(self) -> None:
         result = simulate_route(

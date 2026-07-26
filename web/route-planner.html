@@ -333,11 +333,16 @@ const KIND_OPTIONS=[
 const KIND_LABEL=Object.fromEntries(KIND_OPTIONS);
 const state={
   actions:[],
-  parts:[],
+  parts:(BOOTSTRAP.sample_parts||[]).map((part,index)=>({
+    instanceId:`part-${index+1}`,
+    partId:part.part_id,
+    uses:part.uses??null,
+    value:part.estimated_value??0
+  })),
   overrides:{},
   editMode:false,
   selectedNode:null,
-  nextPartId:1
+  nextPartId:(BOOTSTRAP.sample_parts||[]).length+1
 };
 const svg=document.getElementById("map-overlay");
 const ns="http://www.w3.org/2000/svg";
@@ -358,7 +363,7 @@ function movementSpec(selection){
   return {modeId,partId,rule:movementRules[modeId]};
 }
 function currentNode(){
-  return state.actions.length?state.actions[state.actions.length-1].target:startNode;
+  return simulate().current;
 }
 function nodeClass(kind){
   if(["combat","emergency_combat","enemy","resident_base","resident_occupied","unknown_combat"].includes(kind)) return "combat";
@@ -377,11 +382,7 @@ function isLegal(source,target,spec){
     return adjacency[source].has(target)
       ?[true,""]:[false,"徒步请逐段点击相邻节点"];
   }
-  const pairs=tunnelPairs();
-  if(spec.modeId==="tunnel_transfer"){
-    return pairs[source]===target
-      ?[true,""]:[false,"只能从一端曲折密道传送至另一端"];
-  }
+  if(spec.modeId==="tunnel_transfer") return [false,"曲折密道会在抵达时自动传送"];
   const a=gridPosition(source),b=gridPosition(target);
   if(!a||!b) return [false,"缺少稳定行列坐标"];
   const dr=Math.abs(a[0]-b[0]),dc=Math.abs(a[1]-b[1]);
@@ -487,11 +488,15 @@ function simulate(){
     if(spec.rule.target_rule?.type==="random_any"){
       result.warnings.push("小八界目标随机，当前终点只是情景假设");
     }
+    const paired=kind==="tunnel"?tunnelPairs()[action.target]:null;
+    const destination=paired||action.target;
+    if(kind==="tunnel"&&!paired) result.warnings.push("曲折密道未成功配对，无法自动传送");
     result.steps.push({
-      index:index+1,source:result.current,target:action.target,modeId:action.modeId,
-      partId:action.partId,cost,gain:postAp+nodeAp,apAfter:result.ap,kind
+      index:index+1,source:result.current,selectedTarget:action.target,
+      target:destination,modeId:action.modeId,partId:action.partId,
+      cost,gain:postAp+nodeAp,apAfter:result.ap,kind,autoTeleport:Boolean(paired)
     });
-    result.current=action.target;
+    result.current=destination;
   }
   for(const part of Object.values(result.parts)){
     if(part.remaining===0) continue;
@@ -511,7 +516,6 @@ function simulate(){
 function movementName(step){
   const rule=movementRules[step.modeId];
   if(step.modeId==="walk") return "徒步";
-  if(step.modeId==="tunnel_transfer") return "密道传送";
   const part=state.parts.find(item=>item.instanceId===step.partId);
   return partCatalog[part?.partId]?.name_zh||rule?.name_zh||step.modeId;
 }
@@ -520,8 +524,7 @@ function refreshMovementOptions(result){
   const previous=select.value;
   select.textContent="";
   const choices=[
-    {value:"walk|",label:"徒步跋涉 · 1行动力/格"},
-    {value:"tunnel_transfer|",label:"曲折密道传送 · 0行动力"}
+    {value:"walk|",label:"徒步跋涉 · 1行动力/格"}
   ];
   for(const part of state.parts){
     const catalog=partCatalog[part.partId];
@@ -552,13 +555,24 @@ function renderMap(result){
     addSvg("line",{x1:a.center[0],y1:a.center[1],x2:b.center[0],y2:b.center[1],class:"base-edge"});
   }
   for(const step of result.steps){
-    const a=nodes[step.source],b=nodes[step.target];
+    const a=nodes[step.source],b=nodes[step.selectedTarget];
     addSvg("line",{
       x1:a.center[0],y1:a.center[1],x2:b.center[0],y2:b.center[1],
       class:`route-edge ${step.modeId==="walk"?"":"jump"}`
     });
+    if(step.autoTeleport){
+      const destination=nodes[step.target];
+      addSvg("line",{
+        x1:b.center[0],y1:b.center[1],
+        x2:destination.center[0],y2:destination.center[1],
+        class:"route-edge jump"
+      });
+    }
   }
-  const routeIds=new Set([startNode,...result.steps.map(step=>step.target)]);
+  const routeIds=new Set([
+    startNode,
+    ...result.steps.flatMap(step=>[step.selectedTarget,step.target])
+  ]);
   for(const node of graph.nodes){
     const kind=kindOf(node.node_id);
     const radius=kind==="forest"?10:16;
@@ -637,7 +651,10 @@ function renderRoute(result){
   for(const step of result.steps){
     const row=document.createElement("tr");
     const delta=step.gain-step.cost;
-    row.innerHTML=`<td>${step.index}</td><td>${KIND_LABEL[step.kind]||nodes[step.target].label}<br><span class="muted">${step.target}</span></td><td>${movementName(step)}</td><td class="num">${delta>=0?"+":""}${delta}<br><span class="muted">余 ${step.apAfter}</span></td>`;
+    const targetText=step.autoTeleport
+      ?`${nodes[step.selectedTarget].label} → 自动传送至 ${step.target}`
+      :`${KIND_LABEL[step.kind]||nodes[step.target].label}`;
+    row.innerHTML=`<td>${step.index}</td><td>${targetText}<br><span class="muted">${step.selectedTarget}</span></td><td>${movementName(step)}</td><td class="num">${delta>=0?"+":""}${delta}<br><span class="muted">余 ${step.apAfter}</span></td>`;
     body.append(row);
   }
 }
@@ -668,7 +685,7 @@ function renderParts(result){
     render();
   }));
   document.getElementById("part-note").textContent=
-    "估值不与节点随机奖励混算；血蕈、恋家果和浪花会按路线事件给出动态值或区间。";
+    "已加入几件实验零件，可修改或移除。估值不与节点随机奖励混算。";
 }
 function renderNodeEditor(){
   const select=document.getElementById("node-kind-select");
@@ -725,7 +742,7 @@ document.getElementById("add-part").addEventListener("click",()=>{
   state.parts.push({
     instanceId:`part-${state.nextPartId++}`,
     partId,
-    uses:mode?.uses??0,
+    uses:mode?mode.uses:null,
     value:0
   });
   render();
