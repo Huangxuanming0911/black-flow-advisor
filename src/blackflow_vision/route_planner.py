@@ -30,6 +30,9 @@ _ONE_SHOT_KINDS = {
     "resident_occupied",
     "portal",
     "scout",
+    "pursuit",
+    "exit_end",
+    "exit_path",
 }
 
 
@@ -147,6 +150,14 @@ class RouteStep:
 
 
 @dataclass(slots=True)
+class ResourceEstimate:
+    minimum: int = 0
+    maximum: int = 0
+    pending: int = 0
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class RouteSimulation:
     valid: bool
     start_node: str
@@ -158,6 +169,7 @@ class RouteSimulation:
     guaranteed_collectibles: int = 0
     completed_nodes: set[str] = field(default_factory=set)
     reward_opportunities: dict[str, int] = field(default_factory=dict)
+    resource_estimates: dict[str, ResourceEstimate] = field(default_factory=dict)
     parts: dict[str, PartState] = field(default_factory=dict)
     part_value_min: int = 0
     part_value_max: int = 0
@@ -256,6 +268,7 @@ def simulate_route(
     parts: Iterable[PartState] = (),
     overrides: Mapping[str, str] | None = None,
     tunnel_pairs: Mapping[str, str] | None = None,
+    reward_knowledge: Mapping[str, Any] | None = None,
 ) -> RouteSimulation:
     overrides = overrides or {}
     tunnel_pairs = tunnel_pairs or pair_tunnels(graph, overrides)
@@ -270,6 +283,10 @@ def simulate_route(
         parts=part_states,
         part_value_min=initial_value,
         part_value_max=initial_value,
+        resource_estimates={
+            str(dimension["id"]): ResourceEstimate()
+            for dimension in (reward_knowledge or {}).get("dimensions", ())
+        },
     )
     movement_count = 0
     combat_count = 0
@@ -336,8 +353,20 @@ def simulate_route(
                 result.action_points += delta
             elif resource == "hope":
                 result.hope += delta
+                _add_exact_resource(
+                    result,
+                    "hope",
+                    delta,
+                    "移动零件效果",
+                )
             elif resource == "originium_ingots":
                 result.originium_ingots += delta
+                _add_exact_resource(
+                    result,
+                    "originium_ingots",
+                    delta,
+                    "移动零件效果",
+                )
 
         node = graph.nodes[action.target]
         kind = overrides.get(action.target, node.kind)
@@ -350,6 +379,12 @@ def simulate_route(
             first_completion=first_completion,
         )
         result.action_points += ap_gain
+        if first_completion:
+            _settle_reward_catalog(
+                result,
+                kind,
+                reward_knowledge=reward_knowledge,
+            )
         combat_count += combat_delta
         if first_completion:
             result.completed_nodes.add(action.target)
@@ -361,7 +396,11 @@ def simulate_route(
             result.reward_opportunities[reward] = (
                 result.reward_opportunities.get(reward, 0) + 1
             )
-        if kind == "wish" and first_completion:
+        if (
+            kind == "wish"
+            and first_completion
+            and not reward_knowledge
+        ):
             result.guaranteed_collectibles += 1
 
         destination = (
@@ -402,6 +441,74 @@ def simulate_route(
         combat_count=combat_count,
     )
     return result
+
+
+def _add_exact_resource(
+    result: RouteSimulation,
+    resource: str,
+    value: int,
+    note: str,
+) -> None:
+    estimate = result.resource_estimates.get(resource)
+    if estimate is None:
+        return
+    estimate.minimum += value
+    estimate.maximum += value
+    if note and note not in estimate.notes:
+        estimate.notes.append(note)
+
+
+def _settle_reward_catalog(
+    result: RouteSimulation,
+    kind: str,
+    *,
+    reward_knowledge: Mapping[str, Any] | None,
+) -> None:
+    if not reward_knowledge:
+        return
+    aliases = reward_knowledge.get("kind_aliases", {})
+    canonical_kind = str(aliases.get(kind, kind))
+    catalog = {
+        str(item["id"]): item
+        for item in reward_knowledge.get("node_rewards", ())
+    }
+    node_rule = catalog.get(canonical_kind)
+    if node_rule is None:
+        return
+    for resource, raw in node_rule.get("rewards", {}).items():
+        estimate = result.resource_estimates.get(str(resource))
+        if estimate is None:
+            continue
+        rule_kind = str(raw.get("kind", "possible"))
+        if rule_kind == "exact":
+            value = int(raw.get("value", 0))
+            estimate.minimum += value
+            estimate.maximum += value
+            if resource == "hope":
+                result.hope += value
+            elif resource == "originium_ingots":
+                result.originium_ingots += value
+            elif resource == "collectibles":
+                result.guaranteed_collectibles += value
+        elif rule_kind == "conditional_exact":
+            estimate.maximum += int(raw.get("value", 0))
+            estimate.pending += 1
+        elif rule_kind in {"choice", "conditional"}:
+            estimate.minimum += int(raw.get("minimum", 0))
+            maximum = raw.get("maximum")
+            if maximum is None:
+                estimate.pending += 1
+            else:
+                estimate.maximum += int(maximum)
+        elif rule_kind == "remaining_ap":
+            value = max(0, result.action_points)
+            estimate.minimum += value
+            estimate.maximum += value
+        elif rule_kind in {"possible", "variable", "indirect"}:
+            estimate.pending += 1
+        note = str(raw.get("summary", "")).strip()
+        if note and note not in estimate.notes:
+            estimate.notes.append(note)
 
 
 def _settle_node(

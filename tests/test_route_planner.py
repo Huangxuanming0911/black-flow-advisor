@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 import unittest
 
 from blackflow_vision.route_planner import (
@@ -72,6 +74,19 @@ RULES = {
         ap_cost=1,
     ),
 }
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _reward_knowledge() -> dict:
+    return json.loads(
+        (
+            PROJECT_ROOT
+            / "data"
+            / "knowledge"
+            / "node-rewards.v0.1.json"
+        ).read_text(encoding="utf-8")
+    )
 
 
 class RoutePlannerTests(unittest.TestCase):
@@ -207,6 +222,107 @@ class RoutePlannerTests(unittest.TestCase):
         self.assertTrue(result.valid)
         self.assertEqual(result.part_value_min, 10)
         self.assertEqual(result.part_value_max, 37)
+
+    def test_reward_catalog_counts_exact_and_choice_resources(self) -> None:
+        graph = PlannerGraph.from_unified_dict(
+            {
+                "nodes": [
+                    {
+                        "node_id": "node_r0c0",
+                        "kind": "current",
+                        "center": [0, 0],
+                    },
+                    {
+                        "node_id": "node_r0c1",
+                        "kind": "encounter",
+                        "center": [100, 0],
+                    },
+                    {
+                        "node_id": "node_r0c2",
+                        "kind": "wish",
+                        "center": [200, 0],
+                    },
+                ],
+                "edges": [
+                    {"first": "node_r0c0", "second": "node_r0c1"},
+                    {"first": "node_r0c1", "second": "node_r0c2"},
+                ],
+            }
+        )
+        result = simulate_route(
+            graph,
+            "node_r0c0",
+            (
+                RouteAction("node_r0c1"),
+                RouteAction("node_r0c2"),
+            ),
+            RULES,
+            initial_action_points=2,
+            reward_knowledge=_reward_knowledge(),
+        )
+        self.assertTrue(result.valid)
+        self.assertEqual(
+            (
+                result.resource_estimates[
+                    "recruitment_tickets"
+                ].minimum,
+                result.resource_estimates[
+                    "recruitment_tickets"
+                ].maximum,
+            ),
+            (0, 2),
+        )
+        self.assertEqual(
+            (
+                result.resource_estimates["collectibles"].minimum,
+                result.resource_estimates["collectibles"].maximum,
+            ),
+            (1, 2),
+        )
+        self.assertEqual(
+            (
+                result.resource_estimates["parts"].minimum,
+                result.resource_estimates["parts"].maximum,
+            ),
+            (0, 1),
+        )
+        self.assertEqual(result.guaranteed_collectibles, 1)
+
+    def test_shop_alias_does_not_count_inventory_as_free_income(self) -> None:
+        graph = PlannerGraph.from_unified_dict(
+            {
+                "nodes": [
+                    {
+                        "node_id": "node_r0c0",
+                        "kind": "current",
+                        "center": [0, 0],
+                    },
+                    {
+                        "node_id": "node_r0c1",
+                        "kind": "shop",
+                        "center": [100, 0],
+                    },
+                ],
+                "edges": [
+                    {"first": "node_r0c0", "second": "node_r0c1"},
+                ],
+            }
+        )
+        result = simulate_route(
+            graph,
+            "node_r0c0",
+            (RouteAction("node_r0c1"),),
+            RULES,
+            initial_action_points=1,
+            reward_knowledge=_reward_knowledge(),
+        )
+        self.assertTrue(result.valid)
+        self.assertTrue(
+            all(
+                estimate.minimum == estimate.maximum == 0
+                for estimate in result.resource_estimates.values()
+            )
+        )
 
 
 if __name__ == "__main__":

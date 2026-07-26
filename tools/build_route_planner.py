@@ -55,6 +55,14 @@ def _parser() -> argparse.ArgumentParser:
         / "black-flow-rules.v0.1.json",
     )
     parser.add_argument(
+        "--reward-knowledge",
+        type=Path,
+        default=PROJECT_ROOT
+        / "data"
+        / "knowledge"
+        / "node-rewards.v0.1.json",
+    )
+    parser.add_argument(
         "--image",
         type=Path,
         help="Override the source screenshot recorded in the graph JSON.",
@@ -136,6 +144,9 @@ def main() -> int:
     args = _parser().parse_args()
     graph = json.loads(args.graph.read_text(encoding="utf-8"))
     knowledge = json.loads(args.knowledge.read_text(encoding="utf-8"))
+    reward_knowledge = json.loads(
+        args.reward_knowledge.read_text(encoding="utf-8"),
+    )
     source_image = _resolve_source_image(graph, args.image)
     template_path = PROJECT_ROOT / "web" / "route-planner.html"
     template = template_path.read_text(encoding="utf-8")
@@ -144,12 +155,14 @@ def main() -> int:
         "graph": _portable_graph(graph),
         "movement_modes": knowledge["movement_modes"],
         "parts": knowledge["parts"]["items"],
+        "reward_knowledge": reward_knowledge,
         "sample_parts": [] if args.no_sample_parts else SAMPLE_PARTS,
         "initial_action_points": max(0, args.initial_action_points),
         "source": {
             "graph": str(args.graph),
             "image": str(source_image),
             "knowledge": str(args.knowledge),
+            "reward_knowledge": str(args.reward_knowledge),
         },
         "image_data": _image_data_uri(source_image),
     }
