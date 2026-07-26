@@ -1,0 +1,328 @@
+{
+  "schema_version": "0.1.0",
+  "theme": "沉沦者的黑流树海",
+  "collected_at": "2026-07-26",
+  "scope": "节点直接收益与可选收益；不把零件估值混入资源数量",
+  "notice": "主题刚上线，作战基础指挥经验与源石锭表仍在社区资料页持续补全。未核实的数值只标记为随区域或事件变化，不沿用旧肉鸽数值。",
+  "sources": [
+    {
+      "id": "prts_main",
+      "title": "PRTS：集成战略「沉沦者的黑流树海」",
+      "url": "https://prts.wiki/w/沉沦者的黑流树海",
+      "retrieved": "2026-07-26"
+    },
+    {
+      "id": "bwiki_main",
+      "title": "明日方舟 BWIKI：沉沦者的黑流树海",
+      "url": "https://wiki.biligame.com/arknights/沉沦者的黑流树海",
+      "retrieved": "2026-07-26"
+    }
+  ],
+  "dimensions": [
+    {"id": "hope", "name_zh": "希望"},
+    {"id": "originium_ingots", "name_zh": "源石锭"},
+    {"id": "command_xp", "name_zh": "指挥经验"},
+    {"id": "collectibles", "name_zh": "收藏品"},
+    {"id": "recruitment_tickets", "name_zh": "招募券"},
+    {"id": "parts", "name_zh": "零件"}
+  ],
+  "kind_aliases": {
+    "shop": "secret_trader",
+    "special_shop": "rogue_trader",
+    "unknown_event": "unknown_event",
+    "unknown_combat": "unknown_combat"
+  },
+  "node_rewards": [
+    {
+      "id": "forest",
+      "name_zh": "林间空地",
+      "rewards": {},
+      "summary": "无战斗、无事件、无直接资源收益。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "combat",
+      "name_zh": "作战",
+      "rewards": {
+        "hope": {"kind": "indirect", "summary": "指挥经验升级后间接获得"},
+        "originium_ingots": {"kind": "variable", "summary": "基础值随区域/关卡变化"},
+        "command_xp": {"kind": "variable", "summary": "基础值随区域/关卡变化"},
+        "collectibles": {"kind": "possible", "summary": "随机战利品可能出现"},
+        "recruitment_tickets": {"kind": "possible", "summary": "随机战利品可能出现"},
+        "parts": {"kind": "possible", "summary": "战后零件奖励机会"}
+      },
+      "summary": "固定获得区域对应的经验与源石锭，并从战后随机奖励中取得其他资源。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "emergency_combat",
+      "name_zh": "紧急作战",
+      "rewards": {
+        "hope": {"kind": "indirect", "summary": "指挥经验升级后间接获得"},
+        "originium_ingots": {"kind": "variable", "summary": "高于普通作战，数值随区域/关卡变化"},
+        "command_xp": {"kind": "variable", "summary": "高于普通作战，数值随区域/关卡变化"},
+        "collectibles": {"kind": "possible", "summary": "更高档随机战利品"},
+        "recruitment_tickets": {"kind": "possible", "summary": "随机战利品可能出现"},
+        "parts": {"kind": "possible", "summary": "战后零件奖励机会"}
+      },
+      "summary": "收益类别与普通作战相近，但整体奖励更高。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "enemy",
+      "name_zh": "险路恶敌",
+      "rewards": {
+        "hope": {"kind": "conditional", "minimum": 0, "summary": "作为区域出口时，剩余行动力等量转化"},
+        "originium_ingots": {"kind": "variable", "summary": "随领袖关卡/变体变化"},
+        "command_xp": {"kind": "variable", "summary": "随领袖关卡/变体变化"},
+        "collectibles": {"kind": "possible", "summary": "领袖战奖励可能出现"},
+        "recruitment_tickets": {"kind": "possible", "summary": "领袖战奖励可能出现"},
+        "parts": {"kind": "possible", "summary": "战后零件奖励机会"}
+      },
+      "summary": "领袖战基础奖励随关卡变化；部分区域还会把剩余行动力转为希望。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "pursuit",
+      "name_zh": "追猎",
+      "rewards": {
+        "recruitment_tickets": {"kind": "conditional_exact", "value": 1, "summary": "普通追猎胜利固定1张"},
+        "originium_ingots": {"kind": "conditional", "minimum": 0, "summary": "普通追猎为0；领袖追猎按领袖战结算"},
+        "command_xp": {"kind": "conditional", "minimum": 0, "summary": "普通追猎为0；领袖追猎按领袖战结算"},
+        "collectibles": {"kind": "conditional", "minimum": 0, "summary": "普通追猎为0；领袖追猎按领袖战结算"},
+        "parts": {"kind": "conditional", "minimum": 0, "summary": "普通追猎为0；领袖追猎按领袖战结算"}
+      },
+      "summary": "普通追猎仅给1张招募券；领袖追猎按正常领袖战奖励结算。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "event",
+      "name_zh": "不期而遇",
+      "rewards": {
+        "hope": {"kind": "possible", "summary": "依具体事件与选项"},
+        "originium_ingots": {"kind": "possible", "summary": "依具体事件与选项"},
+        "command_xp": {"kind": "possible", "summary": "少数事件或战斗选项"},
+        "collectibles": {"kind": "possible", "summary": "依具体事件与选项"},
+        "recruitment_tickets": {"kind": "possible", "summary": "依具体事件与选项"},
+        "parts": {"kind": "possible", "summary": "依具体事件与选项"}
+      },
+      "summary": "六类资源都可能出现，必须在识别出具体事件与选项后结算。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "safe_house",
+      "name_zh": "安全的角落",
+      "rewards": {},
+      "summary": "三选一增益；基础节点不直接产出这六类资源。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "fate",
+      "name_zh": "命运所指",
+      "rewards": {
+        "hope": {"kind": "possible", "summary": "依结局事件选项"},
+        "originium_ingots": {"kind": "possible", "summary": "依结局事件选项"},
+        "collectibles": {"kind": "possible", "summary": "常与结局前置收藏品有关"}
+      },
+      "summary": "结局分支节点，不能按统一固定收益结算。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "wish",
+      "name_zh": "得偿所愿",
+      "rewards": {
+        "collectibles": {"kind": "exact", "value": 1, "summary": "免费收藏品"}
+      },
+      "summary": "固定免费获得1件收藏品。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "encounter",
+      "name_zh": "狭路相逢",
+      "rewards": {
+        "collectibles": {"kind": "choice", "minimum": 0, "maximum": 1, "summary": "选择最右目标时1件"},
+        "recruitment_tickets": {"kind": "conditional_exact", "value": 2, "summary": "限时击败所选目标后2张"},
+        "parts": {"kind": "choice", "minimum": 0, "maximum": 1, "summary": "选择左/中目标时1件"}
+      },
+      "summary": "胜利固定2张招募券；再在1件零件与1件收藏品路线间选择，二者不能同时获得。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "rogue_trader",
+      "name_zh": "诡意行商",
+      "rewards": {
+        "originium_ingots": {"kind": "transaction", "summary": "可投资、取款；解锁后可出售零件"},
+        "collectibles": {"kind": "transaction", "summary": "消耗源石锭购买"},
+        "recruitment_tickets": {"kind": "transaction", "summary": "消耗源石锭购买"},
+        "parts": {"kind": "transaction", "summary": "消耗源石锭购买或出售"}
+      },
+      "summary": "这是交易机会，不应在未选择商品前计作免费收益。",
+      "sources": ["prts_main", "bwiki_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "lost_and_found",
+      "name_zh": "失与得",
+      "rewards": {
+        "collectibles": {"kind": "exchange", "summary": "以现有收藏品置换"},
+        "parts": {"kind": "exchange", "summary": "解锁生命游戏后可置换零件"}
+      },
+      "summary": "库存转换节点，产出取决于投入物稀有度。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "exit_end",
+      "name_zh": "险路尽头",
+      "rewards": {
+        "hope": {"kind": "remaining_ap", "summary": "剩余行动力1:1转化"},
+        "recruitment_tickets": {"kind": "access", "summary": "可取出留存券，不是新掉落"},
+        "parts": {"kind": "exact", "value": 1, "summary": "1件加工品"}
+      },
+      "summary": "固定1件加工品，并把离层时剩余行动力全部转为希望。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "exit_path",
+      "name_zh": "险路小径",
+      "rewards": {
+        "parts": {"kind": "exact", "value": 1, "summary": "1件珍贵加工品"}
+      },
+      "summary": "固定1件珍贵加工品；行动力带入下一层，不能取出留存招募券。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "secret_trader",
+      "name_zh": "秘境行商",
+      "rewards": {
+        "originium_ingots": {"kind": "transaction", "summary": "出售零件获得"},
+        "parts": {"kind": "transaction", "summary": "购买；种子培育可能获得随机零件"}
+      },
+      "summary": "零件买卖与种子培育节点，不选择交易前不计免费收益。",
+      "sources": ["prts_main", "bwiki_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "emergency_support",
+      "name_zh": "应急助力",
+      "rewards": {
+        "originium_ingots": {"kind": "cost", "summary": "通常干员雇佣消耗4；专属干员可能免费"}
+      },
+      "summary": "提供临时干员，不产出招募券；通常消耗源石锭。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "tunnel",
+      "name_zh": "曲折密道",
+      "rewards": {},
+      "summary": "零行动力强制传送，无直接资源收益。",
+      "sources": ["prts_main", "bwiki_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "overlook",
+      "name_zh": "羽瞰点",
+      "rewards": {},
+      "summary": "每次前往获得1行动力并扩大视野；行动力单独结算，不属于六类资源。",
+      "sources": ["prts_main", "bwiki_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "resident_base",
+      "name_zh": "“居民”据点",
+      "rewards": {
+        "hope": {"kind": "indirect", "summary": "指挥经验升级后间接获得"},
+        "originium_ingots": {"kind": "variable", "summary": "居民作战奖励，数值待按关卡核实"},
+        "command_xp": {"kind": "variable", "summary": "居民作战奖励，数值待按关卡核实"},
+        "collectibles": {"kind": "possible", "summary": "丰厚随机奖励可能出现"},
+        "recruitment_tickets": {"kind": "possible", "summary": "丰厚随机奖励可能出现"},
+        "parts": {"kind": "possible", "summary": "战后零件奖励机会"}
+      },
+      "summary": "特殊作战并有全层驱逐效果；资源按实际居民关卡结算。",
+      "sources": ["prts_main", "bwiki_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "resident_occupied",
+      "name_zh": "流窜“居民”占领",
+      "rewards": {
+        "hope": {"kind": "indirect", "summary": "指挥经验升级后间接获得"},
+        "originium_ingots": {"kind": "variable", "summary": "居民作战奖励"},
+        "command_xp": {"kind": "variable", "summary": "居民作战奖励"},
+        "parts": {"kind": "possible", "summary": "战后零件奖励机会"}
+      },
+      "summary": "完成战斗后该节点变为林间空地；不会恢复原事件收益。",
+      "sources": ["prts_main", "bwiki_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "portal",
+      "name_zh": "误入奇境",
+      "rewards": {
+        "hope": {"kind": "possible", "summary": "取决于黑潭构型与节点"},
+        "originium_ingots": {"kind": "possible", "summary": "取决于黑潭构型与节点"},
+        "command_xp": {"kind": "possible", "summary": "取决于黑潭作战"},
+        "collectibles": {"kind": "possible", "summary": "取决于黑潭构型与节点"},
+        "recruitment_tickets": {"kind": "possible", "summary": "取决于黑潭构型与节点"},
+        "parts": {"kind": "possible", "summary": "进入需消耗1加工品；内部可获得资源"}
+      },
+      "summary": "入口本身消耗1件加工品；黑潭内部收益需展开子图后统计。",
+      "sources": ["prts_main", "bwiki_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "scout",
+      "name_zh": "先行一步",
+      "rewards": {
+        "hope": {"kind": "choice", "minimum": 0, "maximum": 2, "summary": "不派遣干员时可选+2"},
+        "parts": {"kind": "conditional", "minimum": 0, "maximum": 1, "summary": "派遣后归队可能带回；生命游戏可额外给加工品"}
+      },
+      "summary": "可选择不派遣并获得2希望，或派遣干员换取进阶及之后的零件收益。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "unknown_combat",
+      "name_zh": "未知的凶戾",
+      "rewards": {
+        "hope": {"kind": "possible", "summary": "揭示具体作战后确定"},
+        "originium_ingots": {"kind": "variable", "summary": "揭示具体作战后确定"},
+        "command_xp": {"kind": "variable", "summary": "揭示具体作战后确定"},
+        "collectibles": {"kind": "possible", "summary": "揭示具体作战后确定"},
+        "recruitment_tickets": {"kind": "possible", "summary": "揭示具体作战后确定"},
+        "parts": {"kind": "possible", "summary": "揭示具体作战后确定"}
+      },
+      "summary": "仅知道是作战类，不能提前给出精确资源。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    },
+    {
+      "id": "unknown_event",
+      "name_zh": "未知的诡秘",
+      "rewards": {
+        "hope": {"kind": "possible", "summary": "揭示具体事件后确定"},
+        "originium_ingots": {"kind": "possible", "summary": "揭示具体事件后确定"},
+        "command_xp": {"kind": "possible", "summary": "揭示具体事件后确定"},
+        "collectibles": {"kind": "possible", "summary": "揭示具体事件后确定"},
+        "recruitment_tickets": {"kind": "possible", "summary": "揭示具体事件后确定"},
+        "parts": {"kind": "possible", "summary": "揭示具体事件后确定"}
+      },
+      "summary": "事件未揭示，六类资源均只记为可能性。",
+      "sources": ["prts_main"],
+      "confidence": "high"
+    }
+  ]
+}

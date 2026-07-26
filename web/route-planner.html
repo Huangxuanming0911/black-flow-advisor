@@ -194,6 +194,32 @@ th { color:var(--muted); font-weight:500 }
 td.num,th.num { text-align:right; font-variant-numeric:tabular-nums }
 td input { width:62px; padding:5px }
 .route-table { max-height:250px; overflow:auto }
+.resource-table td:first-child { color:#c8d4d7; width:82px }
+.resource-table td:last-child { text-align:right }
+.reward-known { color:var(--cyan); font-variant-numeric:tabular-nums }
+.reward-possible { color:var(--gold) }
+.catalog-detail {
+  margin-top:9px;
+  padding:9px;
+  background:#0d1316;
+  border:1px solid #253037;
+  border-radius:7px;
+}
+.catalog-detail p+p { margin-top:7px }
+.catalog-dimensions {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:5px 10px;
+  margin-top:8px;
+}
+.catalog-dimension {
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  border-top:1px solid #202b30;
+  padding-top:5px;
+}
+.catalog-dimension span:last-child { color:#dce7e8; text-align:right }
 .tag {
   display:inline-block;
   border:1px solid var(--line);
@@ -251,7 +277,7 @@ td input { width:62px; padding:5px }
         <div id="metric-ap" class="metric-value">—</div>
       </div>
       <div class="metric">
-        <div class="metric-label">确定资源增量</div>
+        <div class="metric-label">确定收益种类</div>
         <div id="metric-resource" class="metric-value">—</div>
       </div>
       <div class="metric">
@@ -261,8 +287,21 @@ td input { width:62px; padding:5px }
     </section>
 
     <section class="panel">
-      <h2>可能收获</h2>
+      <h2>路线收益 · 六类资源</h2>
+      <div class="table-wrap">
+        <table class="resource-table">
+          <tbody id="resource-summary-body"></tbody>
+        </table>
+      </div>
       <ul id="rewards-list" class="compact-list"></ul>
+    </section>
+
+    <section class="panel">
+      <h2>各类节点收益口径</h2>
+      <label class="field">节点类型
+        <select id="reward-kind-select"></select>
+      </label>
+      <div id="reward-kind-detail" class="catalog-detail"></div>
     </section>
 
     <section class="panel">
@@ -319,6 +358,14 @@ const movementRules=Object.fromEntries(
 const partCatalog=Object.fromEntries(
   BOOTSTRAP.parts.map(part=>[part.id,part])
 );
+const rewardKnowledge=BOOTSTRAP.reward_knowledge||{
+  dimensions:[],kind_aliases:{},node_rewards:[]
+};
+const REWARD_DIMENSIONS=rewardKnowledge.dimensions||[];
+const REWARD_RULES=Object.fromEntries(
+  (rewardKnowledge.node_rewards||[]).map(rule=>[rule.id,rule])
+);
+const REWARD_ALIASES=rewardKnowledge.kind_aliases||{};
 const startNode=graph.nodes.find(node=>node.kind==="current")?.node_id
   || graph.nodes[0]?.node_id;
 const KIND_OPTIONS=[
@@ -328,7 +375,11 @@ const KIND_OPTIONS=[
   ["unknown_combat","未知的凶戾"],["unknown_event","未知的诡秘"],
   ["tunnel","曲折密道"],["shop","秘境行商"],
   ["special_shop","诡意行商"],["encounter","狭路相逢"],
-  ["wish","得偿所愿"],["enemy","险路恶敌"],["scout","先行一步"]
+  ["wish","得偿所愿"],["enemy","险路恶敌"],["pursuit","追猎"],
+  ["safe_house","安全的角落"],["fate","命运所指"],
+  ["lost_and_found","失与得"],["exit_end","险路尽头"],
+  ["exit_path","险路小径"],["emergency_support","应急助力"],
+  ["portal","误入奇境"],["scout","先行一步"]
 ];
 const KIND_LABEL=Object.fromEntries(KIND_OPTIONS);
 const state={
@@ -354,6 +405,7 @@ function gridPosition(id){
   return match?[Number(match[1]),Number(match[2])]:null;
 }
 function kindOf(id){ return state.overrides[id]||nodes[id].kind; }
+function rewardKind(kind){ return REWARD_ALIASES[kind]||kind; }
 function tunnelPairs(){
   const ids=Object.keys(nodes).filter(id=>kindOf(id)==="tunnel").sort();
   return ids.length===2?{[ids[0]]:ids[1],[ids[1]]:ids[0]}:{};
@@ -366,14 +418,14 @@ function currentNode(){
   return simulate().current;
 }
 function nodeClass(kind){
-  if(["combat","emergency_combat","enemy","resident_base","resident_occupied","unknown_combat"].includes(kind)) return "combat";
-  if(["tunnel","overlook","shop","special_shop","encounter","wish"].includes(kind)) return "special";
+  if(["combat","emergency_combat","enemy","pursuit","resident_base","resident_occupied","unknown_combat"].includes(kind)) return "combat";
+  if(["tunnel","overlook","shop","special_shop","secret_trader","rogue_trader","encounter","wish","exit_end","exit_path"].includes(kind)) return "special";
   if(["forest"].includes(kind)) return "forest";
   if(["current"].includes(kind)) return "current";
   return "event";
 }
 function isCombat(kind){
-  return ["combat","emergency_combat","enemy","resident_base","resident_occupied","unknown_combat"].includes(kind);
+  return ["combat","emergency_combat","enemy","pursuit","resident_base","resident_occupied","unknown_combat"].includes(kind);
 }
 function isLegal(source,target,spec){
   if(!source||!nodes[target]) return [false,"节点不存在"];
@@ -407,6 +459,42 @@ function initialPartState(){
 function addOpportunity(result,label){
   result.opportunities[label]=(result.opportunities[label]||0)+1;
 }
+function emptyResourceStats(){
+  return Object.fromEntries(REWARD_DIMENSIONS.map(dimension=>[
+    dimension.id,{minimum:0,maximum:0,pending:0,notes:[]}
+  ]));
+}
+function addResourceNote(stat,note){
+  if(note&&!stat.notes.includes(note)) stat.notes.push(note);
+}
+function applyRewardEntry(result,dimensionId,entry){
+  const stat=result.resourceStats[dimensionId];
+  if(!stat||!entry) return;
+  const kind=entry.kind;
+  if(kind==="exact"){
+    const value=Number(entry.value||0);
+    stat.minimum+=value; stat.maximum+=value;
+  } else if(kind==="conditional_exact"){
+    stat.maximum+=Number(entry.value||0); stat.pending+=1;
+  } else if(["choice","conditional"].includes(kind)){
+    stat.minimum+=Number(entry.minimum||0);
+    if(Number.isFinite(entry.maximum)) stat.maximum+=Number(entry.maximum);
+    else stat.pending+=1;
+  } else if(kind==="remaining_ap"){
+    const value=Math.max(0,result.ap);
+    stat.minimum+=value; stat.maximum+=value;
+  } else if(["possible","variable","indirect"].includes(kind)){
+    stat.pending+=1;
+  }
+  addResourceNote(stat,entry.summary);
+}
+function applyNodeRewards(result,kind){
+  const rule=REWARD_RULES[rewardKind(kind)];
+  if(!rule) return;
+  for(const [dimensionId,entry] of Object.entries(rule.rewards||{})){
+    applyRewardEntry(result,dimensionId,entry);
+  }
+}
 function settleNode(result,id,firstCompletion){
   const kind=kindOf(id);
   if(kind==="overlook"){
@@ -419,6 +507,8 @@ function settleNode(result,id,firstCompletion){
     addOpportunity(result,"紧急作战随机奖励"); addOpportunity(result,"战后零件掉落机会"); result.combats+=1;
   } else if(kind==="enemy"){
     addOpportunity(result,"领袖作战奖励"); addOpportunity(result,"战后零件掉落机会"); result.combats+=1;
+  } else if(kind==="pursuit"){
+    addOpportunity(result,"追猎奖励（普通/领袖分支）"); result.combats+=1;
   } else if(kind==="resident_base"){
     addOpportunity(result,"居民据点作战奖励"); addOpportunity(result,"战后零件掉落机会"); addOpportunity(result,"驱逐本层全部流窜居民"); result.combats+=1;
   } else if(kind==="resident_occupied"){
@@ -426,9 +516,19 @@ function settleNode(result,id,firstCompletion){
   } else if(kind==="unknown_combat") addOpportunity(result,"未揭示作战奖励机会");
   else if(kind==="unknown_event") addOpportunity(result,"未揭示事件机会");
   else if(kind==="event") addOpportunity(result,"随机事件机会");
-  else if(kind==="encounter") addOpportunity(result,"狭路相逢自选奖励机会");
-  else if(kind==="wish"){ addOpportunity(result,"免费收藏品"); result.collectibles+=1; }
+  else if(kind==="encounter") addOpportunity(result,"狭路相逢：零件/收藏品二选一");
+  else if(kind==="wish") addOpportunity(result,"固定免费收藏品");
+  else if(kind==="safe_house") addOpportunity(result,"安全角落三选一增益");
+  else if(kind==="fate") addOpportunity(result,"结局路线选择");
+  else if(["rogue_trader","special_shop"].includes(kind)) addOpportunity(result,"诡意行商交易机会");
+  else if(["secret_trader","shop"].includes(kind)) addOpportunity(result,"秘境行商交易机会");
+  else if(kind==="lost_and_found") addOpportunity(result,"收藏品/零件置换机会");
+  else if(kind==="exit_end") addOpportunity(result,"险路尽头离层结算");
+  else if(kind==="exit_path") addOpportunity(result,"险路小径离层结算");
+  else if(kind==="emergency_support") addOpportunity(result,"临时干员雇佣机会");
+  else if(kind==="portal") addOpportunity(result,"黑潭子图收益待展开");
   else if(kind==="scout") addOpportunity(result,"先行一步选择收益");
+  applyNodeRewards(result,kind);
   return 0;
 }
 function simulate(){
@@ -436,6 +536,7 @@ function simulate(){
     valid:true,ap:Number(document.getElementById("initial-ap").value||0),
     hope:0,ingots:0,collectibles:0,combats:0,moves:0,
     current:startNode,steps:[],completed:new Set(),opportunities:{},
+    resourceStats:emptyResourceStats(),
     parts:initialPartState(),partMin:0,partMax:0,error:"",warnings:[]
   };
   for(const part of Object.values(result.parts)){
@@ -445,7 +546,8 @@ function simulate(){
   const oneShot=new Set([
     "combat","emergency_combat","enemy","unknown_combat","unknown_event",
     "event","safe_house","fate","wish","encounter","lost_and_found",
-    "emergency_support","resident_base","resident_occupied","portal","scout"
+    "emergency_support","resident_base","resident_occupied","portal","scout",
+    "pursuit","exit_end","exit_path"
   ]);
   for(let index=0;index<state.actions.length;index++){
     const action=state.actions[index];
@@ -473,8 +575,14 @@ function simulate(){
     let postAp=0;
     for(const effect of spec.rule.post_effects||[]){
       if(effect.resource==="action_points"){ result.ap+=effect.delta; postAp+=effect.delta; }
-      if(effect.resource==="hope") result.hope+=effect.delta;
-      if(effect.resource==="originium_ingots") result.ingots+=effect.delta;
+      if(effect.resource==="hope"){
+        result.hope+=effect.delta;
+        applyRewardEntry(result,"hope",{kind:"exact",value:effect.delta,summary:"移动零件效果"});
+      }
+      if(effect.resource==="originium_ingots"){
+        result.ingots+=effect.delta;
+        applyRewardEntry(result,"originium_ingots",{kind:"exact",value:effect.delta,summary:"移动零件效果"});
+      }
     }
     const kind=kindOf(action.target);
     const first=oneShot.has(kind)&&!result.completed.has(action.target);
@@ -622,15 +730,29 @@ function renderSummary(result){
   const ap=document.getElementById("metric-ap");
   ap.textContent=String(result.ap);
   ap.classList.toggle("warn",result.ap<0||!result.valid);
-  const exact=[];
-  if(result.hope) exact.push(`希望 +${result.hope}`);
-  if(result.ingots) exact.push(`源石锭 +${result.ingots}`);
-  if(result.collectibles) exact.push(`收藏品 +${result.collectibles}`);
-  document.getElementById("metric-resource").textContent=exact.length?exact.join(" / "):"0";
+  const exact=Object.values(result.resourceStats).filter(
+    stat=>stat.minimum===stat.maximum&&stat.minimum>0
+  ).length;
+  document.getElementById("metric-resource").textContent=`${exact} 类`;
   document.getElementById("metric-parts").textContent=
     result.partMin===result.partMax?String(result.partMin):`${result.partMin}–${result.partMax}`;
   const rewards=document.getElementById("rewards-list");
   rewards.textContent="";
+  const resourceBody=document.getElementById("resource-summary-body");
+  resourceBody.textContent="";
+  for(const dimension of REWARD_DIMENSIONS){
+    const stat=result.resourceStats[dimension.id];
+    const numeric=stat.minimum===stat.maximum
+      ?`+${stat.minimum}`:`${stat.minimum}–${stat.maximum}`;
+    const pending=stat.pending?`待定×${stat.pending}`:"";
+    const value=[
+      stat.minimum||stat.maximum?numeric:"",
+      pending
+    ].filter(Boolean).join(" · ")||"—";
+    const row=document.createElement("tr");
+    row.innerHTML=`<td>${dimension.name_zh}</td><td class="${stat.pending?"reward-possible":"reward-known"}" title="${stat.notes.join("；")}">${value}</td>`;
+    resourceBody.append(row);
+  }
   const opportunities=Object.entries(result.opportunities);
   if(!opportunities.length){
     const item=document.createElement("li"); item.className="empty"; item.textContent="当前路线尚无节点收益"; rewards.append(item);
@@ -641,6 +763,37 @@ function renderSummary(result){
   for(const warning of result.warnings){
     const item=document.createElement("li"); item.className="muted"; item.textContent=`注意：${warning}`; rewards.append(item);
   }
+}
+function rewardEntryText(entry){
+  if(!entry) return "—";
+  if(entry.kind==="exact") return `+${entry.value}`;
+  if(entry.kind==="conditional_exact") return `满足条件 +${entry.value}`;
+  if(["choice","conditional"].includes(entry.kind)){
+    const minimum=Number(entry.minimum||0);
+    return Number.isFinite(entry.maximum)
+      ?`${minimum}–${entry.maximum}`:"条件收益";
+  }
+  if(entry.kind==="remaining_ap") return "剩余行动力×1";
+  if(entry.kind==="possible") return "可能";
+  if(entry.kind==="variable") return "随区域/关卡";
+  if(entry.kind==="indirect") return "间接";
+  if(entry.kind==="transaction") return "交易";
+  if(entry.kind==="exchange") return "置换";
+  if(entry.kind==="access") return "取回库存";
+  if(entry.kind==="cost") return "消耗";
+  return entry.summary||entry.kind;
+}
+function renderRewardCatalog(){
+  const id=document.getElementById("reward-kind-select").value;
+  const rule=REWARD_RULES[id];
+  const detail=document.getElementById("reward-kind-detail");
+  if(!rule){ detail.textContent="暂无规则"; return; }
+  const dimensions=REWARD_DIMENSIONS.map(dimension=>{
+    const entry=rule.rewards?.[dimension.id];
+    const summary=entry?.summary?` · ${entry.summary}`:"";
+    return `<div class="catalog-dimension"><span>${dimension.name_zh}</span><span>${rewardEntryText(entry)}${summary}</span></div>`;
+  }).join("");
+  detail.innerHTML=`<p><strong>${rule.name_zh}</strong></p><p class="muted">${rule.summary}</p><div class="catalog-dimensions">${dimensions}</div>`;
 }
 function renderRoute(result){
   const body=document.getElementById("route-body"); body.textContent="";
@@ -728,6 +881,12 @@ for(const part of BOOTSTRAP.parts){
   option.textContent=`${part.name_zh} · ${part.category}`;
   document.getElementById("part-select").append(option);
 }
+for(const rule of rewardKnowledge.node_rewards||[]){
+  const option=document.createElement("option");
+  option.value=rule.id; option.textContent=rule.name_zh;
+  document.getElementById("reward-kind-select").append(option);
+}
+document.getElementById("reward-kind-select").addEventListener("change",renderRewardCatalog);
 document.getElementById("initial-ap").addEventListener("change",render);
 document.getElementById("undo-button").addEventListener("click",()=>{
   state.actions.pop(); setMessage("已撤销最后一步",false); render();
@@ -762,6 +921,7 @@ document.getElementById("node-kind-select").addEventListener("change",event=>{
   render();
 });
 render();
+renderRewardCatalog();
 </script>
 </body>
 </html>

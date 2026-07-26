@@ -237,9 +237,16 @@ zero-action-point transfer to its other end. The
 simulator keeps three ledgers separate:
 
 - exact action-point and deterministic resource changes;
-- random or choice-based reward opportunities;
+- six node-reward dimensions: Hope, Originium Ingots, command XP,
+  collectibles, recruitment tickets, and parts;
 - current part-box valuation, including consumed movement parts and documented
   dynamic valuation rules.
+
+`data/knowledge/node-rewards.v0.1.json` records the current Black Flow node
+reward matrix. Exact, choice-based, conditional, transaction, and
+region/stage-dependent rewards remain distinguishable. Older Integrated
+Strategies data is used only to shape the schema, never to fill missing Black
+Flow numbers.
 
 The page also supports manual semantic corrections for a previously visited
 overlook and resident-occupied nodes. Normal completed nodes are treated as
