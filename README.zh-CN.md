@@ -209,6 +209,15 @@ python tools/analyze_node_semantics.py `
 主证据：如果文字和图标发生强冲突，程序保留文字结果，并输出
 `conflict_text_kept` 和 `needs_review: true`，不会让图标静默覆盖文字。
 
-命令会生成干净的节点语义标注图、路径与语义综合图以及
-`node-semantics.json`。原始截图和本地提取的图标模板继续保存在
-`data/private/`，不会上传到公开仓库。
+命令会生成：
+
+- `node-semantics-annotated.png`：干净的节点文字与事件类型标注；
+- `unified-map-graph.png`：路径、稳定节点 ID 和事件文字的统一验收图；
+- `node-semantics.json`：OCR 与图标交叉验证细节；
+- `unified-map-graph.json`：供规划器使用的节点、无向边、邻接表、连通分量、
+  孤立点和歧义诊断。
+
+统一图通过稳定节点 ID 合并两个识别阶段。图中的边依然只来自路径 UI 的直接
+像素证据；节点文字、网格距离和“应当连通”的假设都不会创建路径。连通性仅作为
+诊断信息输出而非强约束，因此局部截图可以合理地包含多个连通分量。原始截图和
+本地提取的图标模板继续保存在 `data/private/`，不会上传到公开仓库。
