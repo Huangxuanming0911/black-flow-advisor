@@ -277,7 +277,7 @@ td input { width:62px; padding:5px }
         <div id="metric-ap" class="metric-value">—</div>
       </div>
       <div class="metric">
-        <div class="metric-label">确定收益种类</div>
+        <div class="metric-label">可计算期望种类</div>
         <div id="metric-resource" class="metric-value">—</div>
       </div>
       <div class="metric">
@@ -287,7 +287,7 @@ td input { width:62px; padding:5px }
     </section>
 
     <section class="panel">
-      <h2>路线收益 · 六类资源</h2>
+      <h2>节点完成后 · 奖励期望</h2>
       <div class="table-wrap">
         <table class="resource-table">
           <tbody id="resource-summary-body"></tbody>
@@ -297,7 +297,7 @@ td input { width:62px; padding:5px }
     </section>
 
     <section class="panel">
-      <h2>各类节点收益口径</h2>
+      <h2>各类节点完成结算</h2>
       <label class="field">节点类型
         <select id="reward-kind-select"></select>
       </label>
@@ -366,6 +366,7 @@ const REWARD_RULES=Object.fromEntries(
   (rewardKnowledge.node_rewards||[]).map(rule=>[rule.id,rule])
 );
 const REWARD_ALIASES=rewardKnowledge.kind_aliases||{};
+const FORCED_ENCOUNTERS=rewardKnowledge.forced_encounters||[];
 const startNode=graph.nodes.find(node=>node.kind==="current")?.node_id
   || graph.nodes[0]?.node_id;
 const KIND_OPTIONS=[
@@ -375,7 +376,7 @@ const KIND_OPTIONS=[
   ["unknown_combat","未知的凶戾"],["unknown_event","未知的诡秘"],
   ["tunnel","曲折密道"],["shop","秘境行商"],
   ["special_shop","诡意行商"],["encounter","狭路相逢"],
-  ["wish","得偿所愿"],["enemy","险路恶敌"],["pursuit","追猎"],
+  ["wish","得偿所愿"],["enemy","险路恶敌"],
   ["safe_house","安全的角落"],["fate","命运所指"],
   ["lost_and_found","失与得"],["exit_end","险路尽头"],
   ["exit_path","险路小径"],["emergency_support","应急助力"],
@@ -418,14 +419,14 @@ function currentNode(){
   return simulate().current;
 }
 function nodeClass(kind){
-  if(["combat","emergency_combat","enemy","pursuit","resident_base","resident_occupied","unknown_combat"].includes(kind)) return "combat";
+  if(["combat","emergency_combat","enemy","resident_base","resident_occupied","unknown_combat"].includes(kind)) return "combat";
   if(["tunnel","overlook","shop","special_shop","secret_trader","rogue_trader","encounter","wish","exit_end","exit_path"].includes(kind)) return "special";
   if(["forest"].includes(kind)) return "forest";
   if(["current"].includes(kind)) return "current";
   return "event";
 }
 function isCombat(kind){
-  return ["combat","emergency_combat","enemy","pursuit","resident_base","resident_occupied","unknown_combat"].includes(kind);
+  return ["combat","emergency_combat","enemy","resident_base","resident_occupied","unknown_combat"].includes(kind);
 }
 function isLegal(source,target,spec){
   if(!source||!nodes[target]) return [false,"节点不存在"];
@@ -461,7 +462,7 @@ function addOpportunity(result,label){
 }
 function emptyResourceStats(){
   return Object.fromEntries(REWARD_DIMENSIONS.map(dimension=>[
-    dimension.id,{minimum:0,maximum:0,pending:0,notes:[]}
+    dimension.id,{minimum:0,maximum:0,expected:0,pending:0,notes:[]}
   ]));
 }
 function addResourceNote(stat,note){
@@ -473,7 +474,7 @@ function applyRewardEntry(result,dimensionId,entry){
   const kind=entry.kind;
   if(kind==="exact"){
     const value=Number(entry.value||0);
-    stat.minimum+=value; stat.maximum+=value;
+    stat.minimum+=value; stat.maximum+=value; stat.expected+=value;
   } else if(kind==="conditional_exact"){
     stat.maximum+=Number(entry.value||0); stat.pending+=1;
   } else if(["choice","conditional"].includes(kind)){
@@ -482,9 +483,16 @@ function applyRewardEntry(result,dimensionId,entry){
     else stat.pending+=1;
   } else if(kind==="remaining_ap"){
     const value=Math.max(0,result.ap);
-    stat.minimum+=value; stat.maximum+=value;
+    stat.minimum+=value; stat.maximum+=value; stat.expected+=value;
   } else if(["possible","variable","indirect"].includes(kind)){
     stat.pending+=1;
+  }
+  const distribution=entry.known_distribution;
+  if(distribution){
+    stat.minimum+=Number(distribution.minimum||0);
+    stat.maximum+=Number(distribution.maximum||0);
+    stat.expected+=Number(distribution.expected||0);
+    addResourceNote(stat,distribution.summary);
   }
   addResourceNote(stat,entry.summary);
 }
@@ -493,6 +501,27 @@ function applyNodeRewards(result,kind){
   if(!rule) return;
   for(const [dimensionId,entry] of Object.entries(rule.rewards||{})){
     applyRewardEntry(result,dimensionId,entry);
+  }
+}
+function settleForcedEncounter(result){
+  if(result.forcedEncounters.length||result.ap!==0) return;
+  const rule=FORCED_ENCOUNTERS.find(
+    item=>item.id==="pursuit_on_ap_exhaustion"
+  );
+  if(!rule) return;
+  const variantId=rule.default_variant||"normal";
+  const variant=rule.variants?.[variantId]||{};
+  const label=variant.name_zh||rule.name_zh||"追猎";
+  result.forcedEncounters.push(label);
+  addOpportunity(result,`强制遭遇：${label}`);
+  result.combats+=1;
+  for(const [dimensionId,entry] of Object.entries(variant.rewards||{})){
+    applyRewardEntry(result,dimensionId,entry);
+  }
+  for(const effect of variant.additional_effects||[]){
+    if(effect.summary&&!result.warnings.includes(effect.summary)){
+      result.warnings.push(effect.summary);
+    }
   }
 }
 function settleNode(result,id,firstCompletion){
@@ -507,8 +536,6 @@ function settleNode(result,id,firstCompletion){
     addOpportunity(result,"紧急作战随机奖励"); addOpportunity(result,"战后零件掉落机会"); result.combats+=1;
   } else if(kind==="enemy"){
     addOpportunity(result,"领袖作战奖励"); addOpportunity(result,"战后零件掉落机会"); result.combats+=1;
-  } else if(kind==="pursuit"){
-    addOpportunity(result,"追猎奖励（普通/领袖分支）"); result.combats+=1;
   } else if(kind==="resident_base"){
     addOpportunity(result,"居民据点作战奖励"); addOpportunity(result,"战后零件掉落机会"); addOpportunity(result,"驱逐本层全部流窜居民"); result.combats+=1;
   } else if(kind==="resident_occupied"){
@@ -537,7 +564,8 @@ function simulate(){
     hope:0,ingots:0,collectibles:0,combats:0,moves:0,
     current:startNode,steps:[],completed:new Set(),opportunities:{},
     resourceStats:emptyResourceStats(),
-    parts:initialPartState(),partMin:0,partMax:0,error:"",warnings:[]
+    parts:initialPartState(),partMin:0,partMax:0,error:"",warnings:[],
+    forcedEncounters:[]
   };
   for(const part of Object.values(result.parts)){
     result.partMin+=Math.max(0,Number(part.value||0));
@@ -547,7 +575,7 @@ function simulate(){
     "combat","emergency_combat","enemy","unknown_combat","unknown_event",
     "event","safe_house","fate","wish","encounter","lost_and_found",
     "emergency_support","resident_base","resident_occupied","portal","scout",
-    "pursuit","exit_end","exit_path"
+    "exit_end","exit_path"
   ]);
   for(let index=0;index<state.actions.length;index++){
     const action=state.actions[index];
@@ -605,6 +633,9 @@ function simulate(){
       cost,gain:postAp+nodeAp,apAfter:result.ap,kind,autoTeleport:Boolean(paired)
     });
     result.current=destination;
+    if(result.ap===0&&!["exit_end","exit_path"].includes(kind)){
+      settleForcedEncounter(result);
+    }
   }
   for(const part of Object.values(result.parts)){
     if(part.remaining===0) continue;
@@ -731,7 +762,7 @@ function renderSummary(result){
   ap.textContent=String(result.ap);
   ap.classList.toggle("warn",result.ap<0||!result.valid);
   const exact=Object.values(result.resourceStats).filter(
-    stat=>stat.minimum===stat.maximum&&stat.minimum>0
+    stat=>stat.expected>0
   ).length;
   document.getElementById("metric-resource").textContent=`${exact} 类`;
   document.getElementById("metric-parts").textContent=
@@ -742,11 +773,14 @@ function renderSummary(result){
   resourceBody.textContent="";
   for(const dimension of REWARD_DIMENSIONS){
     const stat=result.resourceStats[dimension.id];
-    const numeric=stat.minimum===stat.maximum
-      ?`+${stat.minimum}`:`${stat.minimum}–${stat.maximum}`;
+    const expected=stat.expected
+      ?`期望 +${stat.expected.toFixed(2).replace(/\.?0+$/,"")}`:"";
+    const numeric=(stat.minimum||stat.maximum)
+      ?`已知范围 ${stat.minimum}–${stat.maximum}`:"";
     const pending=stat.pending?`待定×${stat.pending}`:"";
     const value=[
-      stat.minimum||stat.maximum?numeric:"",
+      expected,
+      numeric,
       pending
     ].filter(Boolean).join(" · ")||"—";
     const row=document.createElement("tr");
@@ -774,8 +808,11 @@ function rewardEntryText(entry){
       ?`${minimum}–${entry.maximum}`:"条件收益";
   }
   if(entry.kind==="remaining_ap") return "剩余行动力×1";
-  if(entry.kind==="possible") return "可能";
-  if(entry.kind==="variable") return "随区域/关卡";
+  const knownExpected=entry.known_distribution
+    ?`${entry.known_distribution.category==="in_stage_pickup"?"关卡内额外期望":"已知期望"} +${Number(entry.known_distribution.expected||0).toFixed(2).replace(/\.?0+$/,"")}`
+    :"";
+  if(entry.kind==="possible") return knownExpected||"可能";
+  if(entry.kind==="variable") return knownExpected||"待补";
   if(entry.kind==="indirect") return "间接";
   if(entry.kind==="transaction") return "交易";
   if(entry.kind==="exchange") return "置换";
