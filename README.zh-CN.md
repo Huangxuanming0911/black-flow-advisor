@@ -229,3 +229,24 @@ python tools/analyze_node_semantics.py `
 移动方式、三条结局路线和作战关卡层级。中文说明及来源见
 `docs/black-flow-knowledge.zh-CN.md`。运行
 `python tools/validate_knowledge_base.py` 可检查引用、数量和视觉映射是否一致。
+
+## 交互式路线试算
+
+第一版受控规划器直接读取识别生成的 `unified-map-graph.json`，不会修改或
+补造路径边。生成本地试算页面：
+
+```powershell
+$env:PYTHONPATH = "src;."
+python tools/build_route_planner.py
+start data/output/route-planner/index.html
+```
+
+在地图上依次点击节点即可勾选路线。每一步可以选择徒步、零件移动或已配对的
+曲折密道传送。页面分开计算：
+
+- 行动力和确定性资源变化；
+- 随机奖励、选择奖励的触发机会；
+- 零件箱当前估值，包括移动零件损毁和已记载的动态估值变化。
+
+页面支持人工修正羽瞰点回访和被流窜“居民”占领的节点。普通已完成节点统一按
+林间空地处理，不保留其过去的作战或事件身份。
