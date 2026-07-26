@@ -218,3 +218,29 @@ The next milestone needs lossless frame sequences, not just isolated images:
 - 10-20 toolbox and movement-selector screenshots.
 - At least 5 examples for each common node/part class.
 - Separate runs for train/tuning and final holdout evaluation.
+
+## Interactive route simulation
+
+The first controlled planner consumes the recognized
+`unified-map-graph.json` without changing or inventing its edges. Build the
+local review page with:
+
+```powershell
+$env:PYTHONPATH = "src;."
+python tools/build_route_planner.py
+start data/output/route-planner/index.html
+```
+
+Click nodes in order to construct a route. Each step can use walking, a
+recognized processed part, or an explicitly paired tunnel transfer. The
+simulator keeps three ledgers separate:
+
+- exact action-point and deterministic resource changes;
+- random or choice-based reward opportunities;
+- current part-box valuation, including consumed movement parts and documented
+  dynamic valuation rules.
+
+The page also supports manual semantic corrections for a previously visited
+overlook and resident-occupied nodes. Normal completed nodes are treated as
+ordinary forest clearings; their previous event identity is not retained by
+the planner.

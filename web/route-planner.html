@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>黑流树海 · 路线试算</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg:#0b0f12;
+  --panel:#12181c;
+  --panel-2:#171f24;
+  --line:#2c373e;
+  --text:#edf3f4;
+  --muted:#94a4aa;
+  --cyan:#48d5c7;
+  --gold:#edc35b;
+  --red:#ef746f;
+  --violet:#b497ff;
+}
+* { box-sizing:border-box }
+body {
+  margin:0;
+  background:linear-gradient(145deg,#0b0f12,#0f1518 60%,#0a1010);
+  color:var(--text);
+  font:14px/1.45 system-ui,"Microsoft YaHei",sans-serif;
+}
+button,input,select {
+  color:var(--text);
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:7px 9px;
+  font:inherit;
+}
+button { cursor:pointer }
+button:hover { border-color:#66808b }
+button.primary { background:#17685f; border-color:#2da799 }
+button.danger { color:#ffaaa6 }
+header {
+  display:flex;
+  justify-content:space-between;
+  gap:18px;
+  align-items:flex-end;
+  padding:18px 22px 14px;
+  border-bottom:1px solid var(--line);
+}
+h1,h2,h3,p { margin:0 }
+h1 { font-size:20px; font-weight:600; letter-spacing:.02em }
+.subtitle { color:var(--muted); margin-top:4px }
+.toolbar {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:end;
+}
+.field {
+  display:grid;
+  gap:4px;
+  color:var(--muted);
+  font-size:12px;
+}
+.field input[type=number] { width:76px }
+.workspace {
+  display:grid;
+  grid-template-columns:minmax(0,1.65fr) minmax(340px,.7fr);
+  gap:14px;
+  padding:14px;
+  align-items:start;
+}
+.map-column { min-width:0 }
+.map-shell {
+  position:relative;
+  aspect-ratio:16/9;
+  overflow:hidden;
+  background:#030505;
+  border:1px solid var(--line);
+  border-radius:10px;
+}
+.map-shell img,.map-shell svg {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+.map-shell svg { touch-action:none }
+.base-edge {
+  stroke:#718087;
+  stroke-width:2;
+  opacity:.5;
+  vector-effect:non-scaling-stroke;
+}
+.route-edge {
+  stroke:var(--cyan);
+  stroke-width:5;
+  vector-effect:non-scaling-stroke;
+  filter:drop-shadow(0 0 4px #1aa89a);
+}
+.route-edge.jump {
+  stroke:var(--violet);
+  stroke-dasharray:10 7;
+  filter:drop-shadow(0 0 4px #6f50be);
+}
+.node {
+  fill:#0d1114dd;
+  stroke:#b5c1c5;
+  stroke-width:2.5;
+  vector-effect:non-scaling-stroke;
+  cursor:pointer;
+}
+.node:hover { stroke:var(--gold); stroke-width:4 }
+.node.event { stroke:#72cfd0 }
+.node.combat { stroke:#ef746f }
+.node.special { stroke:#b497ff }
+.node.forest { stroke:#849297 }
+.node.current { fill:#17685f; stroke:#78f2df }
+.node.route { fill:#17685f; stroke:#78f2df }
+.node.selected { fill:#886c1b; stroke:#ffe795 }
+.node-label {
+  fill:#fff;
+  stroke:#050708;
+  stroke-width:3;
+  paint-order:stroke;
+  font-size:13px;
+  font-weight:600;
+  pointer-events:none;
+}
+.step-number {
+  fill:#08100f;
+  font-size:10px;
+  font-weight:700;
+  text-anchor:middle;
+  dominant-baseline:central;
+  pointer-events:none;
+}
+.map-footer {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:8px;
+  color:var(--muted);
+  min-height:22px;
+}
+.message.error { color:#ffaaa6 }
+.message.ok { color:#8ce1d7 }
+.sidebar { display:grid; gap:10px }
+.metrics {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+.metric,.panel {
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:9px;
+}
+.metric { padding:10px }
+.metric-label { color:var(--muted); font-size:12px }
+.metric-value { font-size:22px; margin-top:2px; font-variant-numeric:tabular-nums }
+.metric-value.warn { color:var(--red) }
+.panel { padding:12px }
+.panel h2 {
+  font-size:14px;
+  font-weight:600;
+  margin-bottom:9px;
+}
+.row {
+  display:flex;
+  gap:7px;
+  align-items:end;
+  flex-wrap:wrap;
+}
+.row .grow { flex:1; min-width:140px }
+.compact-list {
+  margin:0;
+  padding-left:19px;
+  color:#d9e1e3;
+}
+.compact-list li+li { margin-top:4px }
+.empty { color:var(--muted) }
+.table-wrap { overflow-x:auto }
+table {
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+}
+th,td {
+  padding:6px 5px;
+  border-bottom:1px solid #253037;
+  text-align:left;
+  vertical-align:middle;
+}
+th { color:var(--muted); font-weight:500 }
+td.num,th.num { text-align:right; font-variant-numeric:tabular-nums }
+td input { width:62px; padding:5px }
+.route-table { max-height:250px; overflow:auto }
+.tag {
+  display:inline-block;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:1px 6px;
+  color:var(--muted);
+  white-space:nowrap;
+}
+.muted { color:var(--muted) }
+.hidden { display:none !important }
+@media(max-width:980px) {
+  header { align-items:flex-start; flex-direction:column }
+  .workspace { grid-template-columns:1fr }
+}
+@media(max-width:540px) {
+  .metrics { grid-template-columns:1fr }
+  header,.workspace { padding-left:9px; padding-right:9px }
+  .node-label { display:none }
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>黑流树海 · 路线试算</h1>
+    <p class="subtitle">点击节点逐步规划；识别图只提供拓扑，随机收益以“机会”记账。</p>
+  </div>
+  <div class="toolbar">
+    <label class="field">初始行动力
+      <input id="initial-ap" type="number" min="0" max="99" value="5">
+    </label>
+    <label class="field">下一步移动
+      <select id="movement-select"></select>
+    </label>
+    <button id="undo-button" type="button">撤销一步</button>
+    <button id="reset-button" class="danger" type="button">清空路线</button>
+  </div>
+</header>
+<main class="workspace">
+  <section class="map-column">
+    <div class="map-shell">
+      <img id="map-image" alt="用于路线试算的游戏地图截图">
+      <svg id="map-overlay" viewBox="0 0 1280 720"
+        role="img" aria-label="可点击的识别路径图"></svg>
+    </div>
+    <div class="map-footer">
+      <span id="map-hint">从当前位置开始，选择相邻节点。</span>
+      <span id="message" class="message"></span>
+    </div>
+  </section>
+  <aside class="sidebar">
+    <section class="metrics" aria-label="路线资源摘要">
+      <div class="metric">
+        <div class="metric-label">剩余行动力</div>
+        <div id="metric-ap" class="metric-value">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">确定资源增量</div>
+        <div id="metric-resource" class="metric-value">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">零件估值</div>
+        <div id="metric-parts" class="metric-value">—</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>可能收获</h2>
+      <ul id="rewards-list" class="compact-list"></ul>
+    </section>
+
+    <section class="panel">
+      <h2>路线步骤</h2>
+      <div class="route-table">
+        <table>
+          <thead><tr><th>#</th><th>节点</th><th>方式</th><th class="num">行动力</th></tr></thead>
+          <tbody id="route-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>零件箱与独立估值</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>零件</th><th class="num">次数</th><th class="num">当前估值</th><th></th></tr></thead>
+          <tbody id="parts-body"></tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label class="field grow">添加零件
+          <select id="part-select"></select>
+        </label>
+        <button id="add-part" type="button">加入</button>
+      </div>
+      <p id="part-note" class="muted" style="margin-top:8px"></p>
+    </section>
+
+    <section class="panel">
+      <h2>节点人工修正</h2>
+      <div class="row">
+        <button id="edit-mode" type="button" aria-pressed="false">开启修正模式</button>
+        <label class="field grow">选中节点类型
+          <select id="node-kind-select" disabled></select>
+        </label>
+      </div>
+      <p id="node-detail" class="muted" style="margin-top:8px">用于标记识别不到的羽瞰点回访或居民占领节点。</p>
+    </section>
+  </aside>
+</main>
+<script>
+const BOOTSTRAP=__BLACKFLOW_DATA__;
+const graph=BOOTSTRAP.graph;
+const nodes=Object.fromEntries(graph.nodes.map(node=>[node.node_id,node]));
+const adjacency=Object.fromEntries(Object.keys(nodes).map(id=>[id,new Set()]));
+for(const edge of graph.edges){
+  adjacency[edge.first].add(edge.second);
+  adjacency[edge.second].add(edge.first);
+}
+const movementRules=Object.fromEntries(
+  BOOTSTRAP.movement_modes.map(mode=>[mode.id,mode])
+);
+const partCatalog=Object.fromEntries(
+  BOOTSTRAP.parts.map(part=>[part.id,part])
+);
+const startNode=graph.nodes.find(node=>node.kind==="current")?.node_id
+  || graph.nodes[0]?.node_id;
+const KIND_OPTIONS=[
+  ["forest","林间空地"],["overlook","羽瞰点"],["combat","作战"],
+  ["emergency_combat","紧急作战"],["resident_base","“居民”据点"],
+  ["resident_occupied","流窜“居民”占领"],["event","不期而遇"],
+  ["unknown_combat","未知的凶戾"],["unknown_event","未知的诡秘"],
+  ["tunnel","曲折密道"],["shop","秘境行商"],
+  ["special_shop","诡意行商"],["encounter","狭路相逢"],
+  ["wish","得偿所愿"],["enemy","险路恶敌"],["scout","先行一步"]
+];
+const KIND_LABEL=Object.fromEntries(KIND_OPTIONS);
+const state={
+  actions:[],
+  parts:[],
+  overrides:{},
+  editMode:false,
+  selectedNode:null,
+  nextPartId:1
+};
+const svg=document.getElementById("map-overlay");
+const ns="http://www.w3.org/2000/svg";
+document.getElementById("map-image").src=BOOTSTRAP.image_data||"";
+document.getElementById("initial-ap").value=String(BOOTSTRAP.initial_action_points??4);
+
+function gridPosition(id){
+  const match=/^node_r(-?\d+)c(-?\d+)$/.exec(id);
+  return match?[Number(match[1]),Number(match[2])]:null;
+}
+function kindOf(id){ return state.overrides[id]||nodes[id].kind; }
+function tunnelPairs(){
+  const ids=Object.keys(nodes).filter(id=>kindOf(id)==="tunnel").sort();
+  return ids.length===2?{[ids[0]]:ids[1],[ids[1]]:ids[0]}:{};
+}
+function movementSpec(selection){
+  const [modeId,partId=""]=selection.split("|");
+  return {modeId,partId,rule:movementRules[modeId]};
+}
+function currentNode(){
+  return state.actions.length?state.actions[state.actions.length-1].target:startNode;
+}
+function nodeClass(kind){
+  if(["combat","emergency_combat","enemy","resident_base","resident_occupied","unknown_combat"].includes(kind)) return "combat";
+  if(["tunnel","overlook","shop","special_shop","encounter","wish"].includes(kind)) return "special";
+  if(["forest"].includes(kind)) return "forest";
+  if(["current"].includes(kind)) return "current";
+  return "event";
+}
+function isCombat(kind){
+  return ["combat","emergency_combat","enemy","resident_base","resident_occupied","unknown_combat"].includes(kind);
+}
+function isLegal(source,target,spec){
+  if(!source||!nodes[target]) return [false,"节点不存在"];
+  if(source===target) return [false,"本版不处理原地重复进入"];
+  if(spec.modeId==="walk"){
+    return adjacency[source].has(target)
+      ?[true,""]:[false,"徒步请逐段点击相邻节点"];
+  }
+  const pairs=tunnelPairs();
+  if(spec.modeId==="tunnel_transfer"){
+    return pairs[source]===target
+      ?[true,""]:[false,"只能从一端曲折密道传送至另一端"];
+  }
+  const a=gridPosition(source),b=gridPosition(target);
+  if(!a||!b) return [false,"缺少稳定行列坐标"];
+  const dr=Math.abs(a[0]-b[0]),dc=Math.abs(a[1]-b[1]);
+  const targetRule=spec.rule.target_rule||{};
+  const max=Number(targetRule.max||0);
+  let legal=false;
+  if(targetRule.type==="orthogonal_distance") legal=(dr===0||dc===0)&&dr+dc<=max;
+  else if(targetRule.type==="chebyshev_radius") legal=Math.max(dr,dc)<=max;
+  else if(targetRule.type==="manhattan_radius") legal=dr+dc<=max;
+  else if(["any_node","random_any"].includes(targetRule.type)) legal=true;
+  if(!legal) return [false,"目标不符合该零件的距离或方向限制"];
+  const kind=kindOf(target);
+  if(targetRule.node_filter==="non_combat"&&isCombat(kind)) return [false,"该零件不能选择作战节点"];
+  if(targetRule.node_filter==="merchant"&&!["shop","special_shop","secret_trader","rogue_trader"].includes(kind)) return [false,"该零件只能选择行商节点"];
+  return [true,""];
+}
+function initialPartState(){
+  return Object.fromEntries(state.parts.map(part=>[
+    part.instanceId,{...part,remaining:Number.isFinite(part.uses)?part.uses:null}
+  ]));
+}
+function addOpportunity(result,label){
+  result.opportunities[label]=(result.opportunities[label]||0)+1;
+}
+function settleNode(result,id,firstCompletion){
+  const kind=kindOf(id);
+  if(kind==="overlook"){
+    result.ap+=1; addOpportunity(result,"羽瞰点行动力 +1"); return 1;
+  }
+  if(!firstCompletion) return 0;
+  if(kind==="combat"){
+    addOpportunity(result,"普通作战随机奖励"); addOpportunity(result,"战后零件掉落机会"); result.combats+=1;
+  } else if(kind==="emergency_combat"){
+    addOpportunity(result,"紧急作战随机奖励"); addOpportunity(result,"战后零件掉落机会"); result.combats+=1;
+  } else if(kind==="enemy"){
+    addOpportunity(result,"领袖作战奖励"); addOpportunity(result,"战后零件掉落机会"); result.combats+=1;
+  } else if(kind==="resident_base"){
+    addOpportunity(result,"居民据点作战奖励"); addOpportunity(result,"战后零件掉落机会"); addOpportunity(result,"驱逐本层全部流窜居民"); result.combats+=1;
+  } else if(kind==="resident_occupied"){
+    addOpportunity(result,"流窜居民作战奖励"); addOpportunity(result,"战后零件掉落机会"); addOpportunity(result,"该节点战后变为林间空地"); result.combats+=1;
+  } else if(kind==="unknown_combat") addOpportunity(result,"未揭示作战奖励机会");
+  else if(kind==="unknown_event") addOpportunity(result,"未揭示事件机会");
+  else if(kind==="event") addOpportunity(result,"随机事件机会");
+  else if(kind==="encounter") addOpportunity(result,"狭路相逢自选奖励机会");
+  else if(kind==="wish"){ addOpportunity(result,"免费收藏品"); result.collectibles+=1; }
+  else if(kind==="scout") addOpportunity(result,"先行一步选择收益");
+  return 0;
+}
+function simulate(){
+  const result={
+    valid:true,ap:Number(document.getElementById("initial-ap").value||0),
+    hope:0,ingots:0,collectibles:0,combats:0,moves:0,
+    current:startNode,steps:[],completed:new Set(),opportunities:{},
+    parts:initialPartState(),partMin:0,partMax:0,error:"",warnings:[]
+  };
+  for(const part of Object.values(result.parts)){
+    result.partMin+=Math.max(0,Number(part.value||0));
+    result.partMax+=Math.max(0,Number(part.value||0));
+  }
+  const oneShot=new Set([
+    "combat","emergency_combat","enemy","unknown_combat","unknown_event",
+    "event","safe_house","fate","wish","encounter","lost_and_found",
+    "emergency_support","resident_base","resident_occupied","portal","scout"
+  ]);
+  for(let index=0;index<state.actions.length;index++){
+    const action=state.actions[index];
+    const spec={modeId:action.modeId,partId:action.partId,rule:movementRules[action.modeId]};
+    const [legal,reason]=isLegal(result.current,action.target,spec);
+    if(!legal){ result.valid=false; result.error=`第${index+1}步：${reason}`; break; }
+    const cost=Number(spec.rule.action_point_cost?.value||0);
+    if(result.ap<cost){ result.valid=false; result.error=`第${index+1}步：行动力不足`; break; }
+    let selectedPart=null;
+    if(spec.rule.part_id){
+      selectedPart=result.parts[action.partId];
+      if(!selectedPart||selectedPart.partId!==spec.rule.part_id||selectedPart.remaining<=0){
+        result.valid=false; result.error=`第${index+1}步：对应零件不可用`; break;
+      }
+    }
+    result.ap-=cost;
+    result.moves+=1;
+    if(selectedPart){
+      selectedPart.remaining-=1;
+      if(selectedPart.remaining===0){
+        result.partMin-=Math.max(0,Number(selectedPart.value||0));
+        result.partMax-=Math.max(0,Number(selectedPart.value||0));
+      }
+    }
+    let postAp=0;
+    for(const effect of spec.rule.post_effects||[]){
+      if(effect.resource==="action_points"){ result.ap+=effect.delta; postAp+=effect.delta; }
+      if(effect.resource==="hope") result.hope+=effect.delta;
+      if(effect.resource==="originium_ingots") result.ingots+=effect.delta;
+    }
+    const kind=kindOf(action.target);
+    const first=oneShot.has(kind)&&!result.completed.has(action.target);
+    if(first) result.completed.add(action.target);
+    if(kind==="tunnel"){
+      const pair=tunnelPairs()[action.target];
+      result.completed.add(action.target);
+      if(pair) result.completed.add(pair);
+    }
+    const nodeAp=settleNode(result,action.target,first);
+    if(spec.rule.target_rule?.type==="random_any"){
+      result.warnings.push("小八界目标随机，当前终点只是情景假设");
+    }
+    result.steps.push({
+      index:index+1,source:result.current,target:action.target,modeId:action.modeId,
+      partId:action.partId,cost,gain:postAp+nodeAp,apAfter:result.ap,kind
+    });
+    result.current=action.target;
+  }
+  for(const part of Object.values(result.parts)){
+    if(part.remaining===0) continue;
+    const base=Math.max(0,Number(part.value||0));
+    if(part.partId==="blood_mushroom"){
+      result.partMin+=result.combats*2; result.partMax+=result.combats*2;
+    } else if(part.partId==="homesick_fruit"){
+      const loss=Math.min(base,result.moves*2);
+      result.partMin-=loss; result.partMax-=loss;
+    } else if(part.partId==="wave"){
+      result.partMin-=Math.min(base,result.moves*8);
+      result.partMax+=result.moves*11;
+    }
+  }
+  return result;
+}
+function movementName(step){
+  const rule=movementRules[step.modeId];
+  if(step.modeId==="walk") return "徒步";
+  if(step.modeId==="tunnel_transfer") return "密道传送";
+  const part=state.parts.find(item=>item.instanceId===step.partId);
+  return partCatalog[part?.partId]?.name_zh||rule?.name_zh||step.modeId;
+}
+function refreshMovementOptions(result){
+  const select=document.getElementById("movement-select");
+  const previous=select.value;
+  select.textContent="";
+  const choices=[
+    {value:"walk|",label:"徒步跋涉 · 1行动力/格"},
+    {value:"tunnel_transfer|",label:"曲折密道传送 · 0行动力"}
+  ];
+  for(const part of state.parts){
+    const catalog=partCatalog[part.partId];
+    if(catalog?.category!=="processed") continue;
+    const live=result.parts[part.instanceId];
+    if(!live||live.remaining<=0) continue;
+    const mode=movementRules[catalog.movement_mode];
+    choices.push({
+      value:`${mode.id}|${part.instanceId}`,
+      label:`${catalog.name_zh} · 剩余${live.remaining}次 · ${mode.action_point_cost.value}行动力`
+    });
+  }
+  for(const choice of choices){
+    const option=document.createElement("option");
+    option.value=choice.value; option.textContent=choice.label; select.append(option);
+  }
+  select.value=choices.some(choice=>choice.value===previous)?previous:choices[0].value;
+}
+function addSvg(tag,attrs,parent=svg){
+  const element=document.createElementNS(ns,tag);
+  for(const [key,value] of Object.entries(attrs)) element.setAttribute(key,value);
+  parent.append(element); return element;
+}
+function renderMap(result){
+  svg.textContent="";
+  for(const edge of graph.edges){
+    const a=nodes[edge.first],b=nodes[edge.second];
+    addSvg("line",{x1:a.center[0],y1:a.center[1],x2:b.center[0],y2:b.center[1],class:"base-edge"});
+  }
+  for(const step of result.steps){
+    const a=nodes[step.source],b=nodes[step.target];
+    addSvg("line",{
+      x1:a.center[0],y1:a.center[1],x2:b.center[0],y2:b.center[1],
+      class:`route-edge ${step.modeId==="walk"?"":"jump"}`
+    });
+  }
+  const routeIds=new Set([startNode,...result.steps.map(step=>step.target)]);
+  for(const node of graph.nodes){
+    const kind=kindOf(node.node_id);
+    const radius=kind==="forest"?10:16;
+    const circle=addSvg("circle",{
+      cx:node.center[0],cy:node.center[1],r:radius,
+      class:`node ${nodeClass(kind)} ${routeIds.has(node.node_id)?"route":""} ${state.selectedNode===node.node_id?"selected":""}`,
+      role:"button",tabindex:"0",
+      "aria-label":`${node.label}，${node.node_id}`
+    });
+    circle.addEventListener("click",()=>handleNodeClick(node.node_id));
+    circle.addEventListener("keydown",event=>{
+      if(event.key==="Enter"||event.key===" "){
+        event.preventDefault();
+        handleNodeClick(node.node_id);
+      }
+    });
+    addSvg("text",{
+      x:node.center[0]+13,y:node.center[1]-13,class:"node-label"
+    }).textContent=state.overrides[node.node_id]?`${KIND_LABEL[kind]}*`:node.label;
+  }
+  result.steps.forEach(step=>{
+    const node=nodes[step.target];
+    addSvg("circle",{cx:node.center[0],cy:node.center[1],r:8,fill:"var(--cyan)",pointerEvents:"none"});
+    addSvg("text",{x:node.center[0],y:node.center[1]+.5,class:"step-number"}).textContent=step.index;
+  });
+}
+function handleNodeClick(id){
+  if(state.editMode){
+    state.selectedNode=id;
+    render();
+    return;
+  }
+  const selection=movementSpec(document.getElementById("movement-select").value);
+  const [legal,reason]=isLegal(currentNode(),id,selection);
+  if(!legal){ setMessage(reason,true); return; }
+  state.actions.push({target:id,modeId:selection.modeId,partId:selection.partId});
+  const result=simulate();
+  if(!result.valid){
+    state.actions.pop();
+    setMessage(result.error,true);
+  } else {
+    setMessage("已加入路线",false);
+  }
+  render();
+}
+function renderSummary(result){
+  const ap=document.getElementById("metric-ap");
+  ap.textContent=String(result.ap);
+  ap.classList.toggle("warn",result.ap<0||!result.valid);
+  const exact=[];
+  if(result.hope) exact.push(`希望 +${result.hope}`);
+  if(result.ingots) exact.push(`源石锭 +${result.ingots}`);
+  if(result.collectibles) exact.push(`收藏品 +${result.collectibles}`);
+  document.getElementById("metric-resource").textContent=exact.length?exact.join(" / "):"0";
+  document.getElementById("metric-parts").textContent=
+    result.partMin===result.partMax?String(result.partMin):`${result.partMin}–${result.partMax}`;
+  const rewards=document.getElementById("rewards-list");
+  rewards.textContent="";
+  const opportunities=Object.entries(result.opportunities);
+  if(!opportunities.length){
+    const item=document.createElement("li"); item.className="empty"; item.textContent="当前路线尚无节点收益"; rewards.append(item);
+  }
+  for(const [label,count] of opportunities){
+    const item=document.createElement("li"); item.textContent=`${label} × ${count}`; rewards.append(item);
+  }
+  for(const warning of result.warnings){
+    const item=document.createElement("li"); item.className="muted"; item.textContent=`注意：${warning}`; rewards.append(item);
+  }
+}
+function renderRoute(result){
+  const body=document.getElementById("route-body"); body.textContent="";
+  if(!result.steps.length){
+    const row=document.createElement("tr");
+    row.innerHTML='<td colspan="4" class="empty">尚未选择路线</td>'; body.append(row); return;
+  }
+  for(const step of result.steps){
+    const row=document.createElement("tr");
+    const delta=step.gain-step.cost;
+    row.innerHTML=`<td>${step.index}</td><td>${KIND_LABEL[step.kind]||nodes[step.target].label}<br><span class="muted">${step.target}</span></td><td>${movementName(step)}</td><td class="num">${delta>=0?"+":""}${delta}<br><span class="muted">余 ${step.apAfter}</span></td>`;
+    body.append(row);
+  }
+}
+function renderParts(result){
+  const body=document.getElementById("parts-body"); body.textContent="";
+  if(!state.parts.length){
+    const row=document.createElement("tr");
+    row.innerHTML='<td colspan="4" class="empty">尚未录入零件</td>'; body.append(row);
+  }
+  for(const part of state.parts){
+    const catalog=partCatalog[part.partId];
+    const live=result.parts[part.instanceId];
+    const row=document.createElement("tr");
+    const useCell=catalog.category==="processed"
+      ?`<input data-part="${part.instanceId}" data-field="uses" type="number" min="0" max="99" value="${part.uses}">`
+      :'<span class="muted">—</span>';
+    row.innerHTML=`<td>${catalog.name_zh}<br><span class="tag">${catalog.category}</span></td><td class="num">${useCell}${live&&live.remaining!==part.uses?`<br><span class="muted">路线后 ${live.remaining}</span>`:""}</td><td class="num"><input data-part="${part.instanceId}" data-field="value" type="number" min="0" max="999" value="${part.value}"></td><td><button data-remove="${part.instanceId}" type="button">移除</button></td>`;
+    body.append(row);
+  }
+  body.querySelectorAll("input").forEach(input=>input.addEventListener("change",event=>{
+    const part=state.parts.find(item=>item.instanceId===event.target.dataset.part);
+    part[event.target.dataset.field]=Math.max(0,Number(event.target.value||0));
+    render();
+  }));
+  body.querySelectorAll("[data-remove]").forEach(button=>button.addEventListener("click",event=>{
+    state.parts=state.parts.filter(item=>item.instanceId!==event.target.dataset.remove);
+    state.actions=state.actions.filter(action=>action.partId!==event.target.dataset.remove);
+    render();
+  }));
+  document.getElementById("part-note").textContent=
+    "估值不与节点随机奖励混算；血蕈、恋家果和浪花会按路线事件给出动态值或区间。";
+}
+function renderNodeEditor(){
+  const select=document.getElementById("node-kind-select");
+  select.disabled=!state.editMode||!state.selectedNode;
+  if(state.selectedNode){
+    select.value=kindOf(state.selectedNode);
+    const node=nodes[state.selectedNode];
+    document.getElementById("node-detail").textContent=
+      `${state.selectedNode} · 识别为「${node.label}」${state.overrides[state.selectedNode]?" · 已人工修正":""}`;
+  } else if(state.editMode){
+    document.getElementById("node-detail").textContent="请在地图上选择需要修正的节点。";
+  } else {
+    document.getElementById("node-detail").textContent="用于标记识别不到的羽瞰点回访或居民占领节点。";
+  }
+}
+function setMessage(text,isError){
+  const element=document.getElementById("message");
+  element.textContent=text;
+  element.className=`message ${isError?"error":"ok"}`;
+}
+function render(){
+  const result=simulate();
+  refreshMovementOptions(result);
+  renderMap(result);
+  renderSummary(result);
+  renderRoute(result);
+  renderParts(result);
+  renderNodeEditor();
+  document.getElementById("map-hint").textContent=state.editMode
+    ?"修正模式：点击节点，再选择实际类型。"
+    :`当前位置：${currentNode()} · 点击下一节点加入路线。`;
+  if(!result.valid) setMessage(result.error,true);
+}
+for(const [kind,label] of KIND_OPTIONS){
+  const option=document.createElement("option"); option.value=kind; option.textContent=label;
+  document.getElementById("node-kind-select").append(option);
+}
+for(const part of BOOTSTRAP.parts){
+  const option=document.createElement("option"); option.value=part.id;
+  option.textContent=`${part.name_zh} · ${part.category}`;
+  document.getElementById("part-select").append(option);
+}
+document.getElementById("initial-ap").addEventListener("change",render);
+document.getElementById("undo-button").addEventListener("click",()=>{
+  state.actions.pop(); setMessage("已撤销最后一步",false); render();
+});
+document.getElementById("reset-button").addEventListener("click",()=>{
+  state.actions=[]; setMessage("路线已清空",false); render();
+});
+document.getElementById("add-part").addEventListener("click",()=>{
+  const partId=document.getElementById("part-select").value;
+  const catalog=partCatalog[partId];
+  const mode=catalog.movement_mode?movementRules[catalog.movement_mode]:null;
+  state.parts.push({
+    instanceId:`part-${state.nextPartId++}`,
+    partId,
+    uses:mode?.uses??0,
+    value:0
+  });
+  render();
+});
+document.getElementById("edit-mode").addEventListener("click",event=>{
+  state.editMode=!state.editMode;
+  state.selectedNode=null;
+  event.target.setAttribute("aria-pressed",String(state.editMode));
+  event.target.textContent=state.editMode?"退出修正模式":"开启修正模式";
+  render();
+});
+document.getElementById("node-kind-select").addEventListener("change",event=>{
+  if(!state.selectedNode) return;
+  state.overrides[state.selectedNode]=event.target.value;
+  state.actions=[];
+  setMessage("节点类型已修正，路线已清空以重新结算",false);
+  render();
+});
+render();
+</script>
+</body>
+</html>
