@@ -231,8 +231,9 @@ python tools/build_route_planner.py
 start data/output/route-planner/index.html
 ```
 
-Click nodes in order to construct a route. Each step can use walking, a
-recognized processed part, or an explicitly paired tunnel transfer. The
+Click nodes in order to construct a route. Each step can use walking or a
+recognized processed part. Reaching a paired tunnel forces an immediate
+zero-action-point transfer to its other end. The
 simulator keeps three ledgers separate:
 
 - exact action-point and deterministic resource changes;
@@ -244,3 +245,6 @@ The page also supports manual semantic corrections for a previously visited
 overlook and resident-occupied nodes. Normal completed nodes are treated as
 ordinary forest clearings; their previous event identity is not retained by
 the planner.
+
+The local demo starts with several editable sample parts. Pass
+`--no-sample-parts` to start with an empty part box.

@@ -133,6 +133,7 @@ class RouteAction:
 class RouteStep:
     index: int
     source: str
+    selected_target: str
     target: str
     mode_id: str
     ap_cost: int
@@ -142,6 +143,7 @@ class RouteStep:
     first_completion: bool
     rewards: tuple[str, ...]
     warnings: tuple[str, ...]
+    auto_teleport: bool = False
 
 
 @dataclass(slots=True)
@@ -201,9 +203,7 @@ def is_legal_target(
         return False, "徒步必须逐段选择识别图中的相邻节点"
 
     if movement.mode_id == "tunnel_transfer":
-        if tunnel_pairs.get(source) == target:
-            return True, ""
-        return False, "曲折密道只能在已配对的两个密道节点之间传送"
+        return False, "曲折密道不是可选移动方式；抵达入口后会自动传送"
 
     source_position = graph.nodes[source].grid_position
     target_position = graph.nodes[target].grid_position
@@ -364,12 +364,21 @@ def simulate_route(
         if kind == "wish" and first_completion:
             result.guaranteed_collectibles += 1
 
-        result.current_node = action.target
+        destination = (
+            tunnel_pairs[action.target]
+            if kind == "tunnel" and action.target in tunnel_pairs
+            else action.target
+        )
+        auto_teleport = destination != action.target
+        if kind == "tunnel" and not auto_teleport:
+            step_warnings.append("曲折密道尚未成功配对，无法自动传送")
+        result.current_node = destination
         result.steps.append(
             RouteStep(
                 index=index,
                 source=source,
-                target=action.target,
+                selected_target=action.target,
+                target=destination,
                 mode_id=action.mode_id,
                 ap_cost=movement.ap_cost,
                 ap_gain=ap_gain + sum(
@@ -382,6 +391,7 @@ def simulate_route(
                 first_completion=first_completion,
                 rewards=tuple(rewards),
                 warnings=tuple(step_warnings),
+                auto_teleport=auto_teleport,
             )
         )
         result.warnings.extend(step_warnings)

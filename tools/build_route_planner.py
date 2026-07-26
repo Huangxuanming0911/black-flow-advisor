@@ -9,6 +9,28 @@ import cv2
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SAMPLE_PARTS = [
+    {
+        "part_id": "scrap_wheel",
+        "uses": 1,
+        "estimated_value": 1,
+    },
+    {
+        "part_id": "structural_principle",
+        "uses": 3,
+        "estimated_value": 1,
+    },
+    {
+        "part_id": "heavy_spring",
+        "uses": 1,
+        "estimated_value": 2,
+    },
+    {
+        "part_id": "blood_mushroom",
+        "uses": None,
+        "estimated_value": 3,
+    },
+]
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -46,6 +68,11 @@ def _parser() -> argparse.ArgumentParser:
         "--output",
         type=Path,
         default=PROJECT_ROOT / "data" / "output" / "route-planner",
+    )
+    parser.add_argument(
+        "--no-sample-parts",
+        action="store_true",
+        help="Start with an empty part box instead of demo inventory.",
     )
     return parser
 
@@ -117,6 +144,7 @@ def main() -> int:
         "graph": _portable_graph(graph),
         "movement_modes": knowledge["movement_modes"],
         "parts": knowledge["parts"]["items"],
+        "sample_parts": [] if args.no_sample_parts else SAMPLE_PARTS,
         "initial_action_points": max(0, args.initial_action_points),
         "source": {
             "graph": str(args.graph),
