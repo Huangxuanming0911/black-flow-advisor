@@ -7,6 +7,10 @@ from pathlib import Path
 import cv2
 
 from .config import RecognitionConfig
+from .calibrated import (
+    CalibratedSceneRecognizer,
+    UnknownCalibrationImageError,
+)
 from .parts import (
     PartRecognitionConfig,
     PartRecognizer,
@@ -50,6 +54,12 @@ def _parser() -> argparse.ArgumentParser:
     recognize_path_ui = subparsers.add_parser("recognize-path-ui")
     recognize_path_ui.add_argument("image", type=Path)
     recognize_path_ui.add_argument("--output", type=Path, required=True)
+
+    calibrated = subparsers.add_parser("recognize-calibrated")
+    calibrated.add_argument("image", type=Path)
+    calibrated.add_argument("--manifest", type=Path, required=True)
+    calibrated.add_argument("--annotations", type=Path, required=True)
+    calibrated.add_argument("--output", type=Path, required=True)
     return parser
 
 
@@ -166,6 +176,34 @@ def main() -> int:
                     ),
                     "line_evidence": result.line_evidence_count,
                     "planner_ready": result.planner_ready,
+                    "output": str(args.output),
+                },
+                ensure_ascii=False,
+            )
+        )
+        return 0
+
+    if args.command == "recognize-calibrated":
+        try:
+            result = CalibratedSceneRecognizer(
+                args.manifest,
+                args.annotations,
+            ).recognize_file(args.image)
+        except (OSError, ValueError, UnknownCalibrationImageError) as exc:
+            print(f"recognition failed: {exc}")
+            return 2
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(
+            json.dumps(result, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        print(
+            json.dumps(
+                {
+                    "frame": result["id"],
+                    "screen": result["screen"]["kind"],
+                    "nodes": len(result.get("nodes", [])),
+                    "edges": len(result.get("edges", [])),
                     "output": str(args.output),
                 },
                 ensure_ascii=False,

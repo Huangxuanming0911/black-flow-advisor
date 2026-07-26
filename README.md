@@ -51,6 +51,34 @@ python -m blackflow_vision.cli synthesize-parts `
 python -m unittest discover -s tests -v
 ```
 
+## Accept the six calibrated screenshots
+
+The six current screenshots have a manually reviewed baseline covering visible
+HUD state, screen type, parts/movement choices, map nodes, and undirected
+edges. Build the local acceptance report with:
+
+```powershell
+python tools/build_acceptance_report.py
+start data/output/acceptance/index.html
+```
+
+The report switches among source images, toggles paths/nodes/labels, lists the
+structured result, and exports per-frame approval or correction notes as JSON.
+
+For deterministic regression output on one of the calibrated source images:
+
+```powershell
+python -m blackflow_vision.cli recognize-calibrated `
+  data/private/raw/2026-07-26/layer03_map_normal_full.png `
+  --manifest data/private/raw/2026-07-26/manifest.json `
+  --annotations data/private/annotations/2026-07-26/recognized-scenes.json `
+  --output data/output/acceptance/scenes/layer03-map-full.json
+```
+
+This command uses an exact SHA-256 match against the annotated set. It is an
+acceptance/regression path, not evidence that the CV model generalizes to new
+screenshots. Results remain `planner_ready: false` until user acceptance.
+
 Outputs:
 
 - `map-state.json`: machine-readable recognition result.
@@ -81,12 +109,45 @@ are offered together so the framework can select a compatible method.
 $env:PYTHONPATH = "src;."
 python -m integration.maafw.live_capture `
   --window-title "明日方舟" `
-  --output data/output/live
+  --output data/output/live `
+  --map-only
 ```
 
 The loop samples every 250 ms, waits for three stable frames, classifies the UI
-state, and writes only the latest accepted screenshot and state JSON. It does
+state, and runs direct path recognition on stable map frames. It atomically
+publishes the latest path JSON, mask, skeleton and annotated image alongside
+the accepted screenshot. The live graph currently has
+`graph_scope: all_visible_nodes_geometry` and remains
+`planner_ready: false`. It does
 not issue input events.
+
+## Offline node semantics
+
+Capture and analysis are separate. `latest.png` is the normalized read-only
+capture; path masks, graph annotations, OCR results and semantic annotations
+are derived artifacts. Existing captures can therefore be reprocessed without
+opening or recapturing the game window.
+
+Install the optional offline OCR dependency and analyze a saved frame:
+
+```powershell
+python -m pip install -e ".[ocr]"
+$env:PYTHONPATH = "src;."
+python tools/analyze_node_semantics.py `
+  data/output/live-full-node/latest.png `
+  --output data/output/node-semantics
+```
+
+The recognizer runs Chinese OCR once over the complete frame, associates text
+boxes with node geometry, corrects close matches against a node-label
+vocabulary, and optionally validates the resulting type against icon templates
+derived from the private reviewed dataset. Text remains authoritative: a
+strong text/icon conflict is reported as `conflict_text_kept` and
+`needs_review: true`; the icon never silently overwrites readable text.
+
+The command writes a clean semantic annotation, a combined path/semantic
+annotation and `node-semantics.json`. Private screenshots and extracted icon
+templates remain under `data/private/` and are not published.
 
 ## Controlled V0 assumptions and hard stops
 
@@ -96,9 +157,14 @@ not issue input events.
 - Cropped viewport boundaries remain unresolved until another overlapping
   observation supplies evidence.
 - Recognition is advisory; uncertain fields require correction.
-- The current circle/road detector is a synthetic baseline. On the six-image
-  calibration seed it identifies the UI state, but does not yet reconstruct
-  reliable real-map roads. `planner_ready` therefore remains false.
+- The fast path detector runs paired-bank and translucent-centre filters on a
+  half-resolution map crop. The acceptance page exposes its response maps,
+  directional candidates, mask and skeleton. Extremely faint paths and long
+  background structures can still be confused, especially in partial views,
+  so `planner_ready` remains false.
+- Global connectivity is not a recognition constraint. Local tangent
+  continuity suppresses short visual interference but never invents an edge
+  to join separate components.
 
 Real game screenshots and derived crops belong under `data/private/`, which is
 ignored by Git. Do not commit proprietary game assets or user screenshots.

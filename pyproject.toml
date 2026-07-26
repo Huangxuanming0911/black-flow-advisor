@@ -17,6 +17,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = []
 maa = ["MaaFw==5.12.2"]
+ocr = ["rapidocr-onnxruntime>=1.4.4"]
 
 [project.scripts]
 blackflow-recognize = "blackflow_vision.cli:main"
