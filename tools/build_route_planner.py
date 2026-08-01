@@ -74,6 +74,20 @@ def _parser() -> argparse.ArgumentParser:
         help="Reviewed post-battle reward samples used as route priors.",
     )
     parser.add_argument(
+        "--run-state-catalog",
+        type=Path,
+        default=PROJECT_ROOT
+        / "data"
+        / "knowledge"
+        / "run-state.v0.1.json",
+        help="Collectible, status, ticket, and operator state catalog.",
+    )
+    parser.add_argument(
+        "--run-state",
+        type=Path,
+        help="Optional recognized or manually calibrated run-state JSON.",
+    )
+    parser.add_argument(
         "--image",
         type=Path,
         help="Override the source screenshot recorded in the graph JSON.",
@@ -241,6 +255,9 @@ def main() -> int:
     empirical_rewards = json.loads(
         args.empirical_rewards.read_text(encoding="utf-8"),
     )
+    run_state_catalog = json.loads(
+        args.run_state_catalog.read_text(encoding="utf-8"),
+    )
     source_image = _resolve_source_image(graph, args.image)
     label_kinds = knowledge.get("vision_bridge", {}).get(
         "node_name_to_rule_id",
@@ -248,6 +265,39 @@ def main() -> int:
     )
     template_path = PROJECT_ROOT / "web" / "route-planner.html"
     template = template_path.read_text(encoding="utf-8")
+
+    inferred_floor = _infer_floor(graph, source_image)
+    run_state = {
+        "schema_version": "0.1.0",
+        "phase": {"floor": inferred_floor, "checkpoint": "map"},
+        "difficulty": {"confidentiality_level": 0},
+        "resources": {
+            "target_life": 8,
+            "target_life_cap": 8,
+            "shield": 0,
+            "hope": 6,
+            "hope_cap": None,
+            "originium_ingots": 6,
+            "command_level": 1,
+            "command_xp": 0,
+            "action_points": max(0, args.initial_action_points),
+            "operator_capacity": 6,
+            "deployment_capacity": None,
+            "part_box_capacity": 10,
+        },
+        "operators": [],
+        "retained_tickets": [],
+        "collectibles": [],
+        "statuses": [],
+        "observed_counts": {"collectibles_total": 0},
+        "field_provenance": {},
+        "checkpoints": [],
+    }
+    if args.run_state is not None:
+        run_state = json.loads(args.run_state.read_text(encoding="utf-8"))
+        inferred_floor = int(
+            run_state.get("phase", {}).get("floor", inferred_floor)
+        )
 
     data = {
         "graph": _portable_graph(graph, label_kinds),
@@ -259,7 +309,9 @@ def main() -> int:
             "resource_lifecycle_policy",
             {},
         ),
-        "floor": _infer_floor(graph, source_image),
+        "run_state_catalog": run_state_catalog,
+        "run_state": run_state,
+        "floor": inferred_floor,
         "location_context": "main_map",
         "sample_parts": [] if args.no_sample_parts else SAMPLE_PARTS,
         "initial_action_points": max(0, args.initial_action_points),
@@ -269,6 +321,8 @@ def main() -> int:
             "knowledge": str(args.knowledge),
             "reward_knowledge": str(args.reward_knowledge),
             "empirical_rewards": str(args.empirical_rewards),
+            "run_state_catalog": str(args.run_state_catalog),
+            "run_state": str(args.run_state) if args.run_state else None,
         },
         "image_data": _image_data_uri(source_image),
         "node_icons": _node_icon_data_uris(source_image, graph),

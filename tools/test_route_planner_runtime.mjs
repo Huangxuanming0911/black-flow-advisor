@@ -74,6 +74,8 @@ return {
   userNodePreference,
   routePreferenceContribution,
   routeScore,
+  activeRunEffects,
+  rosterRiskAdjustment,
   mapPositions,
   nodeIcons: BOOTSTRAP.node_icons
 };
@@ -239,6 +241,22 @@ runtime.state.nodePreferences.normal_combat = 0;
 if (preferredCombatScore <= baseCombatScore) {
   throw new Error("positive combat preference did not raise route score");
 }
+runtime.state.runState.collectibles.push({
+  id: "rogue6_relic_cargo_14", active: true,
+});
+const collectibleCombatScore = runtime.routeScore(
+  combatCandidate.candidate.result,
+  combatCandidate.strategy,
+);
+if (collectibleCombatScore <= baseCombatScore) {
+  throw new Error("collectible synergy did not raise combat route score");
+}
+runtime.state.runState.collectibles = [];
+runtime.state.runState.statuses.push({id: "rogue6_weather_5", active: true});
+if (runtime.activeRunEffects().merchantValueMultiplier >= 1) {
+  throw new Error("merchant debuff was not merged into run effects");
+}
+runtime.state.runState.statuses = [];
 for (const item of routes) {
   const { candidate } = item;
   if (!candidate.result.valid) {
