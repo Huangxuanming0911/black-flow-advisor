@@ -241,6 +241,14 @@ python tools/build_route_planner.py
 start data/output/route-planner/index.html
 ```
 
+路线页现在同时维护整局状态：资源、干员与进阶情况、留存招募券、收藏品、理想域和负面状态。收藏品持续效果会与阵容状态合并后参与路线评分，一次性资源不会被重复计算。页面支持每层校准、本地续用和 JSON 导出，详细规则见 [局内状态与效果合并](docs/run-state-v0.zh-CN.md)。
+
+如已由识别器或上一次校准导出状态，可直接载入：
+
+```powershell
+python tools/build_route_planner.py --run-state data/my-run-state.json
+```
+
 在地图上依次点击节点即可勾选路线。每一步只选择徒步或零件移动；抵达已配对的
 曲折密道后会立即强制传送至另一端，传送本身不额外消耗行动力。页面分开计算：
 

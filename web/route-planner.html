@@ -421,6 +421,102 @@ td input { width:62px; padding:5px }
 }
 .muted { color:var(--muted) }
 .hidden { display:none !important }
+.run-state-summary {
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-bottom:9px;
+}
+.state-chip {
+  display:inline-flex;
+  gap:5px;
+  align-items:center;
+  border:1px solid #2d3b41;
+  border-radius:5px;
+  padding:3px 6px;
+  background:#0d1417;
+  color:#dce7e9;
+  font-size:11px;
+  font-variant-numeric:tabular-nums;
+}
+.state-chip strong { color:var(--cyan); font-weight:650 }
+.state-grid {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+}
+.state-grid .field input { width:100%; min-width:0 }
+.inventory-section {
+  border-top:1px solid #253037;
+  margin-top:10px;
+  padding-top:9px;
+}
+.inventory-title {
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:center;
+  margin-bottom:7px;
+  font-size:12px;
+  color:#dce7e9;
+}
+.inventory-list {
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:7px;
+}
+.inventory-item {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  border:1px solid #2a383e;
+  border-radius:5px;
+  padding:3px 5px;
+  background:#0c1215;
+  font-size:11px;
+}
+.inventory-item button {
+  border:0;
+  padding:0 2px;
+  background:transparent;
+  color:#e89590;
+  line-height:1;
+}
+.operator-input {
+  width:100%;
+  min-height:62px;
+  resize:vertical;
+  color:var(--text);
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:7px 9px;
+  font:12px/1.45 system-ui,"Microsoft YaHei",sans-serif;
+}
+.effect-summary {
+  margin-top:9px;
+  border-left:2px solid var(--cyan);
+  padding-left:8px;
+  color:#cdd9db;
+  font-size:11px;
+}
+.checkpoint-actions {
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.checkpoint-actions button { font-size:11px; padding:5px 7px }
+.recognition-note {
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:8px;
+  color:var(--muted);
+  font-size:11px;
+}
+.recognition-note span:last-child { color:var(--cyan) }
 @media(max-width:980px) {
   header { align-items:flex-start; flex-direction:column }
   .workspace { grid-template-columns:1fr }
@@ -430,6 +526,7 @@ td input { width:62px; padding:5px }
   .preference-grid { grid-template-columns:1fr }
   header,.workspace { padding-left:9px; padding-right:9px }
   .node-label { display:none }
+  .state-grid { grid-template-columns:repeat(2,minmax(0,1fr)) }
 }
 </style>
 </head>
@@ -490,6 +587,71 @@ td input { width:62px; padding:5px }
         <div class="metric-label">零件估值</div>
         <div id="metric-parts" class="metric-value">...</div>
       </div>
+    </section>
+
+    <section class="panel">
+      <div class="inventory-title">
+        <h2 style="margin:0">局内状态</h2>
+        <span id="run-state-origin">识别快照</span>
+      </div>
+      <div id="run-state-summary" class="run-state-summary"></div>
+      <details class="strategy-options">
+        <summary>调整状态与保存本层校准</summary>
+        <div class="strategy-options-body">
+        <div class="recognition-note">
+          <span>自动识别先填入，人工修改只覆盖当前层</span>
+          <span>一次性收益不重复计算</span>
+        </div>
+        <div class="state-grid">
+          <label class="field">生命<input id="rs-life" type="number" min="0" max="99"></label>
+          <label class="field">上限<input id="rs-life-cap" type="number" min="1" max="99"></label>
+          <label class="field">护盾<input id="rs-shield" type="number" min="0" max="99"></label>
+          <label class="field">希望<input id="rs-hope" type="number" min="0" max="999"></label>
+          <label class="field">希望上限<input id="rs-hope-cap" type="number" min="0" max="999" placeholder="未知"></label>
+          <label class="field">指挥等级<input id="rs-level" type="number" min="1" max="99"></label>
+          <label class="field">经验<input id="rs-xp" type="number" min="0" max="9999"></label>
+          <label class="field">干员上限<input id="rs-operator-cap" type="number" min="1" max="99"></label>
+          <label class="field">收藏品总数<input id="rs-collectible-total" type="number" min="0" max="999"></label>
+          <label class="field">保密等级<input id="rs-confidentiality" type="number" min="0" max="15"></label>
+        </div>
+
+        <div class="inventory-section">
+          <div class="inventory-title"><span>干员与留券</span><span id="operator-count" class="muted"></span></div>
+          <textarea id="operator-input" class="operator-input" placeholder="每行一名：干员名, 职业, 进阶&#10;例如：棘刺, 近卫, 进阶"></textarea>
+          <div class="row" style="margin-top:7px">
+            <label class="field grow">留存招募券<select id="ticket-select"></select></label>
+            <label class="field">数量<input id="ticket-count" type="number" min="1" max="9" value="1"></label>
+            <button id="add-ticket" type="button">加入</button>
+          </div>
+          <div id="ticket-list" class="inventory-list"></div>
+        </div>
+
+        <div class="inventory-section">
+          <div class="inventory-title"><span>收藏品</span><span id="collectible-count" class="muted"></span></div>
+          <div class="row">
+            <label class="field grow">目录检索<select id="collectible-select"></select></label>
+            <button id="add-collectible" type="button">加入</button>
+          </div>
+          <div id="collectible-list" class="inventory-list"></div>
+        </div>
+
+        <div class="inventory-section">
+          <div class="inventory-title"><span>理想域与负面状态</span><span class="muted">未标范围时按全图估计</span></div>
+          <div class="row">
+            <label class="field grow">当前状态<select id="status-select"></select></label>
+            <button id="add-status" type="button">加入</button>
+          </div>
+          <div id="status-list" class="inventory-list"></div>
+        </div>
+
+        <div id="run-effect-summary" class="effect-summary"></div>
+        <div class="checkpoint-actions">
+          <button id="save-checkpoint" class="primary" type="button">保存本层校准</button>
+          <button id="export-run-state" type="button">导出局内状态</button>
+          <button id="clear-run-state" class="danger" type="button">恢复识别值</button>
+        </div>
+        </div>
+      </details>
     </section>
 
     <section class="panel">
@@ -627,6 +789,15 @@ const rewardKnowledge=BOOTSTRAP.reward_knowledge||{
   dimensions:[],kind_aliases:{},node_rewards:[]
 };
 const empiricalRewardKnowledge=BOOTSTRAP.empirical_rewards||{profiles:[]};
+const runStateCatalog=BOOTSTRAP.run_state_catalog||{
+  collectibles:[],statuses:[],ticket_types:[],operator_classes:[]
+};
+const collectibleCatalog=Object.fromEntries(
+  (runStateCatalog.collectibles||[]).map(item=>[item.id,item])
+);
+const statusCatalog=Object.fromEntries(
+  (runStateCatalog.statuses||[]).map(item=>[item.id,item])
+);
 const EMPIRICAL_PROFILES=empiricalRewardKnowledge.profiles||[];
 const REWARD_DIMENSIONS=rewardKnowledge.dimensions||[];
 const REWARD_RULES=Object.fromEntries(
@@ -807,6 +978,12 @@ const state={
   nodePreferences:Object.fromEntries(
     NODE_PREFERENCE_GROUPS.map(group=>[group.id,0])
   ),
+  runState:JSON.parse(JSON.stringify(BOOTSTRAP.run_state||{
+    phase:{floor:Number(BOOTSTRAP.floor||3)},
+    difficulty:{confidentiality_level:0},
+    resources:{},operators:[],retained_tickets:[],collectibles:[],statuses:[],
+    checkpoints:[],observed_counts:{collectibles_total:0}
+  })),
   recommendationCache:null
 };
 const svg=document.getElementById("map-overlay");
@@ -814,6 +991,143 @@ const ns="http://www.w3.org/2000/svg";
 document.getElementById("map-image").src=BOOTSTRAP.image_data||"";
 document.getElementById("initial-ap").value=String(BOOTSTRAP.initial_action_points??4);
 document.getElementById("current-floor").value=String(state.floor);
+
+function safeStoredRunState(){
+  try{
+    if(typeof localStorage==="undefined") return null;
+    const raw=localStorage.getItem("blackflow-run-state-v0.1");
+    return raw?JSON.parse(raw):null;
+  }catch(_error){ return null; }
+}
+const storedRunState=safeStoredRunState();
+if(storedRunState?.schema_version==="0.1.0"){
+  state.runState=storedRunState;
+  state.floor=Number(storedRunState.phase?.floor||state.floor);
+  document.getElementById("current-floor").value=String(state.floor);
+}
+
+function numericValue(id,fallback=0){
+  const value=document.getElementById(id).value;
+  return value===""?fallback:Number(value);
+}
+function parseOperators(text){
+  return String(text||"").split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>{
+    const [name,operatorClass="",promotion=""] = line.split(/[，,]/).map(item=>item.trim());
+    return {
+      name,
+      class:operatorClass,
+      promoted:/进阶|精二|精一|elite/i.test(promotion),
+      temporary:/临时/.test(line)
+    };
+  });
+}
+function operatorsText(operators){
+  return (operators||[]).map(operator=>[
+    operator.name,operator.class,operator.promoted?"进阶":"未进阶"
+  ].filter(Boolean).join(", ")).join("\n");
+}
+function syncRunStateFromInputs(){
+  const resources=state.runState.resources||(state.runState.resources={});
+  resources.target_life=numericValue("rs-life",resources.target_life||0);
+  resources.target_life_cap=numericValue("rs-life-cap",resources.target_life_cap||1);
+  resources.shield=numericValue("rs-shield",resources.shield||0);
+  resources.hope=numericValue("rs-hope",resources.hope||0);
+  resources.hope_cap=document.getElementById("rs-hope-cap").value===""
+    ?null:numericValue("rs-hope-cap",0);
+  resources.command_level=numericValue("rs-level",resources.command_level||1);
+  resources.command_xp=numericValue("rs-xp",resources.command_xp||0);
+  resources.operator_capacity=numericValue("rs-operator-cap",resources.operator_capacity||6);
+  resources.originium_ingots=numericValue("current-ingots",resources.originium_ingots||0);
+  resources.part_box_capacity=numericValue("part-box-capacity",resources.part_box_capacity||10);
+  resources.action_points=numericValue("initial-ap",resources.action_points||0);
+  state.runState.observed_counts=state.runState.observed_counts||{};
+  state.runState.observed_counts.collectibles_total=numericValue(
+    "rs-collectible-total",(state.runState.collectibles||[]).length
+  );
+  state.runState.difficulty=state.runState.difficulty||{};
+  state.runState.difficulty.confidentiality_level=numericValue(
+    "rs-confidentiality",0
+  );
+  state.runState.operators=parseOperators(document.getElementById("operator-input").value);
+  state.runState.phase={...(state.runState.phase||{}),floor:state.floor,checkpoint:"map"};
+  state.runState.updated_at=new Date().toISOString();
+  state.recommendationCache=null;
+}
+function initializeRunStateInputs(){
+  const resources=state.runState.resources||{};
+  const pairs={
+    "rs-life":resources.target_life??8,
+    "rs-life-cap":resources.target_life_cap??8,
+    "rs-shield":resources.shield??0,
+    "rs-hope":resources.hope??6,
+    "rs-hope-cap":resources.hope_cap??"",
+    "rs-level":resources.command_level??1,
+    "rs-xp":resources.command_xp??0,
+    "rs-operator-cap":resources.operator_capacity??6,
+    "current-ingots":resources.originium_ingots??0,
+    "part-box-capacity":resources.part_box_capacity??10,
+    "initial-ap":resources.action_points??BOOTSTRAP.initial_action_points??4
+    ,"rs-collectible-total":state.runState.observed_counts?.collectibles_total??(state.runState.collectibles||[]).length
+    ,"rs-confidentiality":state.runState.difficulty?.confidentiality_level??0
+  };
+  for(const [id,value] of Object.entries(pairs)){
+    document.getElementById(id).value=String(value);
+  }
+  document.getElementById("operator-input").value=operatorsText(state.runState.operators);
+}
+function phaseTier(){
+  return state.floor<=2?"early":state.floor<=4?"middle":"late";
+}
+function activeRunEffects(){
+  const result={
+    nodeScores:{},resourceMultipliers:{},combatRisk:0,
+    merchantValueMultiplier:1,bonusPartsPerCombat:0,informationRisk:0,notes:[]
+  };
+  const effects=[];
+  for(const owned of state.runState.collectibles||[]){
+    if(owned.active===false) continue;
+    effects.push(...(collectibleCatalog[owned.id]?.planner_effects||[]));
+  }
+  for(const active of state.runState.statuses||[]){
+    if(active.active===false) continue;
+    const definition=statusCatalog[active.id]||{};
+    effects.push(...(definition.planner_effects||[]));
+    effects.push(...(definition.planner_effects_by_phase?.[phaseTier()]||[]));
+  }
+  for(const effect of effects){
+    const value=Number(effect.value||0);
+    if(effect.metric==="node_score"){
+      result.nodeScores[effect.target]=Number(result.nodeScores[effect.target]||0)+value;
+    }else if(effect.metric==="resource_multiplier"){
+      result.resourceMultipliers[effect.target]=Number(result.resourceMultipliers[effect.target]||1)*value;
+    }else if(effect.metric==="combat_risk") result.combatRisk+=value;
+    else if(effect.metric==="merchant_value_multiplier") result.merchantValueMultiplier*=value;
+    else if(effect.metric==="bonus_parts_per_combat") result.bonusPartsPerCombat+=value;
+    else if(effect.metric==="information_risk") result.informationRisk+=value;
+    if(effect.note&&!result.notes.includes(effect.note)) result.notes.push(effect.note);
+  }
+  return result;
+}
+function rosterRiskAdjustment(){
+  const resources=state.runState.resources||{};
+  const operators=state.runState.operators||[];
+  const capacity=Math.max(1,Number(resources.operator_capacity||6));
+  const fill=operators.length/capacity;
+  const promoted=operators.filter(operator=>operator.promoted).length;
+  const lifeRatio=Number(resources.target_life||0)/Math.max(1,Number(resources.target_life_cap||1));
+  let risk=0;
+  if(operators.length&&fill<.5) risk+=1.5;
+  if(operators.length&&promoted===0&&state.floor>=3) risk+=1;
+  if(lifeRatio<.35) risk+=2;
+  else if(lifeRatio<.6) risk+=.75;
+  if(Number(resources.shield||0)>=3) risk-=.5;
+  return risk;
+}
+function retainedTicketCount(){
+  return (state.runState.retained_tickets||[]).reduce(
+    (total,item)=>total+Number(item.count||1),0
+  );
+}
 
 function gridPosition(id){
   const match=/^node_r(-?\d+)c(-?\d+)$/.exec(id);
@@ -1410,6 +1724,7 @@ function routePreferenceContribution(result){
 }
 function routeScore(result,strategy){
   let score=0;
+  const runEffects=activeRunEffects();
   for(const step of result.steps){
     if(step.firstCompletion||["overlook","tunnel"].includes(step.kind)){
       const scoreKind={
@@ -1418,6 +1733,7 @@ function routeScore(result,strategy){
       }[step.kind]||step.kind;
       score+=Number(strategy.weights[scoreKind]||0);
       score+=userNodePreference(step.kind);
+      score+=Number(runEffects.nodeScores[step.kind]||0);
     }
   }
   for(const [id,weight] of Object.entries(strategy.resourceWeights||{})){
@@ -1427,9 +1743,21 @@ function routeScore(result,strategy){
         Number(stat.expected||0)
         -Number(stat.empiricalExpected||0)
         +Number(stat.empiricalWeightedExpected||0);
-      score+=effective*weight;
+      const multiplier=Number(runEffects.resourceMultipliers[id]||1);
+      score+=effective*weight*multiplier;
     }
   }
+  const combatSteps=result.steps.filter(step=>
+    step.firstCompletion&&isCombat(step.kind)
+  );
+  const combatLoad=combatSteps.reduce((total,step)=>total+({
+    emergency_combat:1.4,enemy:1.8,resident_base:1.15,resident_occupied:1.15
+  }[step.kind]||1),0);
+  const combatRisk=Math.max(-2,runEffects.combatRisk+rosterRiskAdjustment());
+  score-=combatLoad*combatRisk*2.2;
+  score+=combatSteps.length*runEffects.bonusPartsPerCombat*
+    Number(strategy.resourceWeights?.parts||0);
+  score-=runEffects.informationRisk*Math.max(1,result.steps.length*.25);
   score+=Math.max(0,result.ap)*strategy.apWeight;
   const spend=routePartSpend(result);
   const lifecycle=routeLifecycle(result);
@@ -1456,12 +1784,16 @@ function routeScore(result,strategy){
   if(lifecycle.merchantVisited){
     score+=
       lifecycle.spendableIngots
-      *lifecycle.policy.merchantWeight;
+      *lifecycle.policy.merchantWeight
+      *runEffects.merchantValueMultiplier;
     score+=lifecycle.boxUrgency*2.5;
   }
   if(result.forcedEncounters.length){
     score-=strategy.pursuitPenalty;
   }
+  const tickets=retainedTicketCount();
+  if(terminal==="exit_end") score+=tickets*2.5;
+  else if(terminal==="exit_path") score-=tickets*4;
   return score;
 }
 function routeStateSignature(result){
@@ -1575,7 +1907,14 @@ function recommendationKey(){
       part.instanceId,part.partId,part.uses,part.value
     ]),
     nodePreferences:state.nodePreferences,
-    overrides:state.overrides
+    overrides:state.overrides,
+    runState:{
+      resources:state.runState.resources,
+      operators:state.runState.operators,
+      retained_tickets:state.runState.retained_tickets,
+      collectibles:state.runState.collectibles,
+      statuses:state.runState.statuses
+    }
   });
 }
 function buildRecommendations(){
@@ -2033,6 +2372,102 @@ function initializeNodePreferences(){
     container.append(label);
   }
 }
+function appendInventoryItem(container,label,onRemove,title=""){
+  const item=document.createElement("span");
+  item.className="inventory-item";
+  if(title) item.setAttribute("title",title);
+  const textNode=document.createElement("span");
+  textNode.textContent=label;
+  const remove=document.createElement("button");
+  remove.type="button";
+  remove.textContent="×";
+  remove.setAttribute("aria-label",`移除${label}`);
+  remove.addEventListener("click",onRemove);
+  item.append(textNode,remove);
+  container.append(item);
+}
+function renderRunState(){
+  const resources=state.runState.resources||{};
+  const operators=state.runState.operators||[];
+  const tickets=retainedTicketCount();
+  const totalCollectibles=Math.max(
+    (state.runState.collectibles||[]).length,
+    Number(state.runState.observed_counts?.collectibles_total||0)
+  );
+  const summary=document.getElementById("run-state-summary");
+  summary.textContent="";
+  for(const [label,value] of [
+    ["生命",`${resources.target_life??0}/${resources.target_life_cap??"?"}`],
+    ["护盾",resources.shield??0],
+    ["希望",resources.hope_cap?`${resources.hope??0}/${resources.hope_cap}`:resources.hope??0],
+    ["源石锭",resources.originium_ingots??0],
+    ["干员",`${operators.length}/${resources.operator_capacity??"?"}`],
+    ["留券",tickets],
+    ["藏品",`${(state.runState.collectibles||[]).length}/${totalCollectibles}`],
+    ["状态",(state.runState.statuses||[]).length]
+  ]){
+    const chip=document.createElement("span");
+    chip.className="state-chip";
+    chip.innerHTML=`${label}<strong>${value}</strong>`;
+    summary.append(chip);
+  }
+  document.getElementById("operator-count").textContent=
+    `${operators.length}/${resources.operator_capacity??"?"}，进阶 ${operators.filter(item=>item.promoted).length}`;
+  document.getElementById("collectible-count").textContent=
+    `${(state.runState.collectibles||[]).length} 件已识别，${Math.max(0,totalCollectibles-(state.runState.collectibles||[]).length)} 件待补`;
+  const ticketList=document.getElementById("ticket-list");
+  ticketList.textContent="";
+  for(const [index,ticket] of (state.runState.retained_tickets||[]).entries()){
+    appendInventoryItem(ticketList,`${ticket.type}券 ×${ticket.count||1}`,()=>{
+      state.runState.retained_tickets.splice(index,1);
+      state.recommendationCache=null;
+      render();
+    });
+  }
+  if(!(state.runState.retained_tickets||[]).length){
+    const empty=document.createElement("span"); empty.className="muted"; empty.textContent="暂无留券"; ticketList.append(empty);
+  }
+  const collectibleList=document.getElementById("collectible-list");
+  collectibleList.textContent="";
+  for(const [index,owned] of (state.runState.collectibles||[]).entries()){
+    const definition=collectibleCatalog[owned.id]||{name_zh:owned.name_zh||owned.id,effect_text:"未结构化"};
+    appendInventoryItem(collectibleList,definition.name_zh,()=>{
+      state.runState.collectibles.splice(index,1);
+      state.recommendationCache=null;
+      render();
+    },definition.effect_text);
+  }
+  if(!(state.runState.collectibles||[]).length){
+    const empty=document.createElement("span"); empty.className="muted"; empty.textContent="尚未录入收藏品"; collectibleList.append(empty);
+  }
+  const statusList=document.getElementById("status-list");
+  statusList.textContent="";
+  for(const [index,active] of (state.runState.statuses||[]).entries()){
+    const definition=statusCatalog[active.id]||{name_zh:active.name_zh||active.id,effect_text:"未结构化"};
+    appendInventoryItem(statusList,definition.name_zh,()=>{
+      state.runState.statuses.splice(index,1);
+      state.recommendationCache=null;
+      render();
+    },definition.effect_text);
+  }
+  if(!(state.runState.statuses||[]).length){
+    const empty=document.createElement("span"); empty.className="muted"; empty.textContent="当前无理想域或负面状态"; statusList.append(empty);
+  }
+  const effects=activeRunEffects();
+  const effectParts=[];
+  if(effects.combatRisk) effectParts.push(`战斗风险 ${effects.combatRisk>0?"+":""}${compactNumber(effects.combatRisk)}`);
+  if(effects.bonusPartsPerCombat) effectParts.push(`每场战斗额外零件 ${compactNumber(effects.bonusPartsPerCombat)}`);
+  if(effects.merchantValueMultiplier!==1) effectParts.push(`行商价值 ×${compactNumber(effects.merchantValueMultiplier)}`);
+  if(Object.keys(effects.nodeScores).length) effectParts.push(`已修正 ${Object.keys(effects.nodeScores).length} 类节点偏好`);
+  if(effects.informationRisk) effectParts.push(`地图与途经不确定性 ${compactNumber(effects.informationRisk)}`);
+  effectParts.push(`阵容风险修正 ${rosterRiskAdjustment()>0?"+":""}${compactNumber(rosterRiskAdjustment())}`);
+  document.getElementById("run-effect-summary").textContent=
+    `合并后用于规划：${effectParts.join(" · ")}。一次性获得的希望、源石锭和生命上限只读取当前 UI，不会从藏品效果重复计算。`;
+  document.getElementById("run-state-origin").textContent=
+    (state.runState.checkpoints||[]).length
+      ?`本地校准 ${(state.runState.checkpoints||[]).length} 次`
+      :"识别快照，待本层确认";
+}
 function renderNodeEditor(){
   const select=document.getElementById("node-kind-select");
   select.disabled=!state.editMode||!state.selectedNode;
@@ -2060,6 +2495,7 @@ function render(){
   renderRecommendations();
   renderRoute(result);
   renderParts(result);
+  renderRunState();
   renderNodeEditor();
   document.getElementById("map-hint").textContent=state.editMode
     ?"修正模式：点击节点，再选择实际类型。"
@@ -2075,6 +2511,25 @@ for(const part of BOOTSTRAP.parts){
   option.textContent=`${part.name_zh} · ${part.category}`;
   document.getElementById("part-select").append(option);
 }
+for(const ticketType of runStateCatalog.ticket_types||[]){
+  const option=document.createElement("option");
+  option.value=ticketType; option.textContent=`${ticketType}招募券`;
+  document.getElementById("ticket-select").append(option);
+}
+for(const collectible of runStateCatalog.collectibles||[]){
+  const option=document.createElement("option");
+  option.value=collectible.id;
+  option.textContent=`${collectible.number?`${collectible.number} `:""}${collectible.name_zh}`;
+  option.setAttribute("title",collectible.effect_text||"");
+  document.getElementById("collectible-select").append(option);
+}
+for(const status of runStateCatalog.statuses||[]){
+  const option=document.createElement("option");
+  option.value=status.id;
+  option.textContent=`${status.positive?"增益":"状态"} · ${status.name_zh}`;
+  option.setAttribute("title",status.effect_text||"");
+  document.getElementById("status-select").append(option);
+}
 for(const rule of rewardKnowledge.node_rewards||[]){
   const option=document.createElement("option");
   option.value=rule.id; option.textContent=rule.name_zh;
@@ -2087,17 +2542,24 @@ document.getElementById("source-map-toggle").addEventListener("change",event=>{
   setMessage(state.showSource?"已显示识别原图，仅用于核对":"已返回抽象节点图",false);
   render();
 });
-document.getElementById("initial-ap").addEventListener("change",render);
+document.getElementById("initial-ap").addEventListener("change",()=>{
+  syncRunStateFromInputs(); render();
+});
 document.getElementById("current-floor").addEventListener("change",event=>{
   state.floor=Number(event.target.value||3);
+  syncRunStateFromInputs();
   state.recommendationCache=null;
   render();
   renderRewardCatalog();
 });
 document.getElementById("recommend-use-parts").addEventListener("change",render);
 document.getElementById("recommend-reserve-uses").addEventListener("change",render);
-document.getElementById("current-ingots").addEventListener("change",render);
-document.getElementById("part-box-capacity").addEventListener("change",render);
+document.getElementById("current-ingots").addEventListener("change",()=>{
+  syncRunStateFromInputs(); render();
+});
+document.getElementById("part-box-capacity").addEventListener("change",()=>{
+  syncRunStateFromInputs(); render();
+});
 document.getElementById("resource-policy-mode").addEventListener("change",render);
 document.getElementById("reset-node-preferences").addEventListener("click",()=>{
   for(const group of NODE_PREFERENCE_GROUPS){
@@ -2140,6 +2602,112 @@ document.getElementById("node-kind-select").addEventListener("change",event=>{
   setMessage("节点类型已修正，路线已清空以重新结算",false);
   render();
 });
+for(const id of [
+  "rs-life","rs-life-cap","rs-shield","rs-hope","rs-hope-cap",
+  "rs-level","rs-xp","rs-operator-cap","rs-collectible-total",
+  "rs-confidentiality","operator-input"
+]){
+  document.getElementById(id).addEventListener("change",()=>{
+    syncRunStateFromInputs(); render();
+  });
+}
+document.getElementById("add-ticket").addEventListener("click",()=>{
+  syncRunStateFromInputs();
+  const type=document.getElementById("ticket-select").value;
+  const count=Math.max(1,numericValue("ticket-count",1));
+  const existing=(state.runState.retained_tickets||[]).find(item=>item.type===type);
+  if(existing) existing.count=Number(existing.count||1)+count;
+  else state.runState.retained_tickets.push({type,count,source:"manual"});
+  state.recommendationCache=null;
+  render();
+});
+document.getElementById("add-collectible").addEventListener("click",()=>{
+  syncRunStateFromInputs();
+  const id=document.getElementById("collectible-select").value;
+  if(id&&!(state.runState.collectibles||[]).some(item=>item.id===id)){
+    state.runState.collectibles.push({id,active:true,source:"manual"});
+    state.recommendationCache=null;
+  }
+  render();
+});
+document.getElementById("add-status").addEventListener("click",()=>{
+  syncRunStateFromInputs();
+  const id=document.getElementById("status-select").value;
+  if(id&&!(state.runState.statuses||[]).some(item=>item.id===id)){
+    state.runState.statuses.push({id,active:true,scope:"global",source:"manual"});
+    state.recommendationCache=null;
+  }
+  render();
+});
+document.getElementById("save-checkpoint").addEventListener("click",()=>{
+  syncRunStateFromInputs();
+  state.runState.checkpoints=state.runState.checkpoints||[];
+  const ticketSnapshot=Object.fromEntries(
+    (state.runState.retained_tickets||[]).map(item=>[item.type,Number(item.count||1)])
+  );
+  const checkpoint={
+    created_at:new Date().toISOString(),
+    floor:state.floor,
+    resources:{...state.runState.resources},
+    operator_count:(state.runState.operators||[]).length,
+    retained_ticket_count:retainedTicketCount(),
+    collectible_count:(state.runState.collectibles||[]).length,
+    status_count:(state.runState.statuses||[]).length,
+    operator_names:(state.runState.operators||[]).map(item=>item.name),
+    retained_tickets:ticketSnapshot,
+    collectible_ids:(state.runState.collectibles||[]).map(item=>item.id),
+    status_ids:(state.runState.statuses||[]).map(item=>item.id)
+  };
+  const previous=state.runState.checkpoints[state.runState.checkpoints.length-1];
+  if(previous){
+    const resourceKeys=new Set([
+      ...Object.keys(previous.resources||{}),...Object.keys(checkpoint.resources||{})
+    ]);
+    checkpoint.delta={
+      resources:Object.fromEntries([...resourceKeys].filter(key=>
+        Number.isFinite(Number(previous.resources?.[key]))&&
+        Number.isFinite(Number(checkpoint.resources?.[key]))
+      ).map(key=>[key,Number(checkpoint.resources[key])-Number(previous.resources[key])])),
+      operators_added:checkpoint.operator_names.filter(name=>!(previous.operator_names||[]).includes(name)),
+      retained_tickets:Object.fromEntries([...new Set([
+        ...Object.keys(previous.retained_tickets||{}),...Object.keys(ticketSnapshot)
+      ])].map(key=>[key,Number(ticketSnapshot[key]||0)-Number(previous.retained_tickets?.[key]||0)])),
+      collectibles_added:checkpoint.collectible_ids.filter(id=>!(previous.collectible_ids||[]).includes(id)),
+      statuses_added:checkpoint.status_ids.filter(id=>!(previous.status_ids||[]).includes(id)),
+      statuses_removed:(previous.status_ids||[]).filter(id=>!checkpoint.status_ids.includes(id))
+    };
+  }
+  state.runState.checkpoints.push(checkpoint);
+  try{
+    if(typeof localStorage!=="undefined"){
+      localStorage.setItem("blackflow-run-state-v0.1",JSON.stringify(state.runState));
+    }
+  }catch(_error){}
+  setMessage(`第${state.floor}层状态已保存，下次打开会继续使用`,false);
+  render();
+});
+document.getElementById("export-run-state").addEventListener("click",()=>{
+  syncRunStateFromInputs();
+  const blob=new Blob([JSON.stringify(state.runState,null,2)],{type:"application/json;charset=utf-8"});
+  const link=document.createElement("a");
+  link.href=URL.createObjectURL(blob);
+  link.download=`blackflow-run-state-floor-${state.floor}.json`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+});
+document.getElementById("clear-run-state").addEventListener("click",()=>{
+  try{
+    if(typeof localStorage!=="undefined") localStorage.removeItem("blackflow-run-state-v0.1");
+  }catch(_error){}
+  state.runState=JSON.parse(JSON.stringify(BOOTSTRAP.run_state||{}));
+  state.floor=Number(state.runState.phase?.floor||BOOTSTRAP.floor||3);
+  document.getElementById("current-floor").value=String(state.floor);
+  state.recommendationCache=null;
+  initializeRunStateInputs();
+  setMessage("已恢复本次识别快照",false);
+  render();
+});
+initializeRunStateInputs();
 initializeNodePreferences();
 render();
 renderRewardCatalog();
