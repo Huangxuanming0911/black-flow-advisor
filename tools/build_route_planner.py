@@ -188,6 +188,10 @@ def main() -> int:
         "parts": knowledge["parts"]["items"],
         "reward_knowledge": reward_knowledge,
         "empirical_rewards": empirical_rewards,
+        "resource_lifecycle_policy": knowledge.get(
+            "resource_lifecycle_policy",
+            {},
+        ),
         "floor": _infer_floor(graph, source_image),
         "location_context": "main_map",
         "sample_parts": [] if args.no_sample_parts else SAMPLE_PARTS,

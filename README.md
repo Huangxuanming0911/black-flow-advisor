@@ -256,6 +256,12 @@ tunnel-transfer, and portal-entry constraints. Run
 `python tools/build_empirical_rewards.py` after collecting more reviewed runs,
 then rebuild the planner to refresh the empirical snapshot.
 
+Processed parts and ingots also use a configurable floor-aware lifecycle
+heuristic. Early floors preserve more carryable mobility, while floors 5-6
+reduce the reserve target and value merchant/box-capacity conversion more
+strongly. The user can enter current ingots and box capacity, enforce a hard
+minimum-use reserve, or bias the soft policy toward conserving or spending.
+
 `data/knowledge/node-rewards.v0.1.json` records the current Black Flow node
 reward matrix. Exact, choice-based, conditional, transaction, and
 region/stage-dependent rewards remain distinguishable. Older Integrated
