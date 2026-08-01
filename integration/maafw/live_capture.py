@@ -68,6 +68,18 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--window-title", default="明日方舟")
     parser.add_argument("--output", type=Path, default=Path("data/output/live"))
     parser.add_argument("--interval", type=float, default=0.25)
+    parser.add_argument(
+        "--idle-interval",
+        type=float,
+        default=1.0,
+        help="capture interval after the game image remains unchanged",
+    )
+    parser.add_argument(
+        "--active-window",
+        type=float,
+        default=1.75,
+        help="seconds of fast polling after a visible frame change",
+    )
     parser.add_argument("--stable-frames", type=int, default=3)
     parser.add_argument("--once", action="store_true")
     parser.add_argument(
@@ -147,6 +159,13 @@ def main() -> int:
             "captured_unix_ms": round(time.time() * 1000),
             "window_title": window.window_name,
             "read_only": True,
+            "capture_policy": {
+                "mode": "adaptive",
+                "active_interval_ms": round(max(0.05, args.interval) * 1000),
+                "idle_interval_ms": round(
+                    max(args.interval, args.idle_interval) * 1000
+                ),
+            },
             "path_recognition": path_recognition,
         }
         (args.output / "latest-state.json").write_text(
@@ -159,6 +178,7 @@ def main() -> int:
         MaaControllerFrameSource(controller),
         on_capture,
         required_stable_frames=args.stable_frames,
+        active_window_seconds=args.active_window,
     )
     while True:
         capture = loop.poll_once()
@@ -168,7 +188,12 @@ def main() -> int:
                 or capture.state.state == ScreenState.MAP
             ):
                 return 0
-        time.sleep(max(0.05, args.interval))
+        time.sleep(
+            loop.recommended_interval(
+                active_interval=args.interval,
+                idle_interval=args.idle_interval,
+            )
+        )
 
 
 if __name__ == "__main__":

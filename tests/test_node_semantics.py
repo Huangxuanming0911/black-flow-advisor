@@ -41,6 +41,20 @@ class NodeSemanticTests(unittest.TestCase):
         self.assertEqual(kind, "unknown_combat")
         self.assertGreaterEqual(similarity, 0.8)
 
+    def test_specific_event_labels_keep_planner_semantics(self) -> None:
+        expected = {
+            "先行一步": "scout",
+            "失与得": "lost_and_found",
+            "得偿所愿": "wish",
+            "秘境行商": "secret_trader",
+            "诡意行商": "rogue_trader",
+        }
+        for label, kind in expected.items():
+            corrected, observed_kind, similarity = _correct_label(label)
+            self.assertEqual(corrected, label)
+            self.assertEqual(observed_kind, kind)
+            self.assertEqual(similarity, 1.0)
+
     def test_text_remains_primary_when_icon_validation_conflicts(self) -> None:
         node = MapUiNode(
             id="node_r0c0",
