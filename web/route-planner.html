@@ -21,7 +21,7 @@
 * { box-sizing:border-box }
 body {
   margin:0;
-  background:linear-gradient(145deg,#0b0f12,#0f1518 60%,#0a1010);
+  background:#090e11;
   color:var(--text);
   font:14px/1.45 system-ui,"Microsoft YaHei",sans-serif;
 }
@@ -38,15 +38,57 @@ button:hover { border-color:#66808b }
 button.primary { background:#17685f; border-color:#2da799 }
 button.danger { color:#ffaaa6 }
 header {
+  position:sticky;
+  top:0;
+  z-index:20;
   display:flex;
   justify-content:space-between;
   gap:18px;
   align-items:flex-end;
   padding:18px 22px 14px;
   border-bottom:1px solid var(--line);
+  background:#0b1114f2;
+  backdrop-filter:blur(12px);
 }
 h1,h2,h3,p { margin:0 }
 h1 { font-size:20px; font-weight:600; letter-spacing:.02em }
+.brand { display:flex; gap:11px; align-items:center }
+.brand-mark {
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border:1px solid #3d5b60;
+  color:var(--cyan);
+  background:#101a1e;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.08em;
+}
+.app-meta {
+  display:flex;
+  gap:7px;
+  align-items:center;
+  margin-top:5px;
+  color:var(--muted);
+  font-size:12px;
+}
+.status-chip {
+  display:inline-flex;
+  gap:6px;
+  align-items:center;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:2px 7px;
+  background:#11191d;
+}
+.status-dot {
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:var(--cyan);
+  box-shadow:0 0 6px #48d5c799;
+}
 .subtitle { color:var(--muted); margin-top:4px }
 .toolbar {
   display:flex;
@@ -73,7 +115,7 @@ h1 { font-size:20px; font-weight:600; letter-spacing:.02em }
   position:relative;
   aspect-ratio:16/9;
   overflow:hidden;
-  background:#030505;
+  background:#071012;
   border:1px solid var(--line);
   border-radius:10px;
 }
@@ -83,11 +125,18 @@ h1 { font-size:20px; font-weight:600; letter-spacing:.02em }
   width:100%;
   height:100%;
 }
+.map-shell img {
+  object-fit:cover;
+  opacity:0;
+  transition:opacity .16s ease;
+}
+.map-shell.show-source img { opacity:.58 }
 .map-shell svg { touch-action:none }
 .base-edge {
-  stroke:#718087;
-  stroke-width:2;
-  opacity:.5;
+  stroke:#7d9398;
+  stroke-width:3;
+  stroke-linecap:round;
+  opacity:.58;
   vector-effect:non-scaling-stroke;
 }
 .route-edge {
@@ -101,28 +150,53 @@ h1 { font-size:20px; font-weight:600; letter-spacing:.02em }
   stroke-dasharray:10 7;
   filter:drop-shadow(0 0 4px #6f50be);
 }
-.node {
-  fill:#0d1114dd;
-  stroke:#b5c1c5;
+.node-group {
+  color:#75d7d1;
+  cursor:pointer;
+  outline:none;
+}
+.node-hit { fill:transparent }
+.node-ring {
+  fill:none;
+  stroke:currentColor;
   stroke-width:2.5;
   vector-effect:non-scaling-stroke;
-  cursor:pointer;
 }
-.node:hover { stroke:var(--gold); stroke-width:4 }
-.node.event { stroke:#72cfd0 }
-.node.combat { stroke:#ef746f }
-.node.special { stroke:#b497ff }
-.node.forest { stroke:#849297 }
-.node.current { fill:#17685f; stroke:#78f2df }
-.node.route { fill:#17685f; stroke:#78f2df }
-.node.selected { fill:#886c1b; stroke:#ffe795 }
+.node-game-icon {
+  pointer-events:none;
+  filter:drop-shadow(0 0 6px #8ad9d266);
+}
+.node-fallback-bg { fill:#091012; stroke:none }
+.node-group:hover .node-ring,
+.node-group:focus-visible .node-ring { stroke:var(--gold); stroke-width:4 }
+.node-group.event { color:#72cfd0 }
+.node-group.combat { color:#ef746f }
+.node-group.special { color:#b497ff }
+.node-group.current { color:#78f2df }
+.node-group.route .node-ring { stroke:#78f2df; stroke-width:4 }
+.node-group.selected .node-ring { stroke:#ffe795; stroke-width:5 }
+.node-fallback {
+  fill:currentColor;
+  font-size:15px;
+  font-weight:800;
+  text-anchor:middle;
+  dominant-baseline:central;
+  pointer-events:none;
+}
+.forest-junction {
+  fill:#8b999d;
+  stroke:#071012;
+  stroke-width:2;
+  vector-effect:non-scaling-stroke;
+}
 .node-label {
   fill:#fff;
   stroke:#050708;
   stroke-width:3;
   paint-order:stroke;
-  font-size:13px;
+  font-size:12px;
   font-weight:600;
+  text-anchor:middle;
   pointer-events:none;
 }
 .step-number {
@@ -164,6 +238,47 @@ h1 { font-size:20px; font-weight:600; letter-spacing:.02em }
   font-weight:600;
   margin-bottom:9px;
 }
+.disclosure { padding:0 }
+.disclosure>summary {
+  list-style:none;
+  cursor:pointer;
+  padding:11px 12px;
+  font-weight:600;
+  color:#dce7e9;
+}
+.disclosure>summary::-webkit-details-marker { display:none }
+.disclosure>summary::after {
+  content:"＋";
+  float:right;
+  color:var(--muted);
+  font-weight:400;
+}
+.disclosure[open]>summary {
+  border-bottom:1px solid var(--line);
+}
+.disclosure[open]>summary::after { content:"－" }
+.disclosure-body { padding:11px 12px 12px }
+.source-toggle {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.strategy-options {
+  margin-bottom:10px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:#0d1316;
+}
+.strategy-options>summary {
+  cursor:pointer;
+  padding:8px 9px;
+  color:var(--muted);
+  font-size:12px;
+}
+.strategy-options[open]>summary { color:#dce7e9 }
+.strategy-options>.strategy-options-body { padding:0 9px 9px }
 .row {
   display:flex;
   gap:7px;
@@ -320,9 +435,15 @@ td input { width:62px; padding:5px }
 </head>
 <body>
 <header>
-  <div>
-    <h1>黑流树海 · 路线试算</h1>
-    <p class="subtitle">点击节点逐步规划；路线排序会结合当前层的实测战后奖励与样本置信度。</p>
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">BFA</div>
+    <div>
+      <h1>黑流路线助手</h1>
+      <div class="app-meta">
+        <span class="status-chip"><span class="status-dot"></span>本地快照</span>
+        <span id="graph-stat">读取图结构中</span>
+      </div>
+    </div>
   </div>
   <div class="toolbar">
     <label class="field">初始行动力
@@ -350,28 +471,32 @@ td input { width:62px; padding:5px }
         role="img" aria-label="可点击的识别路径图"></svg>
     </div>
     <div class="map-footer">
-      <span id="map-hint">从当前位置开始，选择相邻节点。</span>
+      <span id="map-hint">从当前位置开始，选择相邻节点。小圆点仅表示路径交会。</span>
       <span id="message" class="message"></span>
+      <label class="source-toggle"><input id="source-map-toggle" type="checkbox">查看识别原图</label>
     </div>
   </section>
   <aside class="sidebar">
     <section class="metrics" aria-label="路线资源摘要">
       <div class="metric">
         <div class="metric-label">剩余行动力</div>
-        <div id="metric-ap" class="metric-value">—</div>
+        <div id="metric-ap" class="metric-value">...</div>
       </div>
       <div class="metric">
         <div class="metric-label">可计算期望种类</div>
-        <div id="metric-resource" class="metric-value">—</div>
+        <div id="metric-resource" class="metric-value">...</div>
       </div>
       <div class="metric">
         <div class="metric-label">零件估值</div>
-        <div id="metric-parts" class="metric-value">—</div>
+        <div id="metric-parts" class="metric-value">...</div>
       </div>
     </section>
 
     <section class="panel">
       <h2>候选路线 · 四种目标</h2>
+      <details class="strategy-options">
+        <summary>调整零件、源石锭与节点偏好</summary>
+        <div class="strategy-options-body">
       <div class="strategy-controls">
         <label>
           <input id="recommend-use-parts" type="checkbox" checked>
@@ -407,14 +532,17 @@ td input { width:62px; padding:5px }
           <button id="reset-node-preferences" type="button">恢复为 0</button>
         </div>
       </details>
+        </div>
+      </details>
       <div id="strategy-list" class="strategy-list"></div>
       <p class="muted" style="margin-top:8px">
         “至少保留”是硬约束；阶段策略是软价值，会在收益足够时允许前期用件，也不会强迫后期清空。误入奇境仍需额外消耗一件加工品。
       </p>
     </section>
 
-    <section class="panel">
-      <h2>节点完成后 · 奖励期望</h2>
+    <details class="panel disclosure" open>
+      <summary>奖励期望</summary>
+      <div class="disclosure-body">
       <div class="table-wrap">
         <table class="resource-table">
           <tbody id="resource-summary-body"></tbody>
@@ -422,28 +550,34 @@ td input { width:62px; padding:5px }
       </div>
       <p id="reward-evidence" class="muted" style="margin-top:8px"></p>
       <ul id="rewards-list" class="compact-list"></ul>
-    </section>
+      </div>
+    </details>
 
-    <section class="panel">
-      <h2>各类节点完成结算</h2>
+    <details class="panel disclosure">
+      <summary>节点奖励资料</summary>
+      <div class="disclosure-body">
       <label class="field">节点类型
         <select id="reward-kind-select"></select>
       </label>
       <div id="reward-kind-detail" class="catalog-detail"></div>
-    </section>
+      </div>
+    </details>
 
-    <section class="panel">
-      <h2>路线步骤</h2>
+    <details class="panel disclosure">
+      <summary>路线步骤</summary>
+      <div class="disclosure-body">
       <div class="route-table">
         <table>
           <thead><tr><th>#</th><th>节点</th><th>方式</th><th class="num">行动力</th></tr></thead>
           <tbody id="route-body"></tbody>
         </table>
       </div>
-    </section>
+      </div>
+    </details>
 
-    <section class="panel">
-      <h2>零件箱与独立估值</h2>
+    <details class="panel disclosure">
+      <summary>零件箱与独立估值</summary>
+      <div class="disclosure-body">
       <div class="table-wrap">
         <table>
           <thead><tr><th>零件</th><th class="num">次数</th><th class="num">经济估值</th><th class="num">内在效用/次</th><th></th></tr></thead>
@@ -457,10 +591,12 @@ td input { width:62px; padding:5px }
         <button id="add-part" type="button">加入</button>
       </div>
       <p id="part-note" class="muted" style="margin-top:8px"></p>
-    </section>
+      </div>
+    </details>
 
-    <section class="panel">
-      <h2>节点人工修正</h2>
+    <details class="panel disclosure">
+      <summary>节点人工修正</summary>
+      <div class="disclosure-body">
       <div class="row">
         <button id="edit-mode" type="button" aria-pressed="false">开启修正模式</button>
         <label class="field grow">选中节点类型
@@ -468,7 +604,8 @@ td input { width:62px; padding:5px }
         </label>
       </div>
       <p id="node-detail" class="muted" style="margin-top:8px">用于标记识别不到的羽瞰点回访或居民占领节点。</p>
-    </section>
+      </div>
+    </details>
   </aside>
 </main>
 <script>
@@ -637,13 +774,15 @@ const STRATEGIES=[
 ];
 const startNode=graph.nodes.find(node=>node.kind==="current")?.node_id
   || graph.nodes[0]?.node_id;
+document.getElementById("graph-stat").textContent=
+  `${graph.nodes.length} 个节点 · ${graph.edges.length} 条路径`;
 const KIND_OPTIONS=[
   ["forest","林间空地"],["overlook","羽瞰点"],["combat","作战"],
   ["emergency_combat","紧急作战"],["resident_base","“居民”据点"],
   ["resident_occupied","流窜“居民”占领"],["event","不期而遇"],
   ["unknown_combat","未知的凶戾"],["unknown_event","未知的诡秘"],
-  ["tunnel","曲折密道"],["shop","秘境行商"],
-  ["special_shop","诡意行商"],["encounter","狭路相逢"],
+  ["tunnel","曲折密道"],["secret_trader","秘境行商"],
+  ["rogue_trader","诡意行商"],["encounter","狭路相逢"],
   ["wish","得偿所愿"],["enemy","险路恶敌"],
   ["safe_house","安全的角落"],["fate","命运所指"],
   ["lost_and_found","失与得"],["exit_end","险路尽头"],
@@ -662,6 +801,7 @@ const state={
   overrides:{},
   editMode:false,
   selectedNode:null,
+  showSource:false,
   nextPartId:(BOOTSTRAP.sample_parts||[]).length+1,
   floor:Number(BOOTSTRAP.floor||3),
   nodePreferences:Object.fromEntries(
@@ -1272,7 +1412,11 @@ function routeScore(result,strategy){
   let score=0;
   for(const step of result.steps){
     if(step.firstCompletion||["overlook","tunnel"].includes(step.kind)){
-      score+=Number(strategy.weights[step.kind]||0);
+      const scoreKind={
+        secret_trader:"shop",
+        rogue_trader:"special_shop"
+      }[step.kind]||step.kind;
+      score+=Number(strategy.weights[scoreKind]||0);
       score+=userNodePreference(step.kind);
     }
   }
@@ -1601,23 +1745,44 @@ function addSvg(tag,attrs,parent=svg){
   for(const [key,value] of Object.entries(attrs)) element.setAttribute(key,value);
   parent.append(element); return element;
 }
+function mapPositions(showSource=false){
+  if(showSource){
+    return Object.fromEntries(graph.nodes.map(node=>[node.node_id,node.center]));
+  }
+  const xs=graph.nodes.map(node=>Number(node.center[0]));
+  const ys=graph.nodes.map(node=>Number(node.center[1]));
+  const minX=Math.min(...xs),maxX=Math.max(...xs);
+  const minY=Math.min(...ys),maxY=Math.max(...ys);
+  const spanX=Math.max(1,maxX-minX),spanY=Math.max(1,maxY-minY);
+  const scale=Math.min(1.45,1120/spanX,570/spanY);
+  const width=spanX*scale,height=spanY*scale;
+  const offsetX=(1280-width)/2-minX*scale;
+  const offsetY=(720-height)/2-minY*scale;
+  return Object.fromEntries(graph.nodes.map(node=>[
+    node.node_id,
+    [node.center[0]*scale+offsetX,node.center[1]*scale+offsetY]
+  ]));
+}
 function renderMap(result){
   svg.textContent="";
+  const positions=mapPositions(state.showSource);
   for(const edge of graph.edges){
     const a=nodes[edge.first],b=nodes[edge.second];
-    addSvg("line",{x1:a.center[0],y1:a.center[1],x2:b.center[0],y2:b.center[1],class:"base-edge"});
+    const pa=positions[a.node_id],pb=positions[b.node_id];
+    addSvg("line",{x1:pa[0],y1:pa[1],x2:pb[0],y2:pb[1],class:"base-edge"});
   }
   for(const step of result.steps){
     const a=nodes[step.source],b=nodes[step.selectedTarget];
+    const pa=positions[a.node_id],pb=positions[b.node_id];
     addSvg("line",{
-      x1:a.center[0],y1:a.center[1],x2:b.center[0],y2:b.center[1],
+      x1:pa[0],y1:pa[1],x2:pb[0],y2:pb[1],
       class:`route-edge ${step.modeId==="walk"?"":"jump"}`
     });
     if(step.autoTeleport){
       const destination=nodes[step.target];
+      const pd=positions[destination.node_id];
       addSvg("line",{
-        x1:b.center[0],y1:b.center[1],
-        x2:destination.center[0],y2:destination.center[1],
+        x1:pb[0],y1:pb[1],x2:pd[0],y2:pd[1],
         class:"route-edge jump"
       });
     }
@@ -1628,28 +1793,43 @@ function renderMap(result){
   ]);
   for(const node of graph.nodes){
     const kind=kindOf(node.node_id);
-    const radius=kind==="forest"?10:16;
-    const circle=addSvg("circle",{
-      cx:node.center[0],cy:node.center[1],r:radius,
-      class:`node ${nodeClass(kind)} ${routeIds.has(node.node_id)?"route":""} ${state.selectedNode===node.node_id?"selected":""}`,
+    const [x,y]=positions[node.node_id];
+    const group=addSvg("g",{
+      class:`node-group ${nodeClass(kind)} ${routeIds.has(node.node_id)?"route":""} ${state.selectedNode===node.node_id?"selected":""}`,
       role:"button",tabindex:"0",
       "aria-label":`${node.label}，${node.node_id}`
     });
-    circle.addEventListener("click",()=>handleNodeClick(node.node_id));
-    circle.addEventListener("keydown",event=>{
+    addSvg("circle",{cx:x,cy:y,r:23,class:"node-hit"},group);
+    if(kind==="forest"){
+      addSvg("circle",{cx:x,cy:y,r:4,class:"forest-junction"},group);
+    }else{
+      const icon=BOOTSTRAP.node_icons?.[node.node_id];
+      if(icon){
+        addSvg("image",{
+          href:icon,x:x-28,y:y-28,width:56,height:56,class:"node-game-icon"
+        },group);
+      }else{
+        addSvg("circle",{cx:x,cy:y,r:25,class:"node-fallback-bg"},group);
+        const fallback=addSvg("text",{x,y:y+1,class:"node-fallback"},group);
+        fallback.textContent=(KIND_LABEL[kind]||node.label||"?").slice(0,1);
+      }
+      addSvg("circle",{cx:x,cy:y,r:28,class:"node-ring"},group);
+      addSvg("text",{x,y:y+36,class:"node-label"},group).textContent=
+        state.overrides[node.node_id]?`${KIND_LABEL[kind]}*`:node.label;
+    }
+    group.addEventListener("click",()=>handleNodeClick(node.node_id));
+    group.addEventListener("keydown",event=>{
       if(event.key==="Enter"||event.key===" "){
         event.preventDefault();
         handleNodeClick(node.node_id);
       }
     });
-    addSvg("text",{
-      x:node.center[0]+13,y:node.center[1]-13,class:"node-label"
-    }).textContent=state.overrides[node.node_id]?`${KIND_LABEL[kind]}*`:node.label;
   }
   result.steps.forEach(step=>{
     const node=nodes[step.target];
-    addSvg("circle",{cx:node.center[0],cy:node.center[1],r:8,fill:"var(--cyan)",pointerEvents:"none"});
-    addSvg("text",{x:node.center[0],y:node.center[1]+.5,class:"step-number"}).textContent=step.index;
+    const [x,y]=positions[node.node_id];
+    addSvg("circle",{cx:x+18,cy:y-18,r:8,fill:"var(--cyan)",pointerEvents:"none"});
+    addSvg("text",{x:x+18,y:y-17.5,class:"step-number"}).textContent=step.index;
   });
 }
 function handleNodeClick(id){
@@ -1698,7 +1878,7 @@ function renderSummary(result){
   ).length;
   document.getElementById("metric-resource").textContent=`${exact} 类`;
   document.getElementById("metric-parts").textContent=
-    result.partMin===result.partMax?String(result.partMin):`${result.partMin}–${result.partMax}`;
+    result.partMin===result.partMax?String(result.partMin):`${result.partMin}~${result.partMax}`;
   const rewards=document.getElementById("rewards-list");
   rewards.textContent="";
   const resourceBody=document.getElementById("resource-summary-body");
@@ -1708,13 +1888,13 @@ function renderSummary(result){
     const expected=stat.expected
       ?`期望 +${stat.expected.toFixed(2).replace(/\.?0+$/,"")}`:"";
     const numeric=(stat.minimum||stat.maximum)
-      ?`已知范围 ${stat.minimum}–${stat.maximum}`:"";
+      ?`已知范围 ${stat.minimum}~${stat.maximum}`:"";
     const pending=stat.pending?`待定×${stat.pending}`:"";
     const value=[
       expected,
       numeric,
       pending
-    ].filter(Boolean).join(" · ")||"—";
+    ].filter(Boolean).join(" · ")||"暂无";
     const row=document.createElement("tr");
     row.innerHTML=`<td>${dimension.name_zh}</td><td class="${stat.pending?"reward-possible":"reward-known"}" title="${stat.notes.join("；")}">${value}</td>`;
     resourceBody.append(row);
@@ -1735,13 +1915,13 @@ function renderSummary(result){
   }
 }
 function rewardEntryText(entry){
-  if(!entry) return "—";
+  if(!entry) return "暂无";
   if(entry.kind==="exact") return `+${entry.value}`;
   if(entry.kind==="conditional_exact") return `满足条件 +${entry.value}`;
   if(["choice","conditional"].includes(entry.kind)){
     const minimum=Number(entry.minimum||0);
     return Number.isFinite(entry.maximum)
-      ?`${minimum}–${entry.maximum}`:"条件收益";
+      ?`${minimum}~${entry.maximum}`:"条件收益";
   }
   if(entry.kind==="remaining_ap") return "剩余行动力×1";
   const knownExpected=entry.known_distribution
@@ -1805,7 +1985,7 @@ function renderParts(result){
     const row=document.createElement("tr");
     const useCell=catalog.category==="processed"
       ?`<input data-part="${part.instanceId}" data-field="uses" type="number" min="0" max="99" value="${part.uses}">`
-      :'<span class="muted">—</span>';
+      :'<span class="muted">不适用</span>';
     const intrinsicCell=catalog.category==="processed"
       ?`${compactNumber(intrinsic.perUse)}<br><span class="muted">${intrinsic.expiring?"当层限定":"可跨层"}</span>`
       :'<span class="muted">非移动件</span>';
@@ -1901,6 +2081,12 @@ for(const rule of rewardKnowledge.node_rewards||[]){
   document.getElementById("reward-kind-select").append(option);
 }
 document.getElementById("reward-kind-select").addEventListener("change",renderRewardCatalog);
+document.getElementById("source-map-toggle").addEventListener("change",event=>{
+  state.showSource=event.target.checked;
+  document.querySelector(".map-shell").classList.toggle("show-source",state.showSource);
+  setMessage(state.showSource?"已显示识别原图，仅用于核对":"已返回抽象节点图",false);
+  render();
+});
 document.getElementById("initial-ap").addEventListener("change",render);
 document.getElementById("current-floor").addEventListener("change",event=>{
   state.floor=Number(event.target.value||3);

@@ -113,7 +113,8 @@ python -m integration.maafw.live_capture `
   --map-only
 ```
 
-The loop samples every 250 ms, waits for three stable frames, classifies the UI
+The loop uses adaptive polling: 250 ms briefly after visible motion and 1 s
+while the frame stays idle. It waits for three stable frames, classifies the UI
 state, and runs direct path recognition on stable map frames. It atomically
 publishes the latest path JSON, mask, skeleton and annotated image alongside
 the accepted screenshot. The live graph currently has
@@ -255,6 +256,13 @@ Every strategy may use processed parts and obeys the same reserve, forced
 tunnel-transfer, and portal-entry constraints. Run
 `python tools/build_empirical_rewards.py` after collecting more reviewed runs,
 then rebuild the planner to refresh the empirical snapshot.
+
+The planner opens as a compact desktop-style workspace. Its default map is an
+abstract graph, but every semantic node uses a small game-native icon cropped
+once from the recognized source frame. Forest clearings remain unobtrusive
+junction dots. The full screenshot is available only as an optional diagnostic
+overlay. Icon crops are embedded into the generated local HTML and are not
+committed or downloaded while the planner is running.
 
 Processed parts and ingots also use a configurable floor-aware lifecycle
 heuristic. Early floors preserve more carryable mobility, while floors 5-6

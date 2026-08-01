@@ -73,13 +73,29 @@ return {
   partIntrinsicProfile,
   userNodePreference,
   routePreferenceContribution,
-  routeScore
+  routeScore,
+  mapPositions,
+  nodeIcons: BOOTSTRAP.node_icons
 };
 `;
 const runtime = new Function("document", `${match[1]}\n${expose}`)(
   documentStub,
 );
 const routes = runtime.buildRecommendations();
+
+if (Object.keys(runtime.nodeIcons ?? {}).length < 10) {
+  throw new Error("game-native node icon crops were not embedded");
+}
+const sourcePositions = runtime.mapPositions(true);
+const abstractPositions = runtime.mapPositions(false);
+if (!Object.values(sourcePositions).flat().every(Number.isFinite)) {
+  throw new Error("source-image coordinates should remain numeric");
+}
+if (!Object.values(abstractPositions).every(
+  ([x, y]) => x >= 60 && x <= 1220 && y >= 60 && y <= 660,
+)) {
+  throw new Error("abstract map should fit every node inside the map viewport");
+}
 
 if (runtime.state.floor !== 3) {
   throw new Error(`expected inferred floor 3, got ${runtime.state.floor}`);
