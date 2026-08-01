@@ -71,6 +71,20 @@ class KnowledgeBaseTests(unittest.TestCase):
         )
         self.assertEqual(policy["status"], "planner_heuristic")
 
+    def test_intrinsic_part_value_and_user_preferences_are_configured(self) -> None:
+        policy = self.payload["resource_lifecycle_policy"]
+        model = policy["part_intrinsic_value_model"]
+        self.assertEqual(model["status"], "planner_heuristic")
+        self.assertGreater(model["target_rule_value"]["any_node"], 0)
+        self.assertGreater(model["pursuit_insurance"]["zero_ap_move"], 0)
+        self.assertLess(model["expiring_use_cost_fraction"], 1)
+        groups = policy["node_preference_groups"]
+        self.assertGreater(policy["node_preference_score_per_level"], 0)
+        ids = {group["id"] for group in groups}
+        self.assertEqual(len(ids), len(groups))
+        self.assertIn("merchant", ids)
+        self.assertIn("portal", ids)
+
 
 if __name__ == "__main__":
     unittest.main()

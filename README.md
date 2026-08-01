@@ -261,6 +261,11 @@ heuristic. Early floors preserve more carryable mobility, while floors 5-6
 reduce the reserve target and value merchant/box-capacity conversion more
 strongly. The user can enter current ingots and box capacity, enforce a hard
 minimum-use reserve, or bias the soft policy toward conserving or spending.
+Part sale value is now separated from an intrinsic per-use option value based
+on reach, action-point savings, unfinished-node traversal, side effects, and
+pursuit avoidance. Expiring processed parts are encouraged to be used before a
+real region exit without forcing a bad node solely to empty the box. Optional
+-5 to +5 node-preference controls apply consistently to all four strategies.
 
 `data/knowledge/node-rewards.v0.1.json` records the current Black Flow node
 reward matrix. Exact, choice-based, conditional, transaction, and

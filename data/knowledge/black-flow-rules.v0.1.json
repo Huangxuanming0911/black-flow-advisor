@@ -1128,6 +1128,49 @@
       "零件箱接近或超过容量时提高行商出售与消耗加工品的价值",
       "后期仍不强制清空；只有替代路线收益超过保留价值时才使用零件"
     ],
+    "part_intrinsic_value_model": {
+      "status": "planner_heuristic",
+      "unit": "route_score_per_use",
+      "summary": "将加工品的可控移动范围、节省行动力、跨越未完成节点、附带效果和避免行动力耗尽的保险作用估为每次使用的内在效用；不等同于商店售价。",
+      "base_controlled_move": 0.6,
+      "target_rule_value": {
+        "any_node": 3.0,
+        "manhattan_radius_per_cell": 0.8,
+        "orthogonal_distance_per_cell": 0.55,
+        "chebyshev_radius_per_cell": 0.65,
+        "random_any": 0.35
+      },
+      "zero_ap_cost": 1.5,
+      "cross_unfinished": 0.8,
+      "post_effect_per_resource": {
+        "hope": 0.8,
+        "originium_ingots": 0.18,
+        "action_points": 0.65
+      },
+      "pursuit_insurance": {
+        "zero_ap_move": 1.2,
+        "action_point_gain": 1.8
+      },
+      "expiring_use_cost_fraction": 0.25,
+      "expiry_waste_base_penalty": 3.0,
+      "notes": [
+        "可跨层加工品被使用时计入未来选择权成本；范围越广、越能保行动力，保留价值越高",
+        "不可跨层加工品仍保留少量本层选择权成本，但在真实离层时未使用会产生更高浪费惩罚",
+        "零件帮助保留行动力可降低触发追猎的风险；没有证据表明追猎本身会直接销毁零件",
+        "进入和离开特殊层不会使不可跨层加工品损坏；正常进入下一区域时才按规则处理"
+      ]
+    },
+    "node_preference_score_per_level": 2.0,
+    "node_preference_groups": [
+      {"id": "normal_combat", "label": "普通作战", "kinds": ["combat"]},
+      {"id": "hard_combat", "label": "紧急/领袖作战", "kinds": ["emergency_combat", "enemy"]},
+      {"id": "resident_combat", "label": "居民战斗", "kinds": ["resident_base", "resident_occupied"]},
+      {"id": "unknown", "label": "未知节点", "kinds": ["unknown_combat", "unknown_event", "event"]},
+      {"id": "overlook", "label": "羽瞰点", "kinds": ["overlook"]},
+      {"id": "merchant", "label": "行商", "kinds": ["shop", "special_shop", "secret_trader", "rogue_trader"]},
+      {"id": "special_reward", "label": "得偿/狭路/失与得", "kinds": ["wish", "encounter", "lost_and_found"]},
+      {"id": "portal", "label": "误入奇境", "kinds": ["portal"]}
+    ],
     "floors": [
       {"floor": 1, "label": "蓄力期", "reserve_ratio": 0.65, "spend_multiplier": 1.55, "reserve_penalty": 8, "hoard_penalty": 0, "ingot_reserve": 18, "merchant_weight": 0.18, "unspent_ingot_penalty": 0},
       {"floor": 2, "label": "保留期", "reserve_ratio": 0.5, "spend_multiplier": 1.35, "reserve_penalty": 7, "hoard_penalty": 0.05, "ingot_reserve": 15, "merchant_weight": 0.22, "unspent_ingot_penalty": 0.03},
@@ -1140,6 +1183,12 @@
     "confidence": "inferred"
   },
   "open_questions": [
+    {
+      "id": "pursuit_part_damage",
+      "question": "触发并完成追猎时，是否会使不可跨层加工品提前损坏，或只在随后正常进入下一区域时损坏？",
+      "current_assumption": "不把追猎本身视为零件损坏事件；仅计算行动力耗尽风险和真实离层报废",
+      "validation": "实机在携带重弹簧或小八界时触发一次追猎，分别记录追猎前后和离层后的零件箱"
+    },
     {
       "id": "processed_default_ap_cost",
       "question": "未明确写“无需行动力”的加工品，是否在所有特殊场景中都固定消耗1行动力？",

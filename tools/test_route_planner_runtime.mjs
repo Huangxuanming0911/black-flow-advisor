@@ -69,7 +69,11 @@ return {
   strategies: STRATEGIES,
   empiricalProfile,
   currentResourcePolicy,
-  routeLifecycle
+  routeLifecycle,
+  partIntrinsicProfile,
+  userNodePreference,
+  routePreferenceContribution,
+  routeScore
 };
 `;
 const runtime = new Function("document", `${match[1]}\n${expose}`)(
@@ -109,6 +113,34 @@ const emptyLifecycle = runtime.routeLifecycle(runtime.simulate([]));
 if (emptyLifecycle.remainingExpiring !== 1) {
   throw new Error("non-carrying heavy spring was not tracked as expiring");
 }
+const structuralPart = runtime.state.parts.find(
+  (part) => part.partId === "structural_principle",
+);
+const wheelPart = runtime.state.parts.find(
+  (part) => part.partId === "scrap_wheel",
+);
+const springPart = runtime.state.parts.find(
+  (part) => part.partId === "heavy_spring",
+);
+const structuralIntrinsic = runtime.partIntrinsicProfile(structuralPart);
+const wheelIntrinsic = runtime.partIntrinsicProfile(wheelPart);
+const springIntrinsic = runtime.partIntrinsicProfile(springPart);
+if (structuralIntrinsic.perUse <= wheelIntrinsic.perUse) {
+  throw new Error("any-node movement should retain more option value than a short wheel move");
+}
+if (!springIntrinsic.expiring || springIntrinsic.pursuitInsurance <= 0) {
+  throw new Error("zero-AP heavy spring should be expiring pursuit insurance");
+}
+runtime.state.nodePreferences.normal_combat = 4;
+if (runtime.userNodePreference("combat") !== 8) {
+  throw new Error("user node preference was not applied to combat");
+}
+if (runtime.routePreferenceContribution({
+  steps: [{kind: "combat", firstCompletion: true}],
+}) !== 8) {
+  throw new Error("route preference contribution did not include the selected node");
+}
+runtime.state.nodePreferences.normal_combat = 0;
 runtime.state.floor = 1;
 const earlyRoutes = runtime.buildRecommendations();
 runtime.state.floor = 6;
@@ -155,6 +187,41 @@ if (routes.some((item) => item.strategy === undefined)) {
 }
 if (routes.some((item) => item.candidate === null)) {
   throw new Error("current fixture should produce one route per strategy");
+}
+const completedExitRoutes = routes.filter((item) => {
+  const steps = item.candidate?.result.steps ?? [];
+  return ["enemy", "exit_end", "exit_path"].includes(
+    steps[steps.length - 1]?.kind,
+  );
+});
+if (
+  completedExitRoutes.length > 0 &&
+  completedExitRoutes.some((item) =>
+    runtime.routeLifecycle(item.candidate.result).remainingExpiring > 0
+  )
+) {
+  throw new Error("a reachable exit route unnecessarily discarded an expiring part use");
+}
+const combatCandidate = routes.find((item) =>
+  item.candidate?.result.steps.some((step) =>
+    step.kind === "combat" && step.firstCompletion,
+  ),
+);
+if (!combatCandidate) {
+  throw new Error("current fixture should expose a normal-combat preference test route");
+}
+const baseCombatScore = runtime.routeScore(
+  combatCandidate.candidate.result,
+  combatCandidate.strategy,
+);
+runtime.state.nodePreferences.normal_combat = 5;
+const preferredCombatScore = runtime.routeScore(
+  combatCandidate.candidate.result,
+  combatCandidate.strategy,
+);
+runtime.state.nodePreferences.normal_combat = 0;
+if (preferredCombatScore <= baseCombatScore) {
+  throw new Error("positive combat preference did not raise route score");
 }
 for (const item of routes) {
   const { candidate } = item;

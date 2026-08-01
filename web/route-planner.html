@@ -213,6 +213,32 @@ td input { width:62px; padding:5px }
   font-size:12px;
 }
 .strategy-controls input[type=number] { width:58px }
+.preference-panel {
+  margin:8px 0 10px;
+  padding:8px;
+  border:1px solid #27343a;
+  border-radius:7px;
+  background:#0d1316;
+}
+.preference-panel summary { cursor:pointer; color:#dbe5e7 }
+.preference-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px 12px;
+  margin-top:9px;
+}
+.preference-item {
+  display:grid;
+  grid-template-columns:minmax(84px,1fr) minmax(80px,1.2fr) 28px;
+  gap:6px;
+  align-items:center;
+  color:var(--muted);
+  font-size:11px;
+}
+.preference-item input { width:100%; padding:0 }
+.preference-value { color:var(--cyan); text-align:right; font-variant-numeric:tabular-nums }
+.preference-actions { display:flex; justify-content:space-between; gap:8px; margin-top:8px; align-items:center }
+.preference-actions button { padding:4px 7px; font-size:11px }
 .strategy-list { display:grid; gap:7px }
 .strategy-card {
   padding:9px;
@@ -286,6 +312,7 @@ td input { width:62px; padding:5px }
 }
 @media(max-width:540px) {
   .metrics { grid-template-columns:1fr }
+  .preference-grid { grid-template-columns:1fr }
   header,.workspace { padding-left:9px; padding-right:9px }
   .node-label { display:none }
 }
@@ -372,6 +399,14 @@ td input { width:62px; padding:5px }
           </select>
         </label>
       </div>
+      <details class="preference-panel">
+        <summary>个人节点偏好（-5 避开 / +5 偏好）</summary>
+        <div id="node-preferences" class="preference-grid"></div>
+        <div class="preference-actions">
+          <span class="muted">对四种策略统一叠加；每档折合 2 分，0 表示沿用内置风格。</span>
+          <button id="reset-node-preferences" type="button">恢复为 0</button>
+        </div>
+      </details>
       <div id="strategy-list" class="strategy-list"></div>
       <p class="muted" style="margin-top:8px">
         “至少保留”是硬约束；阶段策略是软价值，会在收益足够时允许前期用件，也不会强迫后期清空。误入奇境仍需额外消耗一件加工品。
@@ -411,7 +446,7 @@ td input { width:62px; padding:5px }
       <h2>零件箱与独立估值</h2>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>零件</th><th class="num">次数</th><th class="num">当前估值</th><th></th></tr></thead>
+          <thead><tr><th>零件</th><th class="num">次数</th><th class="num">经济估值</th><th class="num">内在效用/次</th><th></th></tr></thead>
           <tbody id="parts-body"></tbody>
         </table>
       </div>
@@ -496,6 +531,53 @@ const configuredFloorPolicies=Object.fromEntries(
 const FLOOR_RESOURCE_POLICIES=Object.keys(configuredFloorPolicies).length
   ?configuredFloorPolicies
   :DEFAULT_FLOOR_RESOURCE_POLICIES;
+const DEFAULT_PART_INTRINSIC_MODEL={
+  base_controlled_move:.6,
+  target_rule_value:{
+    any_node:3,manhattan_radius_per_cell:.8,
+    orthogonal_distance_per_cell:.55,chebyshev_radius_per_cell:.65,
+    random_any:.35
+  },
+  zero_ap_cost:1.5,
+  cross_unfinished:.8,
+  post_effect_per_resource:{hope:.8,originium_ingots:.18,action_points:.65},
+  pursuit_insurance:{zero_ap_move:1.2,action_point_gain:1.8},
+  expiring_use_cost_fraction:.25,
+  expiry_waste_base_penalty:3
+};
+const PART_INTRINSIC_MODEL={
+  ...DEFAULT_PART_INTRINSIC_MODEL,
+  ...(BOOTSTRAP.resource_lifecycle_policy?.part_intrinsic_value_model||{}),
+  target_rule_value:{
+    ...DEFAULT_PART_INTRINSIC_MODEL.target_rule_value,
+    ...(BOOTSTRAP.resource_lifecycle_policy?.part_intrinsic_value_model?.target_rule_value||{})
+  },
+  post_effect_per_resource:{
+    ...DEFAULT_PART_INTRINSIC_MODEL.post_effect_per_resource,
+    ...(BOOTSTRAP.resource_lifecycle_policy?.part_intrinsic_value_model?.post_effect_per_resource||{})
+  },
+  pursuit_insurance:{
+    ...DEFAULT_PART_INTRINSIC_MODEL.pursuit_insurance,
+    ...(BOOTSTRAP.resource_lifecycle_policy?.part_intrinsic_value_model?.pursuit_insurance||{})
+  }
+};
+const DEFAULT_NODE_PREFERENCE_GROUPS=[
+  {id:"normal_combat",label:"普通作战",kinds:["combat"]},
+  {id:"hard_combat",label:"紧急/领袖作战",kinds:["emergency_combat","enemy"]},
+  {id:"resident_combat",label:"居民战斗",kinds:["resident_base","resident_occupied"]},
+  {id:"unknown",label:"未知节点",kinds:["unknown_combat","unknown_event","event"]},
+  {id:"overlook",label:"羽瞰点",kinds:["overlook"]},
+  {id:"merchant",label:"行商",kinds:["shop","special_shop","secret_trader","rogue_trader"]},
+  {id:"special_reward",label:"得偿/狭路/失与得",kinds:["wish","encounter","lost_and_found"]},
+  {id:"portal",label:"误入奇境",kinds:["portal"]}
+];
+const NODE_PREFERENCE_GROUPS=(
+  BOOTSTRAP.resource_lifecycle_policy?.node_preference_groups||
+  DEFAULT_NODE_PREFERENCE_GROUPS
+);
+const NODE_PREFERENCE_SCORE_PER_LEVEL=Number(
+  BOOTSTRAP.resource_lifecycle_policy?.node_preference_score_per_level||2
+);
 const STRATEGIES=[
   {
     id:"combat",name:"战斗推进",tone:"主动获取作战经验与战后资源",
@@ -582,6 +664,9 @@ const state={
   selectedNode:null,
   nextPartId:(BOOTSTRAP.sample_parts||[]).length+1,
   floor:Number(BOOTSTRAP.floor||3),
+  nodePreferences:Object.fromEntries(
+    NODE_PREFERENCE_GROUPS.map(group=>[group.id,0])
+  ),
   recommendationCache:null
 };
 const svg=document.getElementById("map-overlay");
@@ -1012,19 +1097,62 @@ function currentResourcePolicy(){
   }
   return base;
 }
-function partFlexibilityPremium(part){
+function partIntrinsicProfile(part){
   const catalog=partCatalog[part.partId];
   const rule=movementRules[catalog?.movement_mode];
-  if(!rule) return 0;
+  if(!rule) return {
+    perUse:0,mobility:0,actionPoint:0,crossing:0,postEffect:0,
+    pursuitInsurance:0,carryable:false,expiring:false
+  };
   const target=rule.target_rule||{};
-  let premium=0;
-  if(target.type==="any_node") premium+=2.4;
-  else if(target.type==="manhattan_radius") premium+=Number(target.max||0)*.65;
-  else if(target.type==="orthogonal_distance") premium+=Number(target.max||0)*.45;
-  else if(target.type==="chebyshev_radius") premium+=Number(target.max||0)*.4;
-  if(Number(rule.action_point_cost?.value||0)===0) premium+=1.4;
-  if((rule.post_effects||[]).length) premium+=1;
-  return premium;
+  const values=PART_INTRINSIC_MODEL.target_rule_value;
+  let mobility=target.type==="random_any"
+    ?Number(values.random_any||0)
+    :Number(PART_INTRINSIC_MODEL.base_controlled_move||0);
+  if(target.type==="any_node") mobility+=Number(values.any_node||0);
+  else if(target.type==="manhattan_radius"){
+    mobility+=Number(target.max||0)*Number(values.manhattan_radius_per_cell||0);
+  } else if(target.type==="orthogonal_distance"){
+    mobility+=Number(target.max||0)*Number(values.orthogonal_distance_per_cell||0);
+  } else if(target.type==="chebyshev_radius"){
+    mobility+=Number(target.max||0)*Number(values.chebyshev_radius_per_cell||0);
+  }
+  const zeroAp=Number(rule.action_point_cost?.value||0)===0;
+  const actionPoint=zeroAp?Number(PART_INTRINSIC_MODEL.zero_ap_cost||0):0;
+  const crossing=rule.can_cross_unfinished_nodes
+    ?Number(PART_INTRINSIC_MODEL.cross_unfinished||0):0;
+  let postEffect=0;
+  let actionPointGain=0;
+  for(const effect of rule.post_effects||[]){
+    const delta=Math.max(0,Number(effect.delta||0));
+    postEffect+=delta*Number(
+      PART_INTRINSIC_MODEL.post_effect_per_resource?.[effect.resource]||0
+    );
+    if(effect.resource==="action_points") actionPointGain+=delta;
+  }
+  const pursuitInsurance=
+    (zeroAp?Number(PART_INTRINSIC_MODEL.pursuit_insurance?.zero_ap_move||0):0)
+    +(actionPointGain>0
+      ?Number(PART_INTRINSIC_MODEL.pursuit_insurance?.action_point_gain||0)
+      :0);
+  const carryable=rule.carried_to_next_region!==false;
+  return {
+    perUse:mobility+actionPoint+crossing+postEffect+pursuitInsurance,
+    mobility,actionPoint,crossing,postEffect,pursuitInsurance,
+    carryable,expiring:!carryable
+  };
+}
+function expiringWastePenalty(result){
+  let penalty=0;
+  for(const part of Object.values(result.parts)){
+    const profile=partIntrinsicProfile(part);
+    if(!profile.expiring) continue;
+    penalty+=Math.max(0,Number(part.remaining||0))*(
+      Number(PART_INTRINSIC_MODEL.expiry_waste_base_penalty||0)
+      +profile.perUse
+    );
+  }
+  return penalty;
 }
 function portalFuelIds(result){
   return Object.values(result.parts)
@@ -1044,6 +1172,8 @@ function portalFuelIds(result){
 function routePartSpend(result){
   let uses=0;
   let valueCost=0;
+  let economicCost=0;
+  let intrinsicCost=0;
   let carryableUses=0;
   let expiringUses=0;
   for(const part of state.parts){
@@ -1056,13 +1186,19 @@ function routePartSpend(result){
     const carryable=isCarryablePart(part);
     if(carryable) carryableUses+=spent;
     else expiringUses+=spent;
-    valueCost+=spent*(
-      .6
-      +Number(part.value||0)/Math.max(1,initial)
-      +(carryable?partFlexibilityPremium(part):0)
+    const perUseEconomic=Number(part.value||0)/Math.max(1,initial);
+    const profile=partIntrinsicProfile(part);
+    const perUseIntrinsic=profile.perUse*(
+      carryable?1:Number(PART_INTRINSIC_MODEL.expiring_use_cost_fraction||0)
     );
+    economicCost+=spent*perUseEconomic;
+    intrinsicCost+=spent*perUseIntrinsic;
   }
-  return {uses,valueCost,carryableUses,expiringUses};
+  valueCost=economicCost+intrinsicCost;
+  return {
+    uses,valueCost,economicCost,intrinsicCost,
+    carryableUses,expiringUses
+  };
 }
 function routeLifecycle(result){
   const policy=currentResourcePolicy();
@@ -1114,11 +1250,30 @@ function isRouteTerminal(result){
     ||kind==="portal"
     ||result.forcedEncounters.length>0;
 }
+function userNodePreference(kind){
+  let preference=0;
+  for(const group of NODE_PREFERENCE_GROUPS){
+    if((group.kinds||[]).includes(kind)){
+      preference+=Number(state.nodePreferences[group.id]||0);
+    }
+  }
+  return preference*NODE_PREFERENCE_SCORE_PER_LEVEL;
+}
+function routePreferenceContribution(result){
+  let contribution=0;
+  for(const step of result.steps){
+    if(step.firstCompletion||["overlook","tunnel"].includes(step.kind)){
+      contribution+=userNodePreference(step.kind);
+    }
+  }
+  return contribution;
+}
 function routeScore(result,strategy){
   let score=0;
   for(const step of result.steps){
     if(step.firstCompletion||["overlook","tunnel"].includes(step.kind)){
       score+=Number(strategy.weights[step.kind]||0);
+      score+=userNodePreference(step.kind);
     }
   }
   for(const [id,weight] of Object.entries(strategy.resourceWeights||{})){
@@ -1144,7 +1299,7 @@ function routeScore(result,strategy){
   if(EXIT_KINDS.has(terminal)){
     score+=strategy.exitBonus;
     score-=lifecycle.carryableSurplus*lifecycle.policy.hoardPenalty;
-    score-=lifecycle.remainingExpiring*9;
+    score-=expiringWastePenalty(result);
     if(!lifecycle.merchantVisited){
       score-=
         lifecycle.projectedSurplusIngots
@@ -1275,6 +1430,7 @@ function recommendationKey(){
     parts:state.parts.map(part=>[
       part.instanceId,part.partId,part.uses,part.value
     ]),
+    nodePreferences:state.nodePreferences,
     overrides:state.overrides
   });
 }
@@ -1369,7 +1525,8 @@ function resourceLifecycleSummary(result){
   const spend=routePartSpend(result);
   const details=[
     `${lifecycle.policy.label}：用${spend.uses}次，保留${lifecycle.remainingCarryable}次可跨层能力`,
-    `软目标${lifecycle.desiredReserve}次`
+    `软目标${lifecycle.desiredReserve}次`,
+    `零件成本：经济${compactNumber(spend.economicCost)} + 内在选择权${compactNumber(spend.intrinsicCost)}`
   ];
   if(lifecycle.remainingExpiring&&EXIT_KINDS.has(routeTerminalKind(result))){
     details.push(`${lifecycle.remainingExpiring}次区域限定能力会浪费`);
@@ -1423,6 +1580,7 @@ function renderRecommendations(){
       <div class="strategy-meta">${routeSummary(candidate)}</div>
       <div class="strategy-evidence">${empiricalRewardSummary(candidate.result)}</div>
       <div class="strategy-meta">${empiricalEvidenceSummary(candidate.result)||"该路线目前只依据规则与节点偏好评分"}</div>
+      <div class="strategy-meta">个人节点偏好 ${routePreferenceContribution(candidate.result)>=0?"+":""}${compactNumber(routePreferenceContribution(candidate.result))}</div>
       <div class="strategy-meta">${resourceLifecycleSummary(candidate.result)}</div>
       <button type="button" data-route="${index}" ${signature===currentSignature?"disabled":""}>${buttonText}</button>
     `;
@@ -1638,16 +1796,20 @@ function renderParts(result){
   const body=document.getElementById("parts-body"); body.textContent="";
   if(!state.parts.length){
     const row=document.createElement("tr");
-    row.innerHTML='<td colspan="4" class="empty">尚未录入零件</td>'; body.append(row);
+    row.innerHTML='<td colspan="5" class="empty">尚未录入零件</td>'; body.append(row);
   }
   for(const part of state.parts){
     const catalog=partCatalog[part.partId];
     const live=result.parts[part.instanceId];
+    const intrinsic=partIntrinsicProfile(part);
     const row=document.createElement("tr");
     const useCell=catalog.category==="processed"
       ?`<input data-part="${part.instanceId}" data-field="uses" type="number" min="0" max="99" value="${part.uses}">`
       :'<span class="muted">—</span>';
-    row.innerHTML=`<td>${catalog.name_zh}<br><span class="tag">${catalog.category}</span></td><td class="num">${useCell}${live&&live.remaining!==part.uses?`<br><span class="muted">路线后 ${live.remaining}</span>`:""}</td><td class="num"><input data-part="${part.instanceId}" data-field="value" type="number" min="0" max="999" value="${part.value}"></td><td><button data-remove="${part.instanceId}" type="button">移除</button></td>`;
+    const intrinsicCell=catalog.category==="processed"
+      ?`${compactNumber(intrinsic.perUse)}<br><span class="muted">${intrinsic.expiring?"当层限定":"可跨层"}</span>`
+      :'<span class="muted">非移动件</span>';
+    row.innerHTML=`<td>${catalog.name_zh}<br><span class="tag">${catalog.category}</span></td><td class="num">${useCell}${live&&live.remaining!==part.uses?`<br><span class="muted">路线后 ${live.remaining}</span>`:""}</td><td class="num"><input data-part="${part.instanceId}" data-field="value" type="number" min="0" max="999" value="${part.value}"></td><td class="num">${intrinsicCell}</td><td><button data-remove="${part.instanceId}" type="button">移除</button></td>`;
     body.append(row);
   }
   body.querySelectorAll("input").forEach(input=>input.addEventListener("change",event=>{
@@ -1661,7 +1823,35 @@ function renderParts(result){
     render();
   }));
   document.getElementById("part-note").textContent=
-    "已加入几件实验零件，可修改或移除。估值不与节点随机奖励混算；不可跨层加工品在离层时仍有次数会受到浪费惩罚。";
+    "经济估值来自画面或用户录入；内在效用由移动范围、行动力、跨越能力、附带效果与追猎保险计算。不可跨层加工品离层前会优先使用，但不会为了清空而选择明显更差的节点。";
+}
+function initializeNodePreferences(){
+  const container=document.getElementById("node-preferences");
+  container.textContent="";
+  for(const group of NODE_PREFERENCE_GROUPS){
+    const label=document.createElement("label");
+    label.className="preference-item";
+    const name=document.createElement("span");
+    name.textContent=group.label;
+    const input=document.createElement("input");
+    input.type="range";
+    input.min="-5";
+    input.max="5";
+    input.step="1";
+    input.value=String(state.nodePreferences[group.id]||0);
+    const output=document.createElement("span");
+    output.className="preference-value";
+    output.textContent="0";
+    input.addEventListener("change",event=>{
+      const value=Math.max(-5,Math.min(5,Number(event.target.value||0)));
+      state.nodePreferences[group.id]=value;
+      output.textContent=value>0?`+${value}`:String(value);
+      state.recommendationCache=null;
+      render();
+    });
+    label.append(name,input,output);
+    container.append(label);
+  }
 }
 function renderNodeEditor(){
   const select=document.getElementById("node-kind-select");
@@ -1723,6 +1913,15 @@ document.getElementById("recommend-reserve-uses").addEventListener("change",rend
 document.getElementById("current-ingots").addEventListener("change",render);
 document.getElementById("part-box-capacity").addEventListener("change",render);
 document.getElementById("resource-policy-mode").addEventListener("change",render);
+document.getElementById("reset-node-preferences").addEventListener("click",()=>{
+  for(const group of NODE_PREFERENCE_GROUPS){
+    state.nodePreferences[group.id]=0;
+  }
+  state.recommendationCache=null;
+  initializeNodePreferences();
+  setMessage("个人节点偏好已恢复为 0",false);
+  render();
+});
 document.getElementById("undo-button").addEventListener("click",()=>{
   state.actions.pop(); setMessage("已撤销最后一步",false); render();
 });
@@ -1755,6 +1954,7 @@ document.getElementById("node-kind-select").addEventListener("change",event=>{
   setMessage("节点类型已修正，路线已清空以重新结算",false);
   render();
 });
+initializeNodePreferences();
 render();
 renderRewardCatalog();
 </script>
