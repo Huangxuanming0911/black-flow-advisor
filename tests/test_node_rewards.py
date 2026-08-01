@@ -19,7 +19,7 @@ class NodeRewardKnowledgeTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.payload = json.loads(REWARD_PATH.read_text(encoding="utf-8"))
 
-    def test_six_requested_dimensions_are_present(self) -> None:
+    def test_requested_dimensions_and_life_are_present(self) -> None:
         self.assertEqual(
             [item["id"] for item in self.payload["dimensions"]],
             [
@@ -29,6 +29,7 @@ class NodeRewardKnowledgeTests(unittest.TestCase):
                 "collectibles",
                 "recruitment_tickets",
                 "parts",
+                "target_life",
             ],
         )
 

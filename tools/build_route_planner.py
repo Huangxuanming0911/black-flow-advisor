@@ -4,6 +4,7 @@ import argparse
 import base64
 import json
 from pathlib import Path
+import re
 
 import cv2
 
@@ -61,6 +62,15 @@ def _parser() -> argparse.ArgumentParser:
         / "data"
         / "knowledge"
         / "node-rewards.v0.1.json",
+    )
+    parser.add_argument(
+        "--empirical-rewards",
+        type=Path,
+        default=PROJECT_ROOT
+        / "data"
+        / "knowledge"
+        / "empirical-node-rewards.v0.1.json",
+        help="Reviewed post-battle reward samples used as route priors.",
     )
     parser.add_argument(
         "--image",
@@ -140,12 +150,33 @@ def _portable_graph(graph: dict) -> dict:
     }
 
 
+def _infer_floor(graph: dict, source_image: Path) -> int:
+    raw_floor = graph.get("floor") or graph.get("source_floor")
+    if raw_floor is not None:
+        return max(1, min(6, int(raw_floor)))
+    search_text = " ".join(
+        (
+            str(graph.get("source_image", "")),
+            source_image.name,
+        ),
+    )
+    match = re.search(
+        r"(?:layer|floor|层)[-_ ]*0?([1-6])",
+        search_text,
+        re.IGNORECASE,
+    )
+    return int(match.group(1)) if match else 3
+
+
 def main() -> int:
     args = _parser().parse_args()
     graph = json.loads(args.graph.read_text(encoding="utf-8"))
     knowledge = json.loads(args.knowledge.read_text(encoding="utf-8"))
     reward_knowledge = json.loads(
         args.reward_knowledge.read_text(encoding="utf-8"),
+    )
+    empirical_rewards = json.loads(
+        args.empirical_rewards.read_text(encoding="utf-8"),
     )
     source_image = _resolve_source_image(graph, args.image)
     template_path = PROJECT_ROOT / "web" / "route-planner.html"
@@ -156,6 +187,9 @@ def main() -> int:
         "movement_modes": knowledge["movement_modes"],
         "parts": knowledge["parts"]["items"],
         "reward_knowledge": reward_knowledge,
+        "empirical_rewards": empirical_rewards,
+        "floor": _infer_floor(graph, source_image),
+        "location_context": "main_map",
         "sample_parts": [] if args.no_sample_parts else SAMPLE_PARTS,
         "initial_action_points": max(0, args.initial_action_points),
         "source": {
@@ -163,6 +197,7 @@ def main() -> int:
             "image": str(source_image),
             "knowledge": str(args.knowledge),
             "reward_knowledge": str(args.reward_knowledge),
+            "empirical_rewards": str(args.empirical_rewards),
         },
         "image_data": _image_data_uri(source_image),
     }
