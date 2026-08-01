@@ -198,6 +198,56 @@ td input { width:62px; padding:5px }
 .resource-table td:last-child { text-align:right }
 .reward-known { color:var(--cyan); font-variant-numeric:tabular-nums }
 .reward-possible { color:var(--gold) }
+.strategy-controls {
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-bottom:9px;
+}
+.strategy-controls label {
+  display:flex;
+  gap:6px;
+  align-items:center;
+  color:var(--muted);
+  font-size:12px;
+}
+.strategy-controls input[type=number] { width:58px }
+.strategy-list { display:grid; gap:7px }
+.strategy-card {
+  padding:9px;
+  border:1px solid #2a373d;
+  border-radius:8px;
+  background:#0d1316;
+}
+.strategy-card.active { border-color:var(--cyan) }
+.strategy-head {
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:flex-start;
+}
+.strategy-title { font-weight:650 }
+.strategy-score {
+  color:var(--cyan);
+  font-variant-numeric:tabular-nums;
+}
+.strategy-route {
+  margin-top:6px;
+  color:#dce5e7;
+  font-size:12px;
+}
+.strategy-meta {
+  margin-top:5px;
+  color:var(--muted);
+  font-size:11px;
+}
+.strategy-evidence {
+  margin-top:5px;
+  color:var(--gold);
+  font-size:11px;
+}
+.strategy-card button { margin-top:7px; width:100% }
 .catalog-detail {
   margin-top:9px;
   padding:9px;
@@ -245,11 +295,18 @@ td input { width:62px; padding:5px }
 <header>
   <div>
     <h1>黑流树海 · 路线试算</h1>
-    <p class="subtitle">点击节点逐步规划；识别图只提供拓扑，随机收益以“机会”记账。</p>
+    <p class="subtitle">点击节点逐步规划；路线排序会结合当前层的实测战后奖励与样本置信度。</p>
   </div>
   <div class="toolbar">
     <label class="field">初始行动力
       <input id="initial-ap" type="number" min="0" max="99" value="5">
+    </label>
+    <label class="field">当前层
+      <select id="current-floor">
+        <option value="1">第1层</option><option value="2">第2层</option>
+        <option value="3">第3层</option><option value="4">第4层</option>
+        <option value="5">第5层</option><option value="6">第6层</option>
+      </select>
     </label>
     <label class="field">下一步移动
       <select id="movement-select"></select>
@@ -287,12 +344,32 @@ td input { width:62px; padding:5px }
     </section>
 
     <section class="panel">
+      <h2>候选路线 · 四种目标</h2>
+      <div class="strategy-controls">
+        <label>
+          <input id="recommend-use-parts" type="checkbox" checked>
+          所有策略允许使用加工品
+        </label>
+        <label>
+          至少保留
+          <input id="recommend-reserve-uses" type="number" min="0" max="99" value="0">
+          次
+        </label>
+      </div>
+      <div id="strategy-list" class="strategy-list"></div>
+      <p class="muted" style="margin-top:8px">
+        所有方案固定从“当前位置”出发。误入奇境会额外消耗一件加工品，并在此版以进入黑潭作为路线终点。
+      </p>
+    </section>
+
+    <section class="panel">
       <h2>节点完成后 · 奖励期望</h2>
       <div class="table-wrap">
         <table class="resource-table">
           <tbody id="resource-summary-body"></tbody>
         </table>
       </div>
+      <p id="reward-evidence" class="muted" style="margin-top:8px"></p>
       <ul id="rewards-list" class="compact-list"></ul>
     </section>
 
@@ -361,12 +438,77 @@ const partCatalog=Object.fromEntries(
 const rewardKnowledge=BOOTSTRAP.reward_knowledge||{
   dimensions:[],kind_aliases:{},node_rewards:[]
 };
+const empiricalRewardKnowledge=BOOTSTRAP.empirical_rewards||{profiles:[]};
+const EMPIRICAL_PROFILES=empiricalRewardKnowledge.profiles||[];
 const REWARD_DIMENSIONS=rewardKnowledge.dimensions||[];
 const REWARD_RULES=Object.fromEntries(
   (rewardKnowledge.node_rewards||[]).map(rule=>[rule.id,rule])
 );
 const REWARD_ALIASES=rewardKnowledge.kind_aliases||{};
 const FORCED_ENCOUNTERS=rewardKnowledge.forced_encounters||[];
+const PROCESSED_PART_IDS=new Set(
+  BOOTSTRAP.parts
+    .filter(part=>part.category==="processed")
+    .map(part=>part.id)
+);
+const EXIT_KINDS=new Set(["enemy","exit_end","exit_path"]);
+const STRATEGIES=[
+  {
+    id:"combat",name:"战斗推进",tone:"主动获取作战经验与战后资源",
+    weights:{
+      combat:11,emergency_combat:16,enemy:20,resident_base:15,
+      resident_occupied:9,unknown_combat:7,encounter:6,wish:5,
+      overlook:3,portal:4,exit_end:12,exit_path:10
+    },
+    resourceWeights:{
+      hope:2,originium_ingots:.5,command_xp:.7,
+      collectibles:5,recruitment_tickets:4.5,parts:4,target_life:1
+    },
+    apWeight:.8,partCost:1.2,exitBonus:24,portalBonus:2,pursuitPenalty:20
+  },
+  {
+    id:"conservative",name:"保守撤离",tone:"优先安全出口、行动力余量与低风险节点",
+    weights:{
+      combat:-3,emergency_combat:-10,enemy:7,resident_base:-9,
+      resident_occupied:-7,unknown_combat:-8,unknown_event:-3,
+      overlook:8,safe_house:9,wish:7,shop:5,special_shop:5,
+      lost_and_found:5,forest:1,portal:-3,exit_end:18,exit_path:20
+    },
+    resourceWeights:{
+      hope:4,originium_ingots:.3,command_xp:.15,
+      collectibles:2,recruitment_tickets:2,parts:3,target_life:8
+    },
+    apWeight:3.2,partCost:3.2,exitBonus:38,portalBonus:-3,pursuitPenalty:55
+  },
+  {
+    id:"balanced",name:"综合收益",tone:"兼顾可计算收益、风险、出口与零件成本",
+    weights:{
+      combat:7,emergency_combat:8,enemy:12,resident_base:10,
+      resident_occupied:5,unknown_combat:2,unknown_event:3,event:4,
+      encounter:9,wish:10,overlook:7,safe_house:6,scout:6,
+      lost_and_found:5,portal:7,exit_end:16,exit_path:15
+    },
+    resourceWeights:{
+      hope:4,originium_ingots:.8,command_xp:.35,
+      collectibles:7,recruitment_tickets:5,parts:6,target_life:3
+    },
+    apWeight:1.7,partCost:2,exitBonus:30,portalBonus:5,pursuitPenalty:38
+  },
+  {
+    id:"exploration",name:"探索揭示",tone:"偏好未知事件、羽瞰点、密道和黑潭入口",
+    weights:{
+      combat:2,emergency_combat:1,enemy:8,resident_base:5,
+      unknown_combat:10,unknown_event:14,event:11,overlook:13,
+      tunnel:10,portal:18,scout:9,wish:8,encounter:7,
+      lost_and_found:6,exit_end:9,exit_path:10
+    },
+    resourceWeights:{
+      hope:3,originium_ingots:.3,command_xp:.1,
+      collectibles:5,recruitment_tickets:2,parts:3,target_life:1.5
+    },
+    apWeight:1.1,partCost:1.5,exitBonus:19,portalBonus:18,pursuitPenalty:30
+  }
+];
 const startNode=graph.nodes.find(node=>node.kind==="current")?.node_id
   || graph.nodes[0]?.node_id;
 const KIND_OPTIONS=[
@@ -394,12 +536,15 @@ const state={
   overrides:{},
   editMode:false,
   selectedNode:null,
-  nextPartId:(BOOTSTRAP.sample_parts||[]).length+1
+  nextPartId:(BOOTSTRAP.sample_parts||[]).length+1,
+  floor:Number(BOOTSTRAP.floor||3),
+  recommendationCache:null
 };
 const svg=document.getElementById("map-overlay");
 const ns="http://www.w3.org/2000/svg";
 document.getElementById("map-image").src=BOOTSTRAP.image_data||"";
 document.getElementById("initial-ap").value=String(BOOTSTRAP.initial_action_points??4);
+document.getElementById("current-floor").value=String(state.floor);
 
 function gridPosition(id){
   const match=/^node_r(-?\d+)c(-?\d+)$/.exec(id);
@@ -462,7 +607,10 @@ function addOpportunity(result,label){
 }
 function emptyResourceStats(){
   return Object.fromEntries(REWARD_DIMENSIONS.map(dimension=>[
-    dimension.id,{minimum:0,maximum:0,expected:0,pending:0,notes:[]}
+    dimension.id,{
+      minimum:0,maximum:0,expected:0,pending:0,notes:[],
+      empiricalExpected:0,empiricalWeightedExpected:0
+    }
   ]));
 }
 function addResourceNote(stat,note){
@@ -496,12 +644,80 @@ function applyRewardEntry(result,dimensionId,entry){
   }
   addResourceNote(stat,entry.summary);
 }
+function empiricalProfile(kind){
+  const canonical=rewardKind(kind);
+  const context=BOOTSTRAP.location_context||"main_map";
+  const exact=EMPIRICAL_PROFILES.find(profile=>
+    Number(profile.floor)===Number(state.floor)
+    &&profile.location_context===context
+    &&profile.node_kind===canonical
+  )||null;
+  const fallback=EMPIRICAL_PROFILES.find(profile=>
+    profile.floor===null
+    &&profile.cross_floor_fallback
+    &&profile.location_context===context
+    &&profile.node_kind===canonical
+  )||null;
+  if(!exact) return fallback;
+  if(!fallback||Number(fallback.sample_count)<=Number(exact.sample_count)){
+    return exact;
+  }
+  const common=Object.keys(exact.rewards||{}).filter(
+    id=>fallback.rewards?.[id]
+  );
+  const agrees=common.every(id=>
+    Number(exact.rewards[id].expected)===Number(fallback.rewards[id].expected)
+  );
+  return agrees?fallback:exact;
+}
+function applyKnownDistributionOnly(result,dimensionId,entry){
+  const stat=result.resourceStats[dimensionId];
+  const distribution=entry?.known_distribution;
+  if(!stat||!distribution) return;
+  stat.minimum+=Number(distribution.minimum||0);
+  stat.maximum+=Number(distribution.maximum||0);
+  stat.expected+=Number(distribution.expected||0);
+  addResourceNote(stat,distribution.summary);
+}
+function applyEmpiricalProfile(result,profile,excludedDimensions=new Set()){
+  if(!profile) return;
+  for(const [dimensionId,reward] of Object.entries(profile.rewards||{})){
+    if(excludedDimensions.has(dimensionId)) continue;
+    const stat=result.resourceStats[dimensionId];
+    if(!stat) continue;
+    const expected=Number(reward.expected||0);
+    stat.minimum+=Number(reward.minimum||0);
+    stat.maximum+=Number(reward.maximum||0);
+    stat.expected+=expected;
+    stat.empiricalExpected+=expected;
+    stat.empiricalWeightedExpected+=
+      expected*Number(profile.confidence_weight||0);
+    addResourceNote(
+      stat,
+      `实测 ${profile.sample_count} 场（${profile.confidence_zh}）`
+    );
+  }
+  result.empiricalEvidence.push(profile);
+}
 function applyNodeRewards(result,kind){
   const rule=REWARD_RULES[rewardKind(kind)];
-  if(!rule) return;
-  for(const [dimensionId,entry] of Object.entries(rule.rewards||{})){
-    applyRewardEntry(result,dimensionId,entry);
+  const profile=empiricalProfile(kind);
+  const authoritativeDimensions=new Set();
+  if(rule){
+    for(const [dimensionId,entry] of Object.entries(rule.rewards||{})){
+      if([
+        "exact","conditional_exact","choice","conditional","remaining_ap"
+      ].includes(entry.kind)){
+        authoritativeDimensions.add(dimensionId);
+        applyRewardEntry(result,dimensionId,entry);
+      } else if(profile?.rewards?.[dimensionId]){
+        applyKnownDistributionOnly(result,dimensionId,entry);
+      } else {
+        applyRewardEntry(result,dimensionId,entry);
+      }
+    }
   }
+  applyEmpiricalProfile(result,profile,authoritativeDimensions);
 }
 function settleForcedEncounter(result){
   if(result.forcedEncounters.length||result.ap!==0) return;
@@ -558,14 +774,23 @@ function settleNode(result,id,firstCompletion){
   applyNodeRewards(result,kind);
   return 0;
 }
-function simulate(){
+function consumePartUse(result,part,{exhaust=false}={}){
+  if(!part||!Number.isFinite(part.remaining)||part.remaining<=0) return false;
+  part.remaining=exhaust?0:part.remaining-1;
+  if(part.remaining===0){
+    result.partMin-=Math.max(0,Number(part.value||0));
+    result.partMax-=Math.max(0,Number(part.value||0));
+  }
+  return true;
+}
+function simulate(actions=state.actions){
   const result={
     valid:true,ap:Number(document.getElementById("initial-ap").value||0),
     hope:0,ingots:0,collectibles:0,combats:0,moves:0,
     current:startNode,steps:[],completed:new Set(),opportunities:{},
     resourceStats:emptyResourceStats(),
     parts:initialPartState(),partMin:0,partMax:0,error:"",warnings:[],
-    forcedEncounters:[]
+    forcedEncounters:[],empiricalEvidence:[]
   };
   for(const part of Object.values(result.parts)){
     result.partMin+=Math.max(0,Number(part.value||0));
@@ -577,9 +802,12 @@ function simulate(){
     "emergency_support","resident_base","resident_occupied","portal","scout",
     "exit_end","exit_path"
   ]);
-  for(let index=0;index<state.actions.length;index++){
-    const action=state.actions[index];
+  for(let index=0;index<actions.length;index++){
+    const action=actions[index];
     const spec={modeId:action.modeId,partId:action.partId,rule:movementRules[action.modeId]};
+    if(!spec.rule){
+      result.valid=false; result.error=`第${index+1}步：未知移动方式`; break;
+    }
     const [legal,reason]=isLegal(result.current,action.target,spec);
     if(!legal){ result.valid=false; result.error=`第${index+1}步：${reason}`; break; }
     const cost=Number(spec.rule.action_point_cost?.value||0);
@@ -594,11 +822,7 @@ function simulate(){
     result.ap-=cost;
     result.moves+=1;
     if(selectedPart){
-      selectedPart.remaining-=1;
-      if(selectedPart.remaining===0){
-        result.partMin-=Math.max(0,Number(selectedPart.value||0));
-        result.partMax-=Math.max(0,Number(selectedPart.value||0));
-      }
+      consumePartUse(result,selectedPart);
     }
     let postAp=0;
     for(const effect of spec.rule.post_effects||[]){
@@ -614,6 +838,21 @@ function simulate(){
     }
     const kind=kindOf(action.target);
     const first=oneShot.has(kind)&&!result.completed.has(action.target);
+    if(kind==="portal"&&first){
+      const portalPart=result.parts[action.portalPartId];
+      if(
+        !portalPart
+        ||!PROCESSED_PART_IDS.has(portalPart.partId)
+        ||!consumePartUse(result,portalPart,{exhaust:true})
+      ){
+        result.valid=false;
+        result.error=`第${index+1}步：进入误入奇境需要额外消耗1件可用加工品`;
+        break;
+      }
+      result.warnings.push(
+        `进入误入奇境额外消耗「${partCatalog[portalPart.partId]?.name_zh||portalPart.partId}」`
+      );
+    }
     if(first) result.completed.add(action.target);
     if(kind==="tunnel"){
       const pair=tunnelPairs()[action.target];
@@ -630,10 +869,12 @@ function simulate(){
     result.steps.push({
       index:index+1,source:result.current,selectedTarget:action.target,
       target:destination,modeId:action.modeId,partId:action.partId,
-      cost,gain:postAp+nodeAp,apAfter:result.ap,kind,autoTeleport:Boolean(paired)
+      portalPartId:kind==="portal"&&first?action.portalPartId:"",
+      cost,gain:postAp+nodeAp,apAfter:result.ap,kind,
+      firstCompletion:first,autoTeleport:Boolean(paired)
     });
     result.current=destination;
-    if(result.ap===0&&!["exit_end","exit_path"].includes(kind)){
+    if(result.ap===0&&!["exit_end","exit_path","enemy","portal"].includes(kind)){
       settleForcedEncounter(result);
     }
   }
@@ -681,6 +922,320 @@ function refreshMovementOptions(result){
     option.value=choice.value; option.textContent=choice.label; select.append(option);
   }
   select.value=choices.some(choice=>choice.value===previous)?previous:choices[0].value;
+}
+function remainingProcessedUses(result){
+  return Object.values(result.parts)
+    .filter(part=>PROCESSED_PART_IDS.has(part.partId))
+    .reduce((total,part)=>total+Math.max(0,Number(part.remaining||0)),0);
+}
+function portalFuelIds(result){
+  return Object.values(result.parts)
+    .filter(part=>
+      PROCESSED_PART_IDS.has(part.partId)
+      &&Number(part.remaining||0)>0
+    )
+    .sort((a,b)=>{
+      const aCost=Number(a.value||0);
+      const bCost=Number(b.value||0);
+      return aCost-bCost
+        ||Number(a.remaining||0)-Number(b.remaining||0)
+        ||a.instanceId.localeCompare(b.instanceId);
+    })
+    .map(part=>part.instanceId);
+}
+function routePartSpend(result){
+  let uses=0;
+  let valueCost=0;
+  for(const part of state.parts){
+    if(!PROCESSED_PART_IDS.has(part.partId)) continue;
+    const live=result.parts[part.instanceId];
+    const initial=Math.max(0,Number(part.uses||0));
+    const remaining=Math.max(0,Number(live?.remaining||0));
+    const spent=Math.max(0,initial-remaining);
+    uses+=spent;
+    valueCost+=spent*(1+Number(part.value||0)/Math.max(1,initial));
+  }
+  return {uses,valueCost};
+}
+function routeTerminalKind(result){
+  return result.steps.length?result.steps[result.steps.length-1].kind:"";
+}
+function isRouteTerminal(result){
+  const kind=routeTerminalKind(result);
+  return EXIT_KINDS.has(kind)
+    ||kind==="portal"
+    ||result.forcedEncounters.length>0;
+}
+function routeScore(result,strategy){
+  let score=0;
+  for(const step of result.steps){
+    if(step.firstCompletion||["overlook","tunnel"].includes(step.kind)){
+      score+=Number(strategy.weights[step.kind]||0);
+    }
+  }
+  for(const [id,weight] of Object.entries(strategy.resourceWeights||{})){
+    const stat=result.resourceStats[id];
+    if(stat){
+      const effective=
+        Number(stat.expected||0)
+        -Number(stat.empiricalExpected||0)
+        +Number(stat.empiricalWeightedExpected||0);
+      score+=effective*weight;
+    }
+  }
+  score+=Math.max(0,result.ap)*strategy.apWeight;
+  const spend=routePartSpend(result);
+  score-=spend.valueCost*strategy.partCost;
+  score-=result.steps.length*.25;
+  const terminal=routeTerminalKind(result);
+  if(EXIT_KINDS.has(terminal)) score+=strategy.exitBonus;
+  else if(terminal==="portal") score+=strategy.portalBonus;
+  else score-=8;
+  if(result.forcedEncounters.length){
+    score-=strategy.pursuitPenalty;
+  }
+  return score;
+}
+function routeStateSignature(result){
+  const completed=[...result.completed].sort().join(",");
+  const parts=Object.values(result.parts)
+    .sort((a,b)=>a.instanceId.localeCompare(b.instanceId))
+    .map(part=>`${part.instanceId}:${part.remaining}`)
+    .join(",");
+  return `${result.current}|${result.ap}|${completed}|${parts}|${result.forcedEncounters.length}`;
+}
+function routeActionSignature(actions){
+  return actions.map(action=>
+    `${action.target}:${action.modeId}:${action.partId||""}:${action.portalPartId||""}`
+  ).join(">");
+}
+function candidateMovements(result,useParts){
+  const choices=[{modeId:"walk",partId:"",rule:movementRules.walk}];
+  if(!useParts) return choices;
+  for(const part of state.parts){
+    const catalog=partCatalog[part.partId];
+    const live=result.parts[part.instanceId];
+    if(
+      catalog?.category!=="processed"
+      ||!live
+      ||Number(live.remaining||0)<=0
+    ) continue;
+    const rule=movementRules[catalog.movement_mode];
+    if(!rule||rule.target_rule?.type==="random_any") continue;
+    choices.push({
+      modeId:rule.id,partId:part.instanceId,rule
+    });
+  }
+  return choices;
+}
+function expandRoute(prefix,result,{useParts,reserveUses}){
+  const expansions=[];
+  const completed=result.completed;
+  for(const spec of candidateMovements(result,useParts)){
+    const targets=spec.modeId==="walk"
+      ?[...(adjacency[result.current]||[])]
+      :Object.keys(nodes);
+    for(const target of targets){
+      if(target===result.current) continue;
+      const kind=kindOf(target);
+      if(
+        completed.has(target)
+        &&!["forest","overlook","tunnel","current"].includes(kind)
+      ) continue;
+      const [legal]=isLegal(result.current,target,spec);
+      if(!legal) continue;
+      const baseAction={
+        target,modeId:spec.modeId,partId:spec.partId,portalPartId:""
+      };
+      const fuelOptions=kind==="portal"
+        ?(useParts?portalFuelIds(result):[])
+        :[""];
+      for(const portalPartId of fuelOptions){
+        const action={...baseAction,portalPartId};
+        const actions=[...prefix,action];
+        const next=simulate(actions);
+        if(!next.valid) continue;
+        if(remainingProcessedUses(next)<reserveUses) continue;
+        expansions.push({actions,result:next});
+        break;
+      }
+    }
+  }
+  return expansions;
+}
+function findStrategyCandidates(strategy,options){
+  const initial=simulate([]);
+  if(!initial.valid) return [];
+  let frontier=[{actions:[],result:initial}];
+  const candidates=[];
+  const seen=new Map();
+  const maxDepth=Math.min(9,Math.max(4,initial.ap+4));
+  for(let depth=0;depth<maxDepth;depth++){
+    const nextFrontier=[];
+    for(const item of frontier){
+      for(const expanded of expandRoute(item.actions,item.result,options)){
+        const score=routeScore(expanded.result,strategy);
+        const signature=routeStateSignature(expanded.result);
+        const previous=seen.get(signature);
+        if(previous!==undefined&&previous>=score) continue;
+        seen.set(signature,score);
+        candidates.push({...expanded,score});
+        if(
+          !isRouteTerminal(expanded.result)
+          &&expanded.result.ap>0
+        ){
+          nextFrontier.push({...expanded,score});
+        }
+      }
+    }
+    nextFrontier.sort((a,b)=>b.score-a.score);
+    frontier=nextFrontier.slice(0,70);
+    if(!frontier.length) break;
+  }
+  return candidates.sort((a,b)=>b.score-a.score);
+}
+function recommendationKey(){
+  return JSON.stringify({
+    floor:state.floor,
+    ap:Number(document.getElementById("initial-ap").value||0),
+    useParts:document.getElementById("recommend-use-parts").checked,
+    reserve:Number(document.getElementById("recommend-reserve-uses").value||0),
+    parts:state.parts.map(part=>[
+      part.instanceId,part.partId,part.uses,part.value
+    ]),
+    overrides:state.overrides
+  });
+}
+function buildRecommendations(){
+  const key=recommendationKey();
+  if(state.recommendationCache?.key===key){
+    return state.recommendationCache.routes;
+  }
+  const useParts=document.getElementById("recommend-use-parts").checked;
+  const initial=simulate([]);
+  const requestedReserve=Math.max(
+    0,
+    Number(document.getElementById("recommend-reserve-uses").value||0)
+  );
+  const reserveUses=Math.min(
+    requestedReserve,
+    remainingProcessedUses(initial)
+  );
+  const options={useParts,reserveUses};
+  const used=new Set();
+  const routes=STRATEGIES.map(strategy=>{
+    const candidates=findStrategyCandidates(strategy,options);
+    const selected=candidates.find(candidate=>
+      !used.has(routeActionSignature(candidate.actions))
+    )||candidates[0]||null;
+    if(selected) used.add(routeActionSignature(selected.actions));
+    return {strategy,candidate:selected};
+  });
+  state.recommendationCache={key,routes};
+  return routes;
+}
+function routeSummary(candidate){
+  const result=candidate.result;
+  const battles=result.steps.filter(step=>
+    ["combat","emergency_combat","enemy","resident_base","resident_occupied"].includes(step.kind)
+    &&step.firstCompletion
+  ).length;
+  const unknowns=result.steps.filter(step=>
+    ["unknown_combat","unknown_event"].includes(step.kind)
+    &&step.firstCompletion
+  ).length;
+  const spend=routePartSpend(result);
+  const terminal=routeTerminalKind(result);
+  const tags=[
+    `余${result.ap}行动力`,
+    battles?`${battles}场已知作战`:"",
+    unknowns?`${unknowns}个未知节点`:"",
+    spend.uses?`用${spend.uses}次加工品`:"全程徒步",
+    EXIT_KINDS.has(terminal)?`抵达${KIND_LABEL[terminal]}`:"",
+    terminal==="portal"?"进入黑潭":"",
+    result.forcedEncounters.length?"触发追猎":""
+  ].filter(Boolean);
+  return tags.join(" · ");
+}
+function compactNumber(value){
+  return Number(value||0).toFixed(2).replace(/\.?0+$/,"");
+}
+function empiricalRewardSummary(result){
+  const labels={
+    command_xp:"经验",originium_ingots:"锭",recruitment_tickets:"券",
+    collectibles:"藏品",parts:"零件",target_life:"生命"
+  };
+  const ordered=[
+    "command_xp","originium_ingots","recruitment_tickets",
+    "collectibles","parts","target_life"
+  ];
+  const values=ordered.map(id=>{
+    const value=Number(result.resourceStats[id]?.empiricalExpected||0);
+    return value?`${labels[id]} ${compactNumber(value)}`:"";
+  }).filter(Boolean);
+  return values.length?`实测基础期望：${values.join(" · ")}`:"暂无匹配的实测基础奖励";
+}
+function empiricalEvidenceSummary(result){
+  const counts=new Map();
+  for(const profile of result.empiricalEvidence){
+    counts.set(profile.id,(counts.get(profile.id)||0)+1);
+  }
+  const parts=[];
+  for(const [id,count] of counts){
+    const profile=EMPIRICAL_PROFILES.find(item=>item.id===id);
+    if(!profile) continue;
+    const floor=profile.floor===null?"跨层":`第${profile.floor}层`;
+    const kind=KIND_LABEL[profile.node_kind]||profile.node_kind;
+    parts.push(
+      `${floor}${kind} n=${profile.sample_count}（${profile.confidence_zh}）${count>1?`×${count}节点`:""}`
+    );
+  }
+  return parts.join("；");
+}
+function renderRecommendations(){
+  const container=document.getElementById("strategy-list");
+  container.textContent="";
+  const currentSignature=routeActionSignature(state.actions);
+  for(const [index,item] of buildRecommendations().entries()){
+    const card=document.createElement("article");
+    card.className="strategy-card";
+    const {strategy,candidate}=item;
+    if(!candidate){
+      card.innerHTML=`<div class="strategy-head"><div><div class="strategy-title">${strategy.name}</div><div class="muted">${strategy.tone}</div></div></div><p class="strategy-route empty">当前行动力、零件和图结构下没有合规候选路线。</p>`;
+      container.append(card);
+      continue;
+    }
+    const signature=routeActionSignature(candidate.actions);
+    if(signature===currentSignature) card.classList.add("active");
+    const labels=candidate.result.steps.map(step=>
+      KIND_LABEL[step.kind]||nodes[step.selectedTarget]?.label||step.selectedTarget
+    );
+    const buttonText=signature===currentSignature?"当前已采用":"采用这条路线";
+    card.innerHTML=`
+      <div class="strategy-head">
+        <div>
+          <div class="strategy-title">${strategy.name}</div>
+          <div class="muted">${strategy.tone}</div>
+        </div>
+        <div class="strategy-score">${candidate.score.toFixed(1)}</div>
+      </div>
+      <div class="strategy-route">当前位置 → ${labels.join(" → ")}</div>
+      <div class="strategy-meta">${routeSummary(candidate)}</div>
+      <div class="strategy-evidence">${empiricalRewardSummary(candidate.result)}</div>
+      <div class="strategy-meta">${empiricalEvidenceSummary(candidate.result)||"该路线目前只依据规则与节点偏好评分"}</div>
+      <button type="button" data-route="${index}" ${signature===currentSignature?"disabled":""}>${buttonText}</button>
+    `;
+    container.append(card);
+  }
+  container.querySelectorAll("[data-route]").forEach(button=>{
+    button.addEventListener("click",event=>{
+      const item=buildRecommendations()[Number(event.currentTarget.dataset.route)];
+      if(!item?.candidate) return;
+      state.actions=item.candidate.actions.map(action=>({...action}));
+      setMessage(`已采用「${item.strategy.name}」候选路线`,false);
+      render();
+    });
+  });
 }
 function addSvg(tag,attrs,parent=svg){
   const element=document.createElementNS(ns,tag);
@@ -747,13 +1302,31 @@ function handleNodeClick(id){
   const selection=movementSpec(document.getElementById("movement-select").value);
   const [legal,reason]=isLegal(currentNode(),id,selection);
   if(!legal){ setMessage(reason,true); return; }
-  state.actions.push({target:id,modeId:selection.modeId,partId:selection.partId});
+  const action={
+    target:id,modeId:selection.modeId,partId:selection.partId,
+    portalPartId:""
+  };
+  if(kindOf(id)==="portal"){
+    const base=simulate();
+    const fuel=portalFuelIds(base).find(partId=>
+      simulate([...state.actions,{...action,portalPartId:partId}]).valid
+    );
+    if(!fuel){
+      setMessage("误入奇境需要额外消耗1件加工品；当前没有可用入场零件",true);
+      return;
+    }
+    action.portalPartId=fuel;
+  }
+  state.actions.push(action);
   const result=simulate();
   if(!result.valid){
     state.actions.pop();
     setMessage(result.error,true);
   } else {
-    setMessage("已加入路线",false);
+    const portalText=action.portalPartId
+      ?`；入场将额外消耗「${partCatalog[result.parts[action.portalPartId]?.partId]?.name_zh||"加工品"}」`
+      :"";
+    setMessage(`已加入路线${portalText}`,false);
   }
   render();
 }
@@ -787,6 +1360,10 @@ function renderSummary(result){
     row.innerHTML=`<td>${dimension.name_zh}</td><td class="${stat.pending?"reward-possible":"reward-known"}" title="${stat.notes.join("；")}">${value}</td>`;
     resourceBody.append(row);
   }
+  const evidence=empiricalEvidenceSummary(result);
+  document.getElementById("reward-evidence").textContent=evidence
+    ?`当前按第${state.floor}层实测基础结算：${evidence}。显示原始均值；推荐排序对低样本做置信折扣，且不把宝箱、无主财富或藏品附带零件混入基础值。`
+    :`当前路线在第${state.floor}层没有可匹配的干净实测样本；仍使用已核实规则和未定机会。`;
   const opportunities=Object.entries(result.opportunities);
   if(!opportunities.length){
     const item=document.createElement("li"); item.className="empty"; item.textContent="当前路线尚无节点收益"; rewards.append(item);
@@ -830,7 +1407,12 @@ function renderRewardCatalog(){
     const summary=entry?.summary?` · ${entry.summary}`:"";
     return `<div class="catalog-dimension"><span>${dimension.name_zh}</span><span>${rewardEntryText(entry)}${summary}</span></div>`;
   }).join("");
-  detail.innerHTML=`<p><strong>${rule.name_zh}</strong></p><p class="muted">${rule.summary}</p><div class="catalog-dimensions">${dimensions}</div>`;
+  const profile=empiricalProfile(id);
+  const profileFloor=profile?.floor===null?"跨层":`第${profile?.floor}层`;
+  const observed=profile
+    ?`<p class="strategy-evidence">${profileFloor}实测 n=${profile.sample_count}（${profile.confidence_zh}）：${Object.entries(profile.rewards||{}).map(([dimensionId,reward])=>`${REWARD_DIMENSIONS.find(item=>item.id===dimensionId)?.name_zh||dimensionId} ${compactNumber(reward.expected)}`).join(" · ")}</p>`
+    :`<p class="muted">第${state.floor}层暂无干净实测基础样本。</p>`;
+  detail.innerHTML=`<p><strong>${rule.name_zh}</strong></p><p class="muted">${rule.summary}</p>${observed}<div class="catalog-dimensions">${dimensions}</div>`;
 }
 function renderRoute(result){
   const body=document.getElementById("route-body"); body.textContent="";
@@ -844,7 +1426,10 @@ function renderRoute(result){
     const targetText=step.autoTeleport
       ?`${nodes[step.selectedTarget].label} → 自动传送至 ${step.target}`
       :`${KIND_LABEL[step.kind]||nodes[step.target].label}`;
-    row.innerHTML=`<td>${step.index}</td><td>${targetText}<br><span class="muted">${step.selectedTarget}</span></td><td>${movementName(step)}</td><td class="num">${delta>=0?"+":""}${delta}<br><span class="muted">余 ${step.apAfter}</span></td>`;
+    const portalCost=step.portalPartId
+      ?`<br><span class="muted">入场另耗：${partCatalog[state.parts.find(part=>part.instanceId===step.portalPartId)?.partId]?.name_zh||"加工品"}</span>`
+      :"";
+    row.innerHTML=`<td>${step.index}</td><td>${targetText}<br><span class="muted">${step.selectedTarget}</span>${portalCost}</td><td>${movementName(step)}</td><td class="num">${delta>=0?"+":""}${delta}<br><span class="muted">余 ${step.apAfter}</span></td>`;
     body.append(row);
   }
 }
@@ -901,6 +1486,7 @@ function render(){
   refreshMovementOptions(result);
   renderMap(result);
   renderSummary(result);
+  renderRecommendations();
   renderRoute(result);
   renderParts(result);
   renderNodeEditor();
@@ -925,6 +1511,14 @@ for(const rule of rewardKnowledge.node_rewards||[]){
 }
 document.getElementById("reward-kind-select").addEventListener("change",renderRewardCatalog);
 document.getElementById("initial-ap").addEventListener("change",render);
+document.getElementById("current-floor").addEventListener("change",event=>{
+  state.floor=Number(event.target.value||3);
+  state.recommendationCache=null;
+  render();
+  renderRewardCatalog();
+});
+document.getElementById("recommend-use-parts").addEventListener("change",render);
+document.getElementById("recommend-reserve-uses").addEventListener("change",render);
 document.getElementById("undo-button").addEventListener("click",()=>{
   state.actions.pop(); setMessage("已撤销最后一步",false); render();
 });

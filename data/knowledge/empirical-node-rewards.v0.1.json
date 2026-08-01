@@ -1,0 +1,579 @@
+{
+  "schema_version": "0.1.0",
+  "generated_at": "2026-08-01",
+  "source": {
+    "repository": "black-flow-reward-collector",
+    "path": "data/records/rewards.jsonl",
+    "snapshot_note": "rewards.jsonl"
+  },
+  "scope": "人工确认且无额外奖励来源的战后基础结算；源石锭使用正常奖励栏，零件不含藏品附带零件，希望暂不纳入。",
+  "sample_policy": {
+    "included": 12,
+    "excluded": 8,
+    "excluded_sample_ids": [
+      "20260728T153453-3d0e63f0",
+      "20260728T201726-3b0dee42",
+      "20260728T203401-2a232fc1",
+      "20260728T203749-beb47985",
+      "20260729T070856-65d375f1",
+      "20260729T083458-cb165437",
+      "20260729T090340-361fa1ca",
+      "20260729T090442-d65d1d46"
+    ],
+    "minimum_stable_samples": 5,
+    "confidence_note": "样本不足5条时只作为推荐先验；显示原始均值，排序时按置信权重折扣。"
+  },
+  "profiles": [
+    {
+      "id": "floor-3:main_map:combat",
+      "floor": 3,
+      "location_context": "main_map",
+      "node_kind": "combat",
+      "sample_count": 3,
+      "confidence": "preliminary_stable",
+      "confidence_zh": "初步稳定",
+      "confidence_weight": 0.78,
+      "cross_floor_fallback": false,
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "趁火打劫",
+        "预算否决",
+        "黑色逆流"
+      ],
+      "sample_ids": [
+        "20260728T182236-a4b17ad1",
+        "20260728T183620-4c23a7e7",
+        "20260728T191631-7743a2ad"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "observations": 3
+        },
+        "command_xp": {
+          "minimum": 15,
+          "maximum": 15,
+          "expected": 15.0,
+          "observations": 3
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "observations": 3
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 3
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.3333,
+          "observations": 3
+        }
+      }
+    },
+    {
+      "id": "floor-3:main_map:emergency_combat",
+      "floor": 3,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "cross_floor_fallback": false,
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "辟路行进"
+      ],
+      "sample_ids": [
+        "20260728T190102-7eb507aa"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 3,
+          "expected": 3.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 30,
+          "maximum": 30,
+          "expected": 30.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "floor-3:main_map:enemy",
+      "floor": 3,
+      "location_context": "main_map",
+      "node_kind": "enemy",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "cross_floor_fallback": false,
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "铁腕迷思"
+      ],
+      "sample_ids": [
+        "20260728T195347-f6e7a3bc"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 5,
+          "maximum": 5,
+          "expected": 5.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 38,
+          "maximum": 38,
+          "expected": 38.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "floor-4:main_map:encounter",
+      "floor": 4,
+      "location_context": "main_map",
+      "node_kind": "encounter",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "cross_floor_fallback": false,
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "共斗"
+      ],
+      "sample_ids": [
+        "20260728T202113-27f1b6ad"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 4,
+          "maximum": 4,
+          "expected": 4.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 19,
+          "maximum": 19,
+          "expected": 19.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "floor-5:main_map:combat",
+      "floor": 5,
+      "location_context": "main_map",
+      "node_kind": "combat",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "cross_floor_fallback": false,
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "湖中魔"
+      ],
+      "sample_ids": [
+        "20260729T073018-75b864e8"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 3,
+          "expected": 3.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 30,
+          "maximum": 30,
+          "expected": 30.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "floor-5:main_map:emergency_combat",
+      "floor": 5,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.65,
+      "cross_floor_fallback": false,
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "丛林法则",
+        "送别仪式"
+      ],
+      "sample_ids": [
+        "20260729T080539-3023c22b",
+        "20260729T091736-329503f2"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 5,
+          "maximum": 5,
+          "expected": 5.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 43,
+          "maximum": 43,
+          "expected": 43.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "floor-5:main_map:encounter",
+      "floor": 5,
+      "location_context": "main_map",
+      "node_kind": "encounter",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "cross_floor_fallback": false,
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "共斗"
+      ],
+      "sample_ids": [
+        "20260729T091301-a59edfd7"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 4,
+          "maximum": 4,
+          "expected": 4.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 19,
+          "maximum": 19,
+          "expected": 19.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "observations": 1
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "floor-5:main_map:resident_occupied",
+      "floor": 5,
+      "location_context": "main_map",
+      "node_kind": "resident_occupied",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "cross_floor_fallback": false,
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "进退趋同"
+      ],
+      "sample_ids": [
+        "20260729T074828-3daca7bb"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 5,
+          "maximum": 5,
+          "expected": 5.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 21,
+          "maximum": 21,
+          "expected": 21.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "floor-5:portal_internal:combat",
+      "floor": 5,
+      "location_context": "portal_internal",
+      "node_kind": "combat",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "cross_floor_fallback": false,
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "丛林法则"
+      ],
+      "sample_ids": [
+        "20260729T085624-5ec3f821"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 24,
+          "maximum": 24,
+          "expected": 24.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 1
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "floor-all:main_map:encounter",
+      "floor": null,
+      "location_context": "main_map",
+      "node_kind": "encounter",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.65,
+      "cross_floor_fallback": true,
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "共斗"
+      ],
+      "sample_ids": [
+        "20260728T202113-27f1b6ad",
+        "20260729T091301-a59edfd7"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 4,
+          "maximum": 4,
+          "expected": 4.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 19,
+          "maximum": 19,
+          "expected": 19.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "observations": 1
+        }
+      }
+    }
+  ]
+}

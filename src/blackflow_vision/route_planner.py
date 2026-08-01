@@ -129,6 +129,7 @@ class RouteAction:
     target: str
     mode_id: str = "walk"
     part_instance_id: str | None = None
+    portal_part_instance_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -146,6 +147,7 @@ class RouteStep:
     rewards: tuple[str, ...]
     warnings: tuple[str, ...]
     auto_teleport: bool = False
+    portal_part_instance_id: str | None = None
 
 
 @dataclass(slots=True)
@@ -153,6 +155,8 @@ class ResourceEstimate:
     minimum: int = 0
     maximum: int = 0
     expected: float = 0.0
+    empirical_expected: float = 0.0
+    empirical_weighted_expected: float = 0.0
     pending: int = 0
     notes: list[str] = field(default_factory=list)
 
@@ -177,6 +181,7 @@ class RouteSimulation:
     steps: list[RouteStep] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    empirical_evidence: list[str] = field(default_factory=list)
 
 
 def pair_tunnels(
@@ -270,6 +275,9 @@ def simulate_route(
     overrides: Mapping[str, str] | None = None,
     tunnel_pairs: Mapping[str, str] | None = None,
     reward_knowledge: Mapping[str, Any] | None = None,
+    empirical_knowledge: Mapping[str, Any] | None = None,
+    source_floor: int | None = None,
+    location_context: str = "main_map",
 ) -> RouteSimulation:
     overrides = overrides or {}
     tunnel_pairs = tunnel_pairs or pair_tunnels(graph, overrides)
@@ -291,6 +299,11 @@ def simulate_route(
     )
     movement_count = 0
     combat_count = 0
+    processed_part_ids = {
+        movement.part_id
+        for movement in movement_rules.values()
+        if movement.part_id is not None
+    }
 
     for index, action in enumerate(actions, start=1):
         movement = movement_rules.get(action.mode_id)
@@ -337,17 +350,7 @@ def simulate_route(
 
         if movement.part_id is not None:
             part = result.parts[action.part_instance_id or ""]
-            if part.remaining_uses is not None:
-                remaining = part.remaining_uses - 1
-                result.parts[part.instance_id] = PartState(
-                    instance_id=part.instance_id,
-                    part_id=part.part_id,
-                    remaining_uses=remaining,
-                    estimated_value=part.estimated_value,
-                )
-                if remaining == 0:
-                    result.part_value_min -= max(0, part.estimated_value)
-                    result.part_value_max -= max(0, part.estimated_value)
+            _consume_part_use(result, part)
 
         for resource, delta in movement.post_effects:
             if resource == "action_points":
@@ -375,6 +378,25 @@ def simulate_route(
             action.target not in result.completed_nodes
             and kind in _ONE_SHOT_KINDS
         )
+        if kind == "portal" and first_completion:
+            portal_part = result.parts.get(
+                action.portal_part_instance_id or "",
+            )
+            if (
+                portal_part is None
+                or portal_part.part_id not in processed_part_ids
+                or portal_part.remaining_uses is None
+                or portal_part.remaining_uses <= 0
+            ):
+                result.valid = False
+                result.errors.append(
+                    f"第{index}步进入误入奇境需要额外消耗1件可用加工品",
+                )
+                break
+            _consume_part_use(result, portal_part, exhaust=True)
+            step_warnings.append(
+                f"进入误入奇境额外消耗加工品 {portal_part.part_id}",
+            )
         rewards, ap_gain, combat_delta = _settle_node(
             kind,
             first_completion=first_completion,
@@ -385,6 +407,9 @@ def simulate_route(
                 result,
                 kind,
                 reward_knowledge=reward_knowledge,
+                empirical_knowledge=empirical_knowledge,
+                source_floor=source_floor,
+                location_context=location_context,
             )
         combat_count += combat_delta
         if first_completion:
@@ -432,12 +457,17 @@ def simulate_route(
                 rewards=tuple(rewards),
                 warnings=tuple(step_warnings),
                 auto_teleport=auto_teleport,
+                portal_part_instance_id=(
+                    action.portal_part_instance_id
+                    if kind == "portal" and first_completion
+                    else None
+                ),
             )
         )
         result.warnings.extend(step_warnings)
         if (
             result.action_points == 0
-            and kind not in {"exit_end", "exit_path"}
+            and kind not in {"exit_end", "exit_path", "enemy", "portal"}
             and not result.forced_encounters
         ):
             forced_combat = _settle_forced_encounter(
@@ -452,6 +482,26 @@ def simulate_route(
         combat_count=combat_count,
     )
     return result
+
+
+def _consume_part_use(
+    result: RouteSimulation,
+    part: PartState,
+    *,
+    exhaust: bool = False,
+) -> None:
+    if part.remaining_uses is None:
+        return
+    remaining = 0 if exhaust else part.remaining_uses - 1
+    result.parts[part.instance_id] = PartState(
+        instance_id=part.instance_id,
+        part_id=part.part_id,
+        remaining_uses=remaining,
+        estimated_value=part.estimated_value,
+    )
+    if remaining == 0:
+        result.part_value_min -= max(0, part.estimated_value)
+        result.part_value_max -= max(0, part.estimated_value)
 
 
 def _add_exact_resource(
@@ -475,6 +525,9 @@ def _settle_reward_catalog(
     kind: str,
     *,
     reward_knowledge: Mapping[str, Any] | None,
+    empirical_knowledge: Mapping[str, Any] | None,
+    source_floor: int | None,
+    location_context: str,
 ) -> None:
     if not reward_knowledge:
         return
@@ -485,14 +538,151 @@ def _settle_reward_catalog(
         for item in reward_knowledge.get("node_rewards", ())
     }
     node_rule = catalog.get(canonical_kind)
-    if node_rule is None:
-        return
-    for resource, raw in node_rule.get("rewards", {}).items():
-        _settle_reward_entry(
-            result,
-            str(resource),
-            raw,
+    profile = _find_empirical_profile(
+        empirical_knowledge,
+        floor=source_floor,
+        location_context=location_context,
+        node_kind=canonical_kind,
+    )
+    authoritative: set[str] = set()
+    if node_rule is not None:
+        for resource, raw in node_rule.get("rewards", {}).items():
+            resource_id = str(resource)
+            if str(raw.get("kind", "")) in {
+                "exact",
+                "conditional_exact",
+                "choice",
+                "conditional",
+                "remaining_ap",
+            }:
+                authoritative.add(resource_id)
+                _settle_reward_entry(result, resource_id, raw)
+            elif profile and resource_id in profile.get("rewards", {}):
+                _settle_known_distribution(result, resource_id, raw)
+            else:
+                _settle_reward_entry(result, resource_id, raw)
+    _settle_empirical_profile(
+        result,
+        profile,
+        excluded_dimensions=authoritative,
+    )
+
+
+def _find_empirical_profile(
+    empirical_knowledge: Mapping[str, Any] | None,
+    *,
+    floor: int | None,
+    location_context: str,
+    node_kind: str,
+) -> Mapping[str, Any] | None:
+    if not empirical_knowledge:
+        return None
+    profiles = empirical_knowledge.get("profiles", ())
+    exact = next(
+        (
+            profile
+            for profile in profiles
+            if profile.get("floor") == floor
+            and profile.get("location_context") == location_context
+            and profile.get("node_kind") == node_kind
+        ),
+        None,
+    )
+    if exact is not None:
+        fallback = next(
+            (
+                profile
+                for profile in profiles
+                if profile.get("floor") is None
+                and profile.get("cross_floor_fallback") is True
+                and profile.get("location_context") == location_context
+                and profile.get("node_kind") == node_kind
+            ),
+            None,
         )
+        if (
+            fallback is not None
+            and int(fallback.get("sample_count", 0))
+            > int(exact.get("sample_count", 0))
+            and _empirical_profiles_agree(exact, fallback)
+        ):
+            return fallback
+        return exact
+    return next(
+        (
+            profile
+            for profile in profiles
+            if profile.get("floor") is None
+            and profile.get("cross_floor_fallback") is True
+            and profile.get("location_context") == location_context
+            and profile.get("node_kind") == node_kind
+        ),
+        None,
+    )
+
+
+def _empirical_profiles_agree(
+    first: Mapping[str, Any],
+    second: Mapping[str, Any],
+) -> bool:
+    first_rewards = first.get("rewards", {})
+    second_rewards = second.get("rewards", {})
+    common = set(first_rewards).intersection(second_rewards)
+    return all(
+        float(first_rewards[resource].get("expected", 0))
+        == float(second_rewards[resource].get("expected", 0))
+        for resource in common
+    )
+
+
+def _settle_known_distribution(
+    result: RouteSimulation,
+    resource: str,
+    raw: Mapping[str, Any],
+) -> None:
+    estimate = result.resource_estimates.get(resource)
+    distribution = raw.get("known_distribution")
+    if estimate is None or not isinstance(distribution, Mapping):
+        return
+    estimate.minimum += int(distribution.get("minimum", 0))
+    estimate.maximum += int(distribution.get("maximum", 0))
+    estimate.expected += float(distribution.get("expected", 0))
+    note = str(distribution.get("summary", "")).strip()
+    if note and note not in estimate.notes:
+        estimate.notes.append(note)
+
+
+def _settle_empirical_profile(
+    result: RouteSimulation,
+    profile: Mapping[str, Any] | None,
+    *,
+    excluded_dimensions: set[str],
+) -> None:
+    if profile is None:
+        return
+    weight = float(profile.get("confidence_weight", 0))
+    for resource, raw in profile.get("rewards", {}).items():
+        resource_id = str(resource)
+        if resource_id in excluded_dimensions:
+            continue
+        estimate = result.resource_estimates.get(resource_id)
+        if estimate is None:
+            continue
+        expected = float(raw.get("expected", 0))
+        estimate.minimum += int(raw.get("minimum", 0))
+        estimate.maximum += int(raw.get("maximum", 0))
+        estimate.expected += expected
+        estimate.empirical_expected += expected
+        estimate.empirical_weighted_expected += expected * weight
+        note = (
+            f"实测 {profile.get('sample_count', 0)} 场"
+            f"（{profile.get('confidence_zh', '低样本')}）"
+        )
+        if note not in estimate.notes:
+            estimate.notes.append(note)
+    profile_id = str(profile.get("id", ""))
+    if profile_id:
+        result.empirical_evidence.append(profile_id)
 
 
 def _settle_reward_entry(

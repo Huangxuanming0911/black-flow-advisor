@@ -237,7 +237,7 @@ zero-action-point transfer to its other end. The
 simulator keeps three ledgers separate:
 
 - exact action-point and deterministic resource changes;
-- post-completion rewards across six dimensions, separating exact values,
+- post-completion rewards across seven dimensions, separating exact values,
   known expectations, ranges, and unresolved components;
 - current part-box valuation, including consumed movement parts and documented
   dynamic valuation rules.
@@ -245,9 +245,16 @@ simulator keeps three ledgers separate:
 Pursuit is modeled as a forced encounter rather than a map node. It is
 triggered when action points reach zero away from an exit; the normal variant
 adds its fixed recruitment-ticket reward, while the boss variant remains an
-explicit placeholder until the current zone endpoint is known. Normal and
-emergency combat include the currently known chest expectation without
-pretending that it is the complete battle reward expectation.
+  explicit placeholder until the current zone endpoint is known. Normal and
+  emergency combat now use floor-specific, manually reviewed clean samples as
+  confidence-weighted recommendation priors. Chest/unowned-wealth rewards and
+  collectible-granted parts remain separate from the base result.
+
+The page proposes combat, conservative, balanced, and exploration routes.
+Every strategy may use processed parts and obeys the same reserve, forced
+tunnel-transfer, and portal-entry constraints. Run
+`python tools/build_empirical_rewards.py` after collecting more reviewed runs,
+then rebuild the planner to refresh the empirical snapshot.
 
 `data/knowledge/node-rewards.v0.1.json` records the current Black Flow node
 reward matrix. Exact, choice-based, conditional, transaction, and

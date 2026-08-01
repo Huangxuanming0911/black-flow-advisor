@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "theme": "沉沦者的黑流树海",
   "collected_at": "2026-07-26",
   "scope": "节点直接收益与可选收益；不把零件估值混入资源数量",
@@ -24,7 +24,8 @@
     {"id": "command_xp", "name_zh": "指挥经验"},
     {"id": "collectibles", "name_zh": "收藏品"},
     {"id": "recruitment_tickets", "name_zh": "招募券"},
-    {"id": "parts", "name_zh": "零件"}
+    {"id": "parts", "name_zh": "零件"},
+    {"id": "target_life", "name_zh": "目标生命值"}
   ],
   "kind_aliases": {
     "shop": "secret_trader",
@@ -239,7 +240,7 @@
       "name_zh": "狭路相逢",
       "rewards": {
         "collectibles": {"kind": "choice", "minimum": 0, "maximum": 1, "summary": "选择最右目标时1件"},
-        "recruitment_tickets": {"kind": "conditional_exact", "value": 2, "summary": "限时击败所选目标后2张"},
+        "recruitment_tickets": {"kind": "exact", "value": 2, "summary": "成功完成后2张"},
         "parts": {"kind": "choice", "minimum": 0, "maximum": 1, "summary": "选择左/中目标时1件"}
       },
       "summary": "胜利固定2张招募券；再在1件零件与1件收藏品路线间选择，二者不能同时获得。",

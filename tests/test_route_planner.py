@@ -89,6 +89,17 @@ def _reward_knowledge() -> dict:
     )
 
 
+def _empirical_knowledge() -> dict:
+    return json.loads(
+        (
+            PROJECT_ROOT
+            / "data"
+            / "knowledge"
+            / "empirical-node-rewards.v0.1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+
 class RoutePlannerTests(unittest.TestCase):
     def test_overlook_offsets_walk_cost_on_every_visit(self) -> None:
         result = simulate_route(
@@ -270,7 +281,7 @@ class RoutePlannerTests(unittest.TestCase):
                     "recruitment_tickets"
                 ].maximum,
             ),
-            (0, 2),
+            (2, 2),
         )
         self.assertEqual(
             (
@@ -287,6 +298,75 @@ class RoutePlannerTests(unittest.TestCase):
             (0, 1),
         )
         self.assertEqual(result.guaranteed_collectibles, 1)
+
+    def test_floor_three_combat_uses_empirical_base_reward(self) -> None:
+        graph = PlannerGraph.from_unified_dict(
+            {
+                "nodes": [
+                    {"node_id": "node_r0c0", "kind": "current"},
+                    {"node_id": "node_r0c1", "kind": "combat"},
+                ],
+                "edges": [
+                    {"first": "node_r0c0", "second": "node_r0c1"},
+                ],
+            },
+        )
+        result = simulate_route(
+            graph,
+            "node_r0c0",
+            (RouteAction("node_r0c1"),),
+            RULES,
+            initial_action_points=2,
+            reward_knowledge=_reward_knowledge(),
+            empirical_knowledge=_empirical_knowledge(),
+            source_floor=3,
+        )
+        xp = result.resource_estimates["command_xp"]
+        ingots = result.resource_estimates["originium_ingots"]
+        parts = result.resource_estimates["parts"]
+        self.assertEqual(xp.expected, 15)
+        self.assertEqual(xp.empirical_expected, 15)
+        self.assertAlmostEqual(xp.empirical_weighted_expected, 11.7)
+        self.assertAlmostEqual(ingots.expected, 3.028846)
+        self.assertAlmostEqual(parts.expected, 0.400608)
+        self.assertEqual(
+            result.empirical_evidence,
+            ["floor-3:main_map:combat"],
+        )
+
+    def test_encounter_falls_back_across_floors_without_overriding_rules(self) -> None:
+        graph = PlannerGraph.from_unified_dict(
+            {
+                "nodes": [
+                    {"node_id": "node_r0c0", "kind": "current"},
+                    {"node_id": "node_r0c1", "kind": "encounter"},
+                ],
+                "edges": [
+                    {"first": "node_r0c0", "second": "node_r0c1"},
+                ],
+            },
+        )
+        result = simulate_route(
+            graph,
+            "node_r0c0",
+            (RouteAction("node_r0c1"),),
+            RULES,
+            initial_action_points=2,
+            reward_knowledge=_reward_knowledge(),
+            empirical_knowledge=_empirical_knowledge(),
+            source_floor=4,
+        )
+        self.assertEqual(
+            result.resource_estimates["command_xp"].expected,
+            19,
+        )
+        tickets = result.resource_estimates["recruitment_tickets"]
+        self.assertEqual((tickets.minimum, tickets.maximum), (2, 2))
+        self.assertEqual(tickets.expected, 2)
+        self.assertEqual(
+            result.empirical_evidence,
+            ["floor-all:main_map:encounter"],
+        )
 
     def test_shop_alias_does_not_count_inventory_as_free_income(self) -> None:
         graph = PlannerGraph.from_unified_dict(
@@ -395,6 +475,105 @@ class RoutePlannerTests(unittest.TestCase):
         self.assertAlmostEqual(parts.expected, 0.067308)
         self.assertEqual((parts.minimum, parts.maximum), (0, 2))
         self.assertEqual(parts.pending, 1)
+
+    def test_portal_requires_an_additional_processed_part_use(self) -> None:
+        graph = PlannerGraph.from_unified_dict(
+            {
+                "nodes": [
+                    {
+                        "node_id": "node_r0c0",
+                        "kind": "current",
+                        "center": [0, 0],
+                    },
+                    {
+                        "node_id": "node_r0c1",
+                        "kind": "portal",
+                        "center": [100, 0],
+                    },
+                ],
+                "edges": [
+                    {"first": "node_r0c0", "second": "node_r0c1"},
+                ],
+            }
+        )
+        without_part = simulate_route(
+            graph,
+            "node_r0c0",
+            (RouteAction("node_r0c1"),),
+            RULES,
+            initial_action_points=2,
+        )
+        self.assertFalse(without_part.valid)
+        self.assertIn("额外消耗1件可用加工品", without_part.errors[0])
+
+        with_part = simulate_route(
+            graph,
+            "node_r0c0",
+            (
+                RouteAction(
+                    "node_r0c1",
+                    portal_part_instance_id="portal-fuel",
+                ),
+            ),
+            RULES,
+            initial_action_points=2,
+            parts=(
+                PartState(
+                    "portal-fuel",
+                    "structural_principle",
+                    2,
+                    6,
+                ),
+            ),
+        )
+        self.assertTrue(with_part.valid)
+        self.assertEqual(
+            with_part.parts["portal-fuel"].remaining_uses,
+            0,
+        )
+        self.assertEqual(
+            with_part.steps[0].portal_part_instance_id,
+            "portal-fuel",
+        )
+        self.assertIn("额外消耗加工品", with_part.warnings[0])
+
+    def test_natural_part_cannot_pay_portal_entry(self) -> None:
+        graph = PlannerGraph.from_unified_dict(
+            {
+                "nodes": [
+                    {
+                        "node_id": "node_r0c0",
+                        "kind": "current",
+                        "center": [0, 0],
+                    },
+                    {
+                        "node_id": "node_r0c1",
+                        "kind": "portal",
+                        "center": [100, 0],
+                    },
+                ],
+                "edges": [
+                    {"first": "node_r0c0", "second": "node_r0c1"},
+                ],
+            }
+        )
+        result = simulate_route(
+            graph,
+            "node_r0c0",
+            (
+                RouteAction(
+                    "node_r0c1",
+                    portal_part_instance_id="natural",
+                ),
+            ),
+            RULES,
+            initial_action_points=2,
+            parts=(
+                PartState("natural", "blood_mushroom", None, 3),
+            ),
+        )
+        self.assertFalse(result.valid)
+        self.assertIn("额外消耗1件可用加工品", result.errors[0])
 
 
 if __name__ == "__main__":
