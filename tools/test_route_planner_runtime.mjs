@@ -50,6 +50,9 @@ function element(id) {
 
 element("recommend-use-parts").checked = true;
 element("recommend-reserve-uses").value = "0";
+element("current-ingots").value = "0";
+element("part-box-capacity").value = "12";
+element("resource-policy-mode").value = "auto";
 
 const documentStub = {
   getElementById: element,
@@ -64,7 +67,9 @@ return {
   state,
   startNode,
   strategies: STRATEGIES,
-  empiricalProfile
+  empiricalProfile,
+  currentResourcePolicy,
+  routeLifecycle
 };
 `;
 const runtime = new Function("document", `${match[1]}\n${expose}`)(
@@ -87,6 +92,59 @@ runtime.state.floor = 4;
 if (runtime.empiricalProfile("encounter")?.sample_count !== 2) {
   throw new Error("matching cross-floor encounter evidence was not pooled");
 }
+runtime.state.floor = 3;
+
+runtime.state.floor = 1;
+const earlyPolicy = runtime.currentResourcePolicy();
+runtime.state.floor = 6;
+const latePolicy = runtime.currentResourcePolicy();
+if (earlyPolicy.reserveRatio <= latePolicy.reserveRatio) {
+  throw new Error("early floors should preserve a larger part reserve");
+}
+if (earlyPolicy.spendMultiplier <= latePolicy.spendMultiplier) {
+  throw new Error("late floors should reduce the cost of spending parts");
+}
+runtime.state.floor = 3;
+const emptyLifecycle = runtime.routeLifecycle(runtime.simulate([]));
+if (emptyLifecycle.remainingExpiring !== 1) {
+  throw new Error("non-carrying heavy spring was not tracked as expiring");
+}
+runtime.state.floor = 1;
+const earlyRoutes = runtime.buildRecommendations();
+runtime.state.floor = 6;
+const lateRoutes = runtime.buildRecommendations();
+const remainingPartUses = (items) => items.reduce(
+  (total, item) => total + (
+    item.candidate
+      ? runtime.routeLifecycle(item.candidate.result).remainingCarryable
+      : 0
+  ),
+  0,
+);
+const earlyRemaining = remainingPartUses(earlyRoutes);
+const lateRemaining = remainingPartUses(lateRoutes);
+if (earlyRemaining < lateRemaining) {
+  throw new Error(
+    `early routes should not preserve fewer carryable uses (${earlyRemaining} < ${lateRemaining})`,
+  );
+}
+runtime.state.floor = 3;
+element("current-ingots").value = "30";
+element("part-box-capacity").value = "3";
+runtime.state.floor = 5;
+const surplusRoutes = runtime.buildRecommendations();
+const merchantSuggested = surplusRoutes.some((item) =>
+  item.candidate?.result.steps.some((step) =>
+    ["shop", "special_shop", "secret_trader", "rogue_trader"].includes(
+      step.kind,
+    ),
+  ),
+);
+if (!merchantSuggested) {
+  throw new Error("late surplus ingots and box pressure should surface a merchant route");
+}
+element("current-ingots").value = "0";
+element("part-box-capacity").value = "12";
 runtime.state.floor = 3;
 
 if (routes.length !== 4) {
@@ -169,6 +227,10 @@ for (const item of walkingOnly) {
 
 console.log(
   `route planner runtime: ok (${unique.size} unique routes from ${runtime.startNode})`,
+);
+console.log(
+  `lifecycle: early routes keep ${earlyRemaining} carryable uses; ` +
+    `late routes keep ${lateRemaining}`,
 );
 for (const item of routes) {
   console.log(

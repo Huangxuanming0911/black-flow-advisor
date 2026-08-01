@@ -1116,6 +1116,29 @@
       "confidence": "high"
     }
   ],
+  "resource_lifecycle_policy": {
+    "schema_version": "0.1.0",
+    "status": "planner_heuristic",
+    "summary": "用随层数递减的未来选择权估值加工品，并在后期提高源石锭与箱位的兑现压力；这是可调启发式，不是游戏固定数值。",
+    "principles": [
+      "用户设置的至少保留次数是硬约束，自动阶段目标只是软约束",
+      "可跨层且目标范围广的加工品在前期具有更高选择权价值",
+      "不能携带到下一区域的加工品在离层前应优先使用",
+      "后期源石锭高于保留线时提高行商路线价值，但行商仅视为消费机会，不预设具体购买结果",
+      "零件箱接近或超过容量时提高行商出售与消耗加工品的价值",
+      "后期仍不强制清空；只有替代路线收益超过保留价值时才使用零件"
+    ],
+    "floors": [
+      {"floor": 1, "label": "蓄力期", "reserve_ratio": 0.65, "spend_multiplier": 1.55, "reserve_penalty": 8, "hoard_penalty": 0, "ingot_reserve": 18, "merchant_weight": 0.18, "unspent_ingot_penalty": 0},
+      {"floor": 2, "label": "保留期", "reserve_ratio": 0.5, "spend_multiplier": 1.35, "reserve_penalty": 7, "hoard_penalty": 0.05, "ingot_reserve": 15, "merchant_weight": 0.22, "unspent_ingot_penalty": 0.03},
+      {"floor": 3, "label": "成长期", "reserve_ratio": 0.35, "spend_multiplier": 1.1, "reserve_penalty": 6, "hoard_penalty": 0.2, "ingot_reserve": 12, "merchant_weight": 0.3, "unspent_ingot_penalty": 0.08},
+      {"floor": 4, "label": "转化期", "reserve_ratio": 0.2, "spend_multiplier": 0.85, "reserve_penalty": 5, "hoard_penalty": 0.55, "ingot_reserve": 8, "merchant_weight": 0.42, "unspent_ingot_penalty": 0.16},
+      {"floor": 5, "label": "兑现期", "reserve_ratio": 0.1, "spend_multiplier": 0.55, "reserve_penalty": 3.5, "hoard_penalty": 1.1, "ingot_reserve": 4, "merchant_weight": 0.58, "unspent_ingot_penalty": 0.3},
+      {"floor": 6, "label": "终局期", "reserve_ratio": 0, "spend_multiplier": 0.3, "reserve_penalty": 2, "hoard_penalty": 1.8, "ingot_reserve": 0, "merchant_weight": 0.72, "unspent_ingot_penalty": 0.55}
+    ],
+    "sources": ["prts_parts", "bwiki_main"],
+    "confidence": "inferred"
+  },
   "open_questions": [
     {
       "id": "processed_default_ap_cost",

@@ -351,14 +351,30 @@ td input { width:62px; padding:5px }
           所有策略允许使用加工品
         </label>
         <label>
-          至少保留
+          至少保留可跨层
           <input id="recommend-reserve-uses" type="number" min="0" max="99" value="0">
           次
+        </label>
+        <label>
+          当前源石锭
+          <input id="current-ingots" type="number" min="0" max="999" value="0">
+        </label>
+        <label>
+          零件箱上限
+          <input id="part-box-capacity" type="number" min="1" max="99" value="12">
+        </label>
+        <label>
+          阶段策略
+          <select id="resource-policy-mode">
+            <option value="auto">随层数自动</option>
+            <option value="conserve">额外保留</option>
+            <option value="spend">倾向消耗</option>
+          </select>
         </label>
       </div>
       <div id="strategy-list" class="strategy-list"></div>
       <p class="muted" style="margin-top:8px">
-        所有方案固定从“当前位置”出发。误入奇境会额外消耗一件加工品，并在此版以进入黑潭作为路线终点。
+        “至少保留”是硬约束；阶段策略是软价值，会在收益足够时允许前期用件，也不会强迫后期清空。误入奇境仍需额外消耗一件加工品。
       </p>
     </section>
 
@@ -452,6 +468,34 @@ const PROCESSED_PART_IDS=new Set(
     .map(part=>part.id)
 );
 const EXIT_KINDS=new Set(["enemy","exit_end","exit_path"]);
+const MERCHANT_KINDS=new Set([
+  "shop","special_shop","secret_trader","rogue_trader"
+]);
+const DEFAULT_FLOOR_RESOURCE_POLICIES={
+  1:{label:"蓄力期",reserveRatio:.65,spendMultiplier:1.55,reservePenalty:8,hoardPenalty:0,ingotReserve:18,merchantWeight:.18,unspentIngotPenalty:0},
+  2:{label:"保留期",reserveRatio:.5,spendMultiplier:1.35,reservePenalty:7,hoardPenalty:.05,ingotReserve:15,merchantWeight:.22,unspentIngotPenalty:.03},
+  3:{label:"成长期",reserveRatio:.35,spendMultiplier:1.1,reservePenalty:6,hoardPenalty:.2,ingotReserve:12,merchantWeight:.3,unspentIngotPenalty:.08},
+  4:{label:"转化期",reserveRatio:.2,spendMultiplier:.85,reservePenalty:5,hoardPenalty:.55,ingotReserve:8,merchantWeight:.42,unspentIngotPenalty:.16},
+  5:{label:"兑现期",reserveRatio:.1,spendMultiplier:.55,reservePenalty:3.5,hoardPenalty:1.1,ingotReserve:4,merchantWeight:.58,unspentIngotPenalty:.3},
+  6:{label:"终局期",reserveRatio:0,spendMultiplier:.3,reservePenalty:2,hoardPenalty:1.8,ingotReserve:0,merchantWeight:.72,unspentIngotPenalty:.55}
+};
+const configuredFloorPolicies=Object.fromEntries(
+  (BOOTSTRAP.resource_lifecycle_policy?.floors||[]).map(item=>[
+    Number(item.floor),{
+      label:item.label,
+      reserveRatio:Number(item.reserve_ratio),
+      spendMultiplier:Number(item.spend_multiplier),
+      reservePenalty:Number(item.reserve_penalty),
+      hoardPenalty:Number(item.hoard_penalty),
+      ingotReserve:Number(item.ingot_reserve),
+      merchantWeight:Number(item.merchant_weight),
+      unspentIngotPenalty:Number(item.unspent_ingot_penalty)
+    }
+  ])
+);
+const FLOOR_RESOURCE_POLICIES=Object.keys(configuredFloorPolicies).length
+  ?configuredFloorPolicies
+  :DEFAULT_FLOOR_RESOURCE_POLICIES;
 const STRATEGIES=[
   {
     id:"combat",name:"战斗推进",tone:"主动获取作战经验与战后资源",
@@ -923,10 +967,64 @@ function refreshMovementOptions(result){
   }
   select.value=choices.some(choice=>choice.value===previous)?previous:choices[0].value;
 }
-function remainingProcessedUses(result){
+function isCarryablePart(part){
+  const catalog=partCatalog[part.partId];
+  const rule=movementRules[catalog?.movement_mode];
+  return catalog?.category==="processed"
+    &&rule?.carried_to_next_region!==false;
+}
+function remainingCarryableUses(result){
   return Object.values(result.parts)
-    .filter(part=>PROCESSED_PART_IDS.has(part.partId))
+    .filter(part=>isCarryablePart(part))
     .reduce((total,part)=>total+Math.max(0,Number(part.remaining||0)),0);
+}
+function remainingExpiringUses(result){
+  return Object.values(result.parts)
+    .filter(part=>{
+      const catalog=partCatalog[part.partId];
+      const rule=movementRules[catalog?.movement_mode];
+      return catalog?.category==="processed"
+        &&rule?.carried_to_next_region===false;
+    })
+    .reduce((total,part)=>total+Math.max(0,Number(part.remaining||0)),0);
+}
+function currentResourcePolicy(){
+  const base={...(FLOOR_RESOURCE_POLICIES[state.floor]||FLOOR_RESOURCE_POLICIES[3])};
+  const mode=document.getElementById("resource-policy-mode").value||"auto";
+  if(mode==="conserve"){
+    base.label+=" · 额外保留";
+    base.reserveRatio=Math.min(1,base.reserveRatio+.2);
+    base.spendMultiplier*=1.3;
+    base.reservePenalty*=1.25;
+    base.hoardPenalty*=.45;
+    base.ingotReserve+=6;
+    base.merchantWeight*=.7;
+    base.unspentIngotPenalty*=.4;
+  } else if(mode==="spend"){
+    base.label+=" · 倾向消耗";
+    base.reserveRatio=Math.max(0,base.reserveRatio-.2);
+    base.spendMultiplier*=.65;
+    base.reservePenalty*=.6;
+    base.hoardPenalty=base.hoardPenalty*1.45+.25;
+    base.ingotReserve=Math.max(0,base.ingotReserve-6);
+    base.merchantWeight*=1.35;
+    base.unspentIngotPenalty=base.unspentIngotPenalty*1.4+.05;
+  }
+  return base;
+}
+function partFlexibilityPremium(part){
+  const catalog=partCatalog[part.partId];
+  const rule=movementRules[catalog?.movement_mode];
+  if(!rule) return 0;
+  const target=rule.target_rule||{};
+  let premium=0;
+  if(target.type==="any_node") premium+=2.4;
+  else if(target.type==="manhattan_radius") premium+=Number(target.max||0)*.65;
+  else if(target.type==="orthogonal_distance") premium+=Number(target.max||0)*.45;
+  else if(target.type==="chebyshev_radius") premium+=Number(target.max||0)*.4;
+  if(Number(rule.action_point_cost?.value||0)===0) premium+=1.4;
+  if((rule.post_effects||[]).length) premium+=1;
+  return premium;
 }
 function portalFuelIds(result){
   return Object.values(result.parts)
@@ -946,6 +1044,8 @@ function portalFuelIds(result){
 function routePartSpend(result){
   let uses=0;
   let valueCost=0;
+  let carryableUses=0;
+  let expiringUses=0;
   for(const part of state.parts){
     if(!PROCESSED_PART_IDS.has(part.partId)) continue;
     const live=result.parts[part.instanceId];
@@ -953,9 +1053,57 @@ function routePartSpend(result){
     const remaining=Math.max(0,Number(live?.remaining||0));
     const spent=Math.max(0,initial-remaining);
     uses+=spent;
-    valueCost+=spent*(1+Number(part.value||0)/Math.max(1,initial));
+    const carryable=isCarryablePart(part);
+    if(carryable) carryableUses+=spent;
+    else expiringUses+=spent;
+    valueCost+=spent*(
+      .6
+      +Number(part.value||0)/Math.max(1,initial)
+      +(carryable?partFlexibilityPremium(part):0)
+    );
   }
-  return {uses,valueCost};
+  return {uses,valueCost,carryableUses,expiringUses};
+}
+function routeLifecycle(result){
+  const policy=currentResourcePolicy();
+  const initial=initialPartState();
+  const initialCarryable=Object.values(initial)
+    .filter(part=>isCarryablePart(part))
+    .reduce((total,part)=>total+Math.max(0,Number(part.remaining||0)),0);
+  const hardReserve=Math.max(
+    0,Number(document.getElementById("recommend-reserve-uses").value||0)
+  );
+  const desiredReserve=Math.max(
+    hardReserve,Math.ceil(initialCarryable*policy.reserveRatio)
+  );
+  const remainingCarryable=remainingCarryableUses(result);
+  const remainingExpiring=remainingExpiringUses(result);
+  const reserveShortfall=Math.max(0,desiredReserve-remainingCarryable);
+  const carryableSurplus=Math.max(0,remainingCarryable-desiredReserve);
+  const merchantVisited=result.steps.some(step=>MERCHANT_KINDS.has(step.kind));
+  const currentIngots=Math.max(
+    0,Number(document.getElementById("current-ingots").value||0)
+  );
+  const projectedIngots=currentIngots+
+    Number(result.resourceStats.originium_ingots?.expected||0);
+  const spendableIngots=Math.max(0,currentIngots-policy.ingotReserve);
+  const projectedSurplusIngots=Math.max(0,projectedIngots-policy.ingotReserve);
+  const capacity=Math.max(
+    1,Number(document.getElementById("part-box-capacity").value||12)
+  );
+  const livePartCount=Object.values(result.parts).filter(
+    part=>part.remaining===null||Number(part.remaining||0)>0
+  ).length;
+  const projectedBoxUse=livePartCount+
+    Number(result.resourceStats.parts?.expected||0);
+  const boxPressure=Math.max(0,projectedBoxUse-capacity);
+  const boxUrgency=Math.max(0,projectedBoxUse-capacity*.8);
+  return {
+    policy,desiredReserve,remainingCarryable,remainingExpiring,
+    reserveShortfall,carryableSurplus,merchantVisited,currentIngots,
+    projectedIngots,spendableIngots,projectedSurplusIngots,
+    capacity,projectedBoxUse,boxPressure,boxUrgency
+  };
 }
 function routeTerminalKind(result){
   return result.steps.length?result.steps[result.steps.length-1].kind:"";
@@ -985,12 +1133,33 @@ function routeScore(result,strategy){
   }
   score+=Math.max(0,result.ap)*strategy.apWeight;
   const spend=routePartSpend(result);
-  score-=spend.valueCost*strategy.partCost;
+  const lifecycle=routeLifecycle(result);
+  score-=
+    spend.valueCost
+    *strategy.partCost
+    *lifecycle.policy.spendMultiplier;
+  score-=lifecycle.reserveShortfall*lifecycle.policy.reservePenalty;
   score-=result.steps.length*.25;
   const terminal=routeTerminalKind(result);
-  if(EXIT_KINDS.has(terminal)) score+=strategy.exitBonus;
+  if(EXIT_KINDS.has(terminal)){
+    score+=strategy.exitBonus;
+    score-=lifecycle.carryableSurplus*lifecycle.policy.hoardPenalty;
+    score-=lifecycle.remainingExpiring*9;
+    if(!lifecycle.merchantVisited){
+      score-=
+        lifecycle.projectedSurplusIngots
+        *lifecycle.policy.unspentIngotPenalty;
+      score-=lifecycle.boxPressure*10;
+    }
+  }
   else if(terminal==="portal") score+=strategy.portalBonus;
   else score-=8;
+  if(lifecycle.merchantVisited){
+    score+=
+      lifecycle.spendableIngots
+      *lifecycle.policy.merchantWeight;
+    score+=lifecycle.boxUrgency*2.5;
+  }
   if(result.forcedEncounters.length){
     score-=strategy.pursuitPenalty;
   }
@@ -1055,7 +1224,7 @@ function expandRoute(prefix,result,{useParts,reserveUses}){
         const actions=[...prefix,action];
         const next=simulate(actions);
         if(!next.valid) continue;
-        if(remainingProcessedUses(next)<reserveUses) continue;
+        if(remainingCarryableUses(next)<reserveUses) continue;
         expansions.push({actions,result:next});
         break;
       }
@@ -1098,6 +1267,9 @@ function recommendationKey(){
   return JSON.stringify({
     floor:state.floor,
     ap:Number(document.getElementById("initial-ap").value||0),
+    ingots:Number(document.getElementById("current-ingots").value||0),
+    capacity:Number(document.getElementById("part-box-capacity").value||12),
+    resourcePolicy:document.getElementById("resource-policy-mode").value,
     useParts:document.getElementById("recommend-use-parts").checked,
     reserve:Number(document.getElementById("recommend-reserve-uses").value||0),
     parts:state.parts.map(part=>[
@@ -1119,7 +1291,7 @@ function buildRecommendations(){
   );
   const reserveUses=Math.min(
     requestedReserve,
-    remainingProcessedUses(initial)
+    remainingCarryableUses(initial)
   );
   const options={useParts,reserveUses};
   const used=new Set();
@@ -1192,6 +1364,34 @@ function empiricalEvidenceSummary(result){
   }
   return parts.join("；");
 }
+function resourceLifecycleSummary(result){
+  const lifecycle=routeLifecycle(result);
+  const spend=routePartSpend(result);
+  const details=[
+    `${lifecycle.policy.label}：用${spend.uses}次，保留${lifecycle.remainingCarryable}次可跨层能力`,
+    `软目标${lifecycle.desiredReserve}次`
+  ];
+  if(lifecycle.remainingExpiring&&EXIT_KINDS.has(routeTerminalKind(result))){
+    details.push(`${lifecycle.remainingExpiring}次区域限定能力会浪费`);
+  }
+  if(lifecycle.merchantVisited){
+    if(lifecycle.spendableIngots){
+      details.push(`行商前约有${compactNumber(lifecycle.spendableIngots)}锭可周转`);
+    } else {
+      details.push("行商用于补给或处理箱位");
+    }
+  } else if(
+    EXIT_KINDS.has(routeTerminalKind(result))
+    &&lifecycle.projectedSurplusIngots>0
+    &&lifecycle.policy.unspentIngotPenalty>0
+  ){
+    details.push(`预计${compactNumber(lifecycle.projectedSurplusIngots)}锭高于本层保留线`);
+  }
+  if(lifecycle.boxPressure>0){
+    details.push(`预计超箱位${compactNumber(lifecycle.boxPressure)}`);
+  }
+  return details.join(" · ");
+}
 function renderRecommendations(){
   const container=document.getElementById("strategy-list");
   container.textContent="";
@@ -1223,6 +1423,7 @@ function renderRecommendations(){
       <div class="strategy-meta">${routeSummary(candidate)}</div>
       <div class="strategy-evidence">${empiricalRewardSummary(candidate.result)}</div>
       <div class="strategy-meta">${empiricalEvidenceSummary(candidate.result)||"该路线目前只依据规则与节点偏好评分"}</div>
+      <div class="strategy-meta">${resourceLifecycleSummary(candidate.result)}</div>
       <button type="button" data-route="${index}" ${signature===currentSignature?"disabled":""}>${buttonText}</button>
     `;
     container.append(card);
@@ -1460,7 +1661,7 @@ function renderParts(result){
     render();
   }));
   document.getElementById("part-note").textContent=
-    "已加入几件实验零件，可修改或移除。估值不与节点随机奖励混算。";
+    "已加入几件实验零件，可修改或移除。估值不与节点随机奖励混算；不可跨层加工品在离层时仍有次数会受到浪费惩罚。";
 }
 function renderNodeEditor(){
   const select=document.getElementById("node-kind-select");
@@ -1519,6 +1720,9 @@ document.getElementById("current-floor").addEventListener("change",event=>{
 });
 document.getElementById("recommend-use-parts").addEventListener("change",render);
 document.getElementById("recommend-reserve-uses").addEventListener("change",render);
+document.getElementById("current-ingots").addEventListener("change",render);
+document.getElementById("part-box-capacity").addEventListener("change",render);
+document.getElementById("resource-policy-mode").addEventListener("change",render);
 document.getElementById("undo-button").addEventListener("click",()=>{
   state.actions.pop(); setMessage("已撤销最后一步",false); render();
 });

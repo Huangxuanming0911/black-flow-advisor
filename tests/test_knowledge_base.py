@@ -53,6 +53,24 @@ class KnowledgeBaseTests(unittest.TestCase):
         self.assertEqual(mapping["诡意行商"], "rogue_trader")
         self.assertEqual(mapping["先行一步"], "scout")
 
+    def test_resource_lifecycle_spends_more_near_the_end(self) -> None:
+        policy = self.payload["resource_lifecycle_policy"]
+        floors = policy["floors"]
+        self.assertEqual([item["floor"] for item in floors], list(range(1, 7)))
+        self.assertGreater(
+            floors[0]["reserve_ratio"],
+            floors[-1]["reserve_ratio"],
+        )
+        self.assertGreater(
+            floors[0]["spend_multiplier"],
+            floors[-1]["spend_multiplier"],
+        )
+        self.assertGreater(
+            floors[0]["ingot_reserve"],
+            floors[-1]["ingot_reserve"],
+        )
+        self.assertEqual(policy["status"], "planner_heuristic")
+
 
 if __name__ == "__main__":
     unittest.main()

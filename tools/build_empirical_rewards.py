@@ -211,10 +211,8 @@ def main() -> int:
     args = _parser().parse_args()
     payload = build_payload(args.records)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    with args.output.open("w", encoding="utf-8", newline="\r\n") as stream:
+        stream.write(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
     print(
         f"wrote {len(payload['profiles'])} profiles from "
         f"{payload['sample_policy']['included']} clean samples to {args.output}",
