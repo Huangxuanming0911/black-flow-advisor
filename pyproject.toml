@@ -18,6 +18,10 @@ dependencies = [
 dev = []
 maa = ["MaaFw==5.12.2"]
 ocr = ["rapidocr-onnxruntime>=1.4.4"]
+desktop = [
+  "pywebview>=6.2,<7",
+  "pyinstaller>=6.11,<7",
+]
 
 [project.scripts]
 blackflow-recognize = "blackflow_vision.cli:main"

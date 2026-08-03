@@ -2686,12 +2686,23 @@ document.getElementById("save-checkpoint").addEventListener("click",()=>{
   setMessage(`第${state.floor}层状态已保存，下次打开会继续使用`,false);
   render();
 });
-document.getElementById("export-run-state").addEventListener("click",()=>{
+document.getElementById("export-run-state").addEventListener("click",async()=>{
   syncRunStateFromInputs();
-  const blob=new Blob([JSON.stringify(state.runState,null,2)],{type:"application/json;charset=utf-8"});
+  const payload=JSON.stringify(state.runState,null,2);
+  const filename=`blackflow-run-state-floor-${state.floor}.json`;
+  if(window.pywebview?.api?.save_text){
+    try{
+      const result=await window.pywebview.api.save_text(filename,payload);
+      if(result?.saved) setMessage(`局内状态已导出：${result.path}`,false);
+      return;
+    }catch(error){
+      setMessage(`桌面导出失败，已改用浏览器下载：${String(error)}`,true);
+    }
+  }
+  const blob=new Blob([payload],{type:"application/json;charset=utf-8"});
   const link=document.createElement("a");
   link.href=URL.createObjectURL(blob);
-  link.download=`blackflow-run-state-floor-${state.floor}.json`;
+  link.download=filename;
   link.click();
   URL.revokeObjectURL(link.href);
 });

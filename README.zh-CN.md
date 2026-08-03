@@ -252,6 +252,16 @@ python tools/build_route_planner.py --run-state data/my-run-state.json
 在地图上依次点击节点即可勾选路线。每一步只选择徒步或零件移动；抵达已配对的
 曲折密道后会立即强制传送至另一端，传送本身不额外消耗行动力。页面分开计算：
 
+### Windows 桌面版
+
+路径规划页面可以封装为不显示命令行窗口的 WebView2 应用：
+
+```powershell
+.\build_planner_windows.ps1
+```
+
+完成后双击 `dist\BlackFlowRoutePlanner\BlackFlowRoutePlanner.exe`。请保留整个目录，不要只复制 EXE。桌面版会把本层校准和局内状态保存在程序旁的 `data\webview`，导出局内状态时使用 Windows 保存对话框；同一时间只允许运行一个规划器实例。Windows 10/11 通常已经包含 Microsoft Edge WebView2 Runtime。
+
 - 行动力和确定性资源变化；
 - 节点完成后的确定奖励、分层实测奖励期望和仍待补全的随机组件；
 - 零件箱当前估值，包括移动零件损毁和已记载的动态估值变化。
