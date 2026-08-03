@@ -7,5 +7,5 @@ dist/
 *.egg-info/
 data/private/
 data/output/
+data/webview-companion/
 debug/
-

@@ -292,3 +292,25 @@ python tools/build_route_planner.py --run-state data/my-run-state.json
 
 本地实验页默认加入报废轮子、结构性原理、重弹簧和血蕈，可直接修改次数与估值
 或移除。使用 `--no-sample-parts` 可以从空零件箱开始。
+
+## 陪跑助手桌面版
+
+项目的桌面产品现在以“对局陪跑 Bot”为主体，路径规划器作为其中的独立工具页保留。主界面提供对话、当前局状态校准、路径工具、知识检索和模型设置：玩家可以一边进行对局，一边询问路线、零件保留价值、资源取舍和资料规则。
+
+当前支持三类可替换的模型接口：
+
+- OpenAI Responses API；
+- OpenAI-compatible Chat Completions，可接本地 Ollama、LM Studio 或其他兼容服务；
+- Anthropic Messages API。
+
+模型名称和服务地址由用户配置，不绑定某个会过期的“最新模型”。API Key 默认只保存在程序本次运行的内存中，不会写入 `data/settings.json`。发送给模型的上下文限于聊天记录、右侧明确展示的局内状态以及本地检索命中的少量资料；当前版本不会自动上传游戏截图。
+
+回答前可检索 `data/knowledge/` 中的规则、分层实测奖励和局内效果目录，并在回答下方标出资料片段。PRTS 的公开 MediaWiki API 当前会拒绝自动访问，因此程序不会依赖该接口；需要外部核对时会生成 PRTS 搜索链接，由用户按需打开。语言风格提供冷静参谋、罗德岛终端、轻松搭档和严格教练四种预设，也可以添加自定义要求。
+
+构建 Windows 版本：
+
+```powershell
+.\build_companion_windows.ps1
+```
+
+完成后运行 `dist\BlackFlowCompanion\BlackFlowCompanion.exe`。需要保留整个 `BlackFlowCompanion` 目录；原有的独立路径规划器构建脚本仍然可用。

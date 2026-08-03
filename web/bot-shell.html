@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>黑流树海陪跑助手</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #091115;
+      --panel: #0d181d;
+      --panel-2: #111f25;
+      --panel-3: #17282f;
+      --line: #263b43;
+      --line-strong: #38545d;
+      --text: #e8f0ee;
+      --muted: #8fa2a4;
+      --dim: #65787c;
+      --accent: #51d3bc;
+      --accent-2: #8adbc7;
+      --warn: #efb85a;
+      --danger: #ef766d;
+      --shadow: 0 18px 48px rgba(0,0,0,.28);
+      font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--bg); color: var(--text); }
+    button, input, select, textarea { font: inherit; }
+    button { color: inherit; }
+    .app { display: grid; grid-template-columns: 184px minmax(540px, 1fr) 300px; height: 100vh; }
+    .rail { border-right: 1px solid var(--line); padding: 22px 14px; display: flex; flex-direction: column; background: #0a1418; }
+    .brand { padding: 0 10px 24px; }
+    .brand-kicker { color: var(--accent); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; }
+    .brand h1 { margin: 7px 0 0; font-size: 18px; font-weight: 650; letter-spacing: .04em; }
+    .nav { display: grid; gap: 6px; }
+    .nav button { width: 100%; border: 0; background: transparent; padding: 11px 12px; border-radius: 8px; text-align: left; color: var(--muted); cursor: pointer; border-left: 2px solid transparent; }
+    .nav button:hover { background: #101e23; color: var(--text); }
+    .nav button.active { background: #14252a; border-left-color: var(--accent); color: var(--text); }
+    .nav small { display: block; color: var(--dim); font-size: 10px; margin-top: 3px; }
+    .rail-foot { margin-top: auto; padding: 14px 10px 0; border-top: 1px solid var(--line); }
+    .connection { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 12px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); box-shadow: 0 0 0 3px rgba(101,120,124,.12); }
+    .dot.ready { background: var(--accent); box-shadow: 0 0 0 3px rgba(81,211,188,.12); }
+    .dot.busy { background: var(--warn); animation: pulse 1.1s ease-in-out infinite; }
+    @keyframes pulse { 50% { opacity: .45; } }
+    .main { min-width: 0; position: relative; background: radial-gradient(circle at 30% -10%, rgba(44,103,96,.13), transparent 35%), var(--bg); }
+    .view { display: none; height: 100%; }
+    .view.active { display: flex; flex-direction: column; }
+    .topbar { height: 72px; min-height: 72px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); background: rgba(9,17,21,.82); }
+    .topbar h2 { margin: 0; font-size: 17px; font-weight: 620; }
+    .topbar p { margin: 5px 0 0; font-size: 12px; color: var(--muted); }
+    .model-chip { display: flex; gap: 9px; align-items: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px; color: var(--muted); font-size: 12px; }
+    .chat-scroll { flex: 1; overflow-y: auto; padding: 30px max(28px, calc((100% - 780px)/2)); }
+    .welcome { border: 1px solid var(--line); background: linear-gradient(135deg, #102127, #0d191e); border-radius: 14px; padding: 22px; box-shadow: var(--shadow); }
+    .welcome .eyebrow { color: var(--accent); font-size: 11px; letter-spacing: .14em; }
+    .welcome h3 { font-size: 21px; margin: 8px 0; }
+    .welcome p { color: var(--muted); line-height: 1.7; margin: 0; font-size: 13px; }
+    .quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 16px; }
+    .quick button { min-height: 70px; border: 1px solid var(--line); background: #101d22; border-radius: 9px; padding: 11px; text-align: left; cursor: pointer; }
+    .quick button:hover { border-color: var(--line-strong); background: #132329; }
+    .quick b { display: block; font-size: 13px; margin-bottom: 5px; font-weight: 600; }
+    .quick span { color: var(--muted); font-size: 11px; line-height: 1.4; }
+    .message { margin: 20px 0; display: flex; gap: 12px; align-items: flex-start; }
+    .avatar { width: 30px; height: 30px; flex: 0 0 30px; border: 1px solid var(--line-strong); border-radius: 8px; display: grid; place-items: center; color: var(--accent); font-size: 11px; background: var(--panel-2); }
+    .message.user { flex-direction: row-reverse; }
+    .message.user .avatar { color: var(--text); }
+    .bubble { max-width: min(720px, 84%); color: #dce7e5; font-size: 14px; line-height: 1.7; background: var(--panel); border: 1px solid var(--line); border-radius: 4px 12px 12px 12px; padding: 12px 15px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .message.user .bubble { background: #17302f; border-color: #28514c; border-radius: 12px 4px 12px 12px; }
+    .source-row { margin-top: 9px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .source-tag { color: var(--muted); font-size: 10px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 7px; }
+    .typing { color: var(--muted); }
+    .composer-wrap { padding: 14px max(28px, calc((100% - 780px)/2)) 20px; background: linear-gradient(transparent, var(--bg) 24%); }
+    .composer { display: flex; align-items: flex-end; gap: 8px; background: var(--panel-2); border: 1px solid var(--line-strong); border-radius: 12px; padding: 9px; box-shadow: var(--shadow); }
+    .composer:focus-within { border-color: #4a786f; }
+    .composer textarea { flex: 1; resize: none; min-height: 44px; max-height: 130px; border: 0; outline: 0; background: transparent; color: var(--text); padding: 11px; line-height: 1.45; }
+    .composer textarea::placeholder { color: var(--dim); }
+    .send { border: 0; background: var(--accent); color: #05211d; border-radius: 8px; height: 42px; min-width: 66px; font-weight: 700; cursor: pointer; }
+    .send:disabled { opacity: .42; cursor: not-allowed; }
+    .composer-note { color: var(--dim); font-size: 10px; margin: 7px 3px 0; }
+    .context { border-left: 1px solid var(--line); background: #0b1519; overflow-y: auto; padding: 22px 18px; }
+    .context-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 17px; }
+    .context h2 { margin: 0; font-size: 15px; }
+    .context-badge { color: var(--accent); font-size: 10px; border: 1px solid #2d665e; border-radius: 999px; padding: 3px 7px; }
+    .section { padding: 14px 0; border-top: 1px solid var(--line); }
+    .section:first-of-type { border-top: 0; }
+    .section-title { color: var(--muted); font-size: 11px; letter-spacing: .08em; margin-bottom: 10px; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    label { display: block; color: var(--muted); font-size: 11px; }
+    input, select, textarea.field { width: 100%; margin-top: 5px; color: var(--text); background: #101e23; border: 1px solid var(--line); border-radius: 7px; outline: 0; padding: 8px 9px; }
+    input:focus, select:focus, textarea.field:focus { border-color: #4a756e; }
+    textarea.field { resize: vertical; min-height: 66px; line-height: 1.5; }
+    .resource-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .resource { background: #101e23; border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+    .resource span { display: block; font-size: 9px; color: var(--dim); }
+    .resource input { margin-top: 3px; padding: 2px 0; border: 0; background: transparent; font-size: 17px; }
+    .subtle { color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .tool-frame { flex: 1; width: 100%; border: 0; background: var(--bg); }
+    .panel-scroll { flex: 1; overflow: auto; padding: 26px; }
+    .settings-grid { max-width: 820px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+    .card.wide { grid-column: 1 / -1; }
+    .card h3 { margin: 0 0 5px; font-size: 14px; }
+    .card > p { margin: 0 0 14px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .stack { display: grid; gap: 11px; }
+    .row-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+    .secondary, .primary { border: 1px solid var(--line-strong); border-radius: 7px; padding: 8px 12px; cursor: pointer; background: var(--panel-2); }
+    .primary { background: var(--accent); border-color: var(--accent); color: #06231f; font-weight: 650; }
+    .privacy { display: flex; gap: 9px; padding: 10px; background: #101c20; border-radius: 8px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .searchbar { display: flex; gap: 8px; max-width: 800px; }
+    .searchbar input { margin: 0; flex: 1; }
+    .knowledge-results { display: grid; gap: 10px; max-width: 900px; margin-top: 18px; }
+    .knowledge-item { border: 1px solid var(--line); background: var(--panel); border-radius: 9px; padding: 13px; }
+    .knowledge-item b { font-size: 11px; color: var(--accent-2); }
+    .knowledge-item p { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+    .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(12px); opacity: 0; pointer-events: none; background: #1b2c31; border: 1px solid var(--line-strong); box-shadow: var(--shadow); border-radius: 8px; padding: 9px 13px; font-size: 12px; transition: .16s ease; z-index: 10; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .error { color: var(--danger); }
+    @media (max-width: 1250px) { .app { grid-template-columns: 156px minmax(500px, 1fr) 260px; } .quick { grid-template-columns: 1fr; } }
+    @media (max-width: 950px) {
+      .app { grid-template-columns: 112px minmax(330px, 1fr) 200px; }
+      .rail { padding: 16px 8px; }
+      .brand { padding: 0 6px 18px; }
+      .brand-kicker { font-size: 9px; letter-spacing: .1em; }
+      .brand h1 { font-size: 15px; }
+      .nav button { padding: 10px 8px; font-size: 12px; }
+      .nav small { display: none; }
+      .rail-foot { padding: 12px 5px 0; }
+      .connection { font-size: 10px; }
+      .topbar { padding: 0 15px; }
+      .topbar p { display: none; }
+      .chat-scroll { padding: 20px 16px; }
+      .composer-wrap { padding: 12px 16px 16px; }
+      .welcome { padding: 16px; }
+      .welcome h3 { font-size: 18px; }
+      .welcome p { font-size: 12px; }
+      .model-chip { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .context { padding: 17px 10px; }
+      .context-head { margin-bottom: 10px; }
+      .context-badge { display: none; }
+      .field-grid { grid-template-columns: 1fr; }
+      .resource-grid { grid-template-columns: 1fr 1fr; }
+      .settings-grid { grid-template-columns: 1fr; }
+      .card.wide { grid-column: auto; }
+      .panel-scroll { padding: 18px; }
+    }
+    @media (max-width: 670px) {
+      .app { grid-template-columns: 96px minmax(300px, 1fr) 176px; }
+      .context { font-size: 11px; }
+      .resource-grid { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="rail">
+      <div class="brand"><div class="brand-kicker">BLACK FLOW</div><h1>陪跑助手</h1></div>
+      <nav class="nav">
+        <button class="active" data-view="chat">对话<small>当前决策与问答</small></button>
+        <button data-view="planner">路径工具<small>截图图结构与规划</small></button>
+        <button data-view="knowledge">知识检索<small>规则、样本与 PRTS</small></button>
+        <button data-view="settings">模型与风格<small>服务、密钥与语气</small></button>
+      </nav>
+      <div class="rail-foot">
+        <div class="connection"><span class="dot" id="statusDot"></span><span id="statusText">正在初始化</span></div>
+        <div class="subtle" style="margin-top:8px" id="versionText">桌面版</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="view active" id="view-chat">
+        <header class="topbar"><div><h2>对局对话</h2><p>建议只会使用右侧明确显示的局内状态</p></div><div class="model-chip"><span class="dot ready"></span><span id="modelChip">尚未配置模型</span></div></header>
+        <div class="chat-scroll" id="chatScroll">
+          <div class="welcome" id="welcome">
+            <div class="eyebrow">RUN COMPANION</div><h3>先告诉我你现在想解决什么。</h3>
+            <p>我可以对照本地规则与实测样本回答、分析是否值得消耗零件，或在路径工具读取图结构后讨论下一步。没有接入画面时，我不会假装看到了游戏。</p>
+            <div class="quick">
+              <button data-prompt="根据右侧当前局状态，我现在应该优先做什么？"><b>判断当前优先级</b><span>综合楼层、行动力、资源与队伍</span></button>
+              <button data-prompt="帮我判断这一层是否应该主动消耗零件，并说明保留价值。"><b>零件使用建议</b><span>不默认全部花完</span></button>
+              <button data-view-jump="planner"><b>打开路径工具</b><span>在已识别图结构上规划路线</span></button>
+            </div>
+          </div>
+          <div id="messages"></div>
+        </div>
+        <div class="composer-wrap">
+          <div class="composer"><textarea id="prompt" rows="1" placeholder="例如：这一层要不要用结构性原理跳去羽瞰点？"></textarea><button class="send" id="sendButton">发送</button></div>
+          <div class="composer-note">Enter 发送 · Shift+Enter 换行 · API Key 默认仅保存在本次运行内存</div>
+        </div>
+      </section>
+
+      <section class="view" id="view-planner">
+        <header class="topbar"><div><h2>路径规划工具</h2><p>这是陪跑助手的一项下辖能力；规划数据不会自动发送给模型</p></div><button class="secondary" data-view-jump="chat">返回对话</button></header>
+        <iframe class="tool-frame" id="plannerFrame" title="黑流树海路径规划器"></iframe>
+      </section>
+
+      <section class="view" id="view-knowledge">
+        <header class="topbar"><div><h2>知识检索</h2><p id="knowledgeStats">正在载入本地资料</p></div></header>
+        <div class="panel-scroll">
+          <div class="searchbar"><input id="knowledgeQuery" placeholder="搜索节点、零件、结局条件或奖励"><button class="primary" id="knowledgeSearch">检索</button></div>
+          <div class="knowledge-results" id="knowledgeResults"><div class="knowledge-item"><b>检索原则</b><p>本地规则和实测奖励可直接检索；PRTS 仅按需打开搜索结果并保留来源，不会整站抓取。模型回答会把资料和推断分开。</p></div></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-settings">
+        <header class="topbar"><div><h2>模型与语言风格</h2><p>模型服务可替换；密钥不会写入设置文件</p></div></header>
+        <div class="panel-scroll">
+          <div class="settings-grid">
+            <div class="card wide"><h3>模型服务</h3><p>OpenAI 使用 Responses API；兼容服务使用 Chat Completions；Anthropic 使用 Messages API。</p>
+              <div class="stack">
+                <label>服务<select id="provider"></select></label>
+                <label>API 地址<input id="baseUrl" spellcheck="false"></label>
+                <label>模型名称<input id="model" spellcheck="false" placeholder="由服务商提供，例如你的可用模型 ID"></label>
+                <label>API Key（仅本次运行）<input id="apiKey" type="password" autocomplete="off" placeholder="不会写入磁盘；本地服务可留空"></label>
+                <div class="privacy"><span>隐私</span><span>对话请求只发送聊天记录、右侧状态和检索命中的少量文本。当前版本不会自动上传截图。</span></div>
+              </div>
+            </div>
+            <div class="card"><h3>说话风格</h3><p>风格与模型解耦，可以随时切换。</p><div class="stack"><label>预设<select id="persona"></select></label><label>自定义补充<textarea class="field" id="customStyle" placeholder="例如：每次只给三条建议；不要使用世界观口吻"></textarea></label></div></div>
+            <div class="card"><h3>资料边界</h3><p>优先使用可追溯资料，信息不足时要求确认。</p><div class="stack"><label><input style="width:auto;margin-right:7px" type="checkbox" id="knowledgeEnabled" checked>回答前检索本地知识</label><div class="subtle">PRTS 自动 API 当前会返回 403，因此作为外部搜索链接降级；本地缓存的 PRTS/BWIKI 来源仍会参与检索。</div></div></div>
+            <div class="card wide"><div class="row-actions"><button class="secondary" id="testConfig">检查配置</button><button class="primary" id="saveSettings">保存非敏感设置</button></div></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="context">
+      <div class="context-head"><h2>当前局</h2><span class="context-badge">手动可校准</span></div>
+      <div class="section"><div class="section-title">位置与压力</div><div class="field-grid"><label>楼层<input id="stateFloor" type="number" min="1" max="6" value="1"></label><label>难度<input id="stateDifficulty" type="number" min="0" max="18" value="6"></label><label>当前节点<input id="stateNode" value="当前位置"></label><label>行动力<input id="stateAp" type="number" min="0" value="5"></label></div></div>
+      <div class="section"><div class="section-title">资源</div><div class="resource-grid"><div class="resource"><span>源石锭</span><input id="stateIngots" type="number" min="0" value="0"></div><div class="resource"><span>零件</span><input id="stateParts" type="number" min="0" value="0"></div><div class="resource"><span>希望</span><input id="stateHope" type="number" min="0" value="0"></div></div></div>
+      <div class="section"><div class="section-title">队伍与持有物</div><label>队伍概况<textarea class="field" id="stateTeam" placeholder="核心干员、缺口、生命值压力"></textarea></label><label style="margin-top:10px">招募券 / 收藏品 / Debuff<textarea class="field" id="stateInventory" placeholder="保留的券、关键收藏品、理想域和负面状态"></textarea></label></div>
+      <div class="section"><div class="section-title">决策倾向</div><label>本局目标<select id="statePreference"><option value="综合收益">综合收益</option><option value="保守通关">保守通关</option><option value="战斗成长">战斗成长</option><option value="结局条件">结局条件</option><option value="探索收集">探索收集</option></select></label><div class="subtle" style="margin-top:10px">这些字段会随对话发送给模型。路径工具内的完整图结构目前不会自动同步，需由你在对话中确认。</div></div>
+    </aside>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script>
+    const state = { bootstrap: null, settings: null, messages: [], busy: false };
+    const $ = (id) => document.getElementById(id);
+    const fallback = {
+      version: "browser-preview",
+      providers: {
+        openai: {label:"OpenAI Responses",base_url:"https://api.openai.com/v1",model:"",key_required:true,hint:""},
+        compatible: {label:"OpenAI-compatible",base_url:"http://127.0.0.1:11434/v1",model:"",key_required:false,hint:""},
+        anthropic: {label:"Anthropic Messages",base_url:"https://api.anthropic.com/v1",model:"",key_required:true,hint:""}
+      },
+      personas: {advisor:{label:"冷静参谋",description:""},terminal:{label:"罗德岛终端",description:""},partner:{label:"轻松搭档",description:""},coach:{label:"严格教练",description:""}},
+      settings:{provider:"openai",base_urls:{openai:"https://api.openai.com/v1",compatible:"http://127.0.0.1:11434/v1",anthropic:"https://api.anthropic.com/v1"},models:{openai:"",compatible:"",anthropic:""},persona:"advisor",custom_style:"",knowledge_enabled:true},
+      knowledge:{chunks:0,sources:[]},planner_url:"../data/output/route-planner/index.html"
+    };
+
+    function api() { return window.pywebview && window.pywebview.api; }
+    function toast(message, bad=false) { const node=$("toast"); node.textContent=message; node.classList.toggle("error",bad); node.classList.add("show"); clearTimeout(toast.timer); toast.timer=setTimeout(()=>node.classList.remove("show"),2600); }
+    function setStatus(kind,text) { $("statusDot").className="dot "+kind; $("statusText").textContent=text; }
+    function showView(name) {
+      document.querySelectorAll(".view").forEach(el=>el.classList.toggle("active",el.id===`view-${name}`));
+      document.querySelectorAll(".nav button").forEach(el=>el.classList.toggle("active",el.dataset.view===name));
+      if(name==="planner" && !$("plannerFrame").src) $("plannerFrame").src=state.bootstrap.planner_url;
+    }
+    document.querySelectorAll("[data-view]").forEach(el=>el.addEventListener("click",()=>showView(el.dataset.view)));
+    document.querySelectorAll("[data-view-jump]").forEach(el=>el.addEventListener("click",()=>showView(el.dataset.viewJump)));
+
+    function selectedProvider() { return $("provider").value; }
+    function captureProviderFields() {
+      if(!state.settings) return;
+      const p=state.settings.provider;
+      if(p) { state.settings.base_urls[p]=$("baseUrl").value.trim(); state.settings.models[p]=$("model").value.trim(); }
+    }
+    function applyProvider(provider) {
+      const config=state.bootstrap.providers[provider];
+      $("baseUrl").value=state.settings.base_urls[provider] || config.base_url;
+      $("model").value=state.settings.models[provider] || config.model || "";
+      $("apiKey").value="";
+      $("modelChip").textContent=`${config.label} · ${$("model").value || "未填模型"}`;
+    }
+    function fillSettings() {
+      const p=$("provider"), persona=$("persona"); p.innerHTML=""; persona.innerHTML="";
+      Object.entries(state.bootstrap.providers).forEach(([id,c])=>p.add(new Option(c.label,id)));
+      Object.entries(state.bootstrap.personas).forEach(([id,c])=>persona.add(new Option(`${c.label} · ${c.description}`,id)));
+      p.value=state.settings.provider; persona.value=state.settings.persona;
+      $("customStyle").value=state.settings.custom_style || ""; $("knowledgeEnabled").checked=state.settings.knowledge_enabled!==false;
+      applyProvider(p.value);
+      p.addEventListener("change",()=>{ captureProviderFields(); state.settings.provider=p.value; applyProvider(p.value); });
+      $("model").addEventListener("input",()=>$("modelChip").textContent=`${state.bootstrap.providers[selectedProvider()].label} · ${$("model").value || "未填模型"}`);
+    }
+    function currentSettings() {
+      captureProviderFields();
+      return {...state.settings,provider:selectedProvider(),persona:$("persona").value,custom_style:$("customStyle").value.trim(),knowledge_enabled:$("knowledgeEnabled").checked};
+    }
+    function currentRunState() { return {floor:+$("stateFloor").value||1,difficulty:+$("stateDifficulty").value||0,current_node:$("stateNode").value.trim(),action_points:+$("stateAp").value||0,ingots:+$("stateIngots").value||0,parts:+$("stateParts").value||0,hope:+$("stateHope").value||0,team:$("stateTeam").value.trim(),inventory_and_effects:$("stateInventory").value.trim(),preference:$("statePreference").value}; }
+    function escapeHtml(value) { return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]); }
+    function addMessage(role, content, sources=[]) {
+      $("welcome").style.display="none";
+      const item=document.createElement("div"); item.className=`message ${role}`;
+      const tags=sources.length?`<div class="source-row">${sources.slice(0,5).map((s,i)=>s.url?`<button class="source-tag" data-source="${i}" style="background:transparent;cursor:pointer">${escapeHtml(s.title)}</button>`:`<span class="source-tag">${escapeHtml(s.title)}</span>`).join("")}</div>`:"";
+      item.innerHTML=`<div class="avatar">${role==="user"?"YOU":"BOT"}</div><div class="bubble">${escapeHtml(content)}${tags}</div>`;
+      item.querySelectorAll("[data-source]").forEach(button=>button.addEventListener("click",()=>api()&&api().open_external(sources[+button.dataset.source].url)));
+      $("messages").appendChild(item); $("chatScroll").scrollTop=$("chatScroll").scrollHeight; return item;
+    }
+    async function setKey() { const value=$("apiKey").value.trim(); if(api() && value) await api().set_session_key(selectedProvider(),value); }
+    async function send(textOverride) {
+      const text=(textOverride || $("prompt").value).trim(); if(!text || state.busy) return;
+      state.busy=true; $("sendButton").disabled=true; setStatus("busy","模型思考中");
+      $("prompt").value=""; state.messages.push({role:"user",content:text}); addMessage("user",text);
+      const typing=addMessage("assistant","正在检索相关资料并整理建议…"); typing.classList.add("typing");
+      try {
+        if(!api()) throw new Error("浏览器预览无法调用模型，请运行桌面 EXE");
+        await setKey(); const settings=currentSettings();
+        const result=await api().chat({provider:settings.provider,base_url:settings.base_urls[settings.provider],model:settings.models[settings.provider],persona:settings.persona,custom_style:settings.custom_style,knowledge_enabled:settings.knowledge_enabled,state:currentRunState(),messages:state.messages});
+        typing.remove(); state.messages.push({role:"assistant",content:result.answer}); addMessage("assistant",result.answer,result.sources||[]); setStatus("ready","等待指令");
+      } catch(error) { typing.remove(); const msg=String(error && error.message || error); addMessage("assistant",`请求没有完成：${msg}`); setStatus("","需要检查配置"); }
+      finally { state.busy=false; $("sendButton").disabled=false; $("prompt").focus(); }
+    }
+    $("sendButton").addEventListener("click",()=>send());
+    $("prompt").addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} });
+    document.querySelectorAll("[data-prompt]").forEach(el=>el.addEventListener("click",()=>send(el.dataset.prompt)));
+    $("prompt").addEventListener("input",e=>{e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,130)+"px";});
+
+    $("saveSettings").addEventListener("click",async()=>{ try { const s=currentSettings(); if(api()){await setKey();await api().save_settings(s);} state.settings=s; toast("设置已保存；API Key 未写入磁盘"); applyProvider(s.provider); } catch(e){toast(String(e.message||e),true);} });
+    $("testConfig").addEventListener("click",async()=>{ const s=currentSettings(), c=state.bootstrap.providers[s.provider]; if(!s.models[s.provider]) return toast("请先填写模型名称",true); if(!s.base_urls[s.provider]) return toast("请先填写 API 地址",true); await setKey(); toast(`${c.label} 配置格式有效；发送消息时才会联网`); });
+    $("knowledgeSearch").addEventListener("click",searchKnowledge);
+    $("knowledgeQuery").addEventListener("keydown",e=>{if(e.key==="Enter")searchKnowledge();});
+    async function searchKnowledge(){ const q=$("knowledgeQuery").value.trim(); if(!q)return; const box=$("knowledgeResults");box.innerHTML='<div class="knowledge-item"><b>检索中</b><p>正在匹配本地规则与实测样本…</p></div>'; try { const result=api()?await api().search_knowledge(q):{results:[],external:[]}; box.innerHTML=""; (result.results||[]).forEach(x=>{const el=document.createElement("div");el.className="knowledge-item";el.innerHTML=`<b>${escapeHtml(x.source)} · ${escapeHtml(x.path)}</b><p>${escapeHtml(x.text)}</p>`;box.appendChild(el);}); (result.external||[]).forEach(x=>{const el=document.createElement("div");el.className="knowledge-item";el.innerHTML=`<b>外部资料</b><p>${escapeHtml(x.status)}<br><button class="secondary" style="margin-top:8px">${escapeHtml(x.title)}</button></p>`;el.querySelector("button").onclick=()=>api().open_external(x.url);box.appendChild(el);}); if(!box.children.length)box.innerHTML='<div class="knowledge-item"><b>没有直接命中</b><p>尝试使用完整节点名、零件名或资源名称。</p></div>'; } catch(e){box.innerHTML=`<div class="knowledge-item"><b class="error">检索失败</b><p>${escapeHtml(e.message||e)}</p></div>`;} }
+
+    async function initialize() {
+      setStatus("busy","正在载入资料");
+      try { state.bootstrap=api()?await api().bootstrap():fallback; } catch(e) { state.bootstrap=fallback; toast("桌面接口未就绪，已进入预览模式",true); }
+      state.settings=JSON.parse(JSON.stringify(state.bootstrap.settings)); fillSettings();
+      $("versionText").textContent=`桌面版 ${state.bootstrap.version}`;
+      $("knowledgeStats").textContent=`已索引 ${state.bootstrap.knowledge.chunks} 条本地资料片段 · ${state.bootstrap.knowledge.sources.length} 个外部来源`;
+      setStatus("ready",api()?"等待指令":"浏览器预览");
+    }
+    window.addEventListener("pywebviewready",initialize,{once:true});
+    setTimeout(()=>{if(!state.bootstrap)initialize();},900);
+  </script>
+</body>
+</html>

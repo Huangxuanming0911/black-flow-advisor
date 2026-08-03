@@ -288,3 +288,26 @@ the planner.
 
 The local demo starts with several editable sample parts. Pass
 `--no-sample-parts` to start with an empty part box.
+
+## Desktop run companion
+
+The desktop product is now a chat-first run companion. Route planning remains
+available as an embedded tool, while the main shell adds editable run context,
+local knowledge retrieval, model configuration, and selectable response
+styles.
+
+It supports OpenAI Responses, OpenAI-compatible Chat Completions, and Anthropic
+Messages endpoints. Model IDs and base URLs are user-configurable. API keys are
+kept in process memory by default and are never written to `data/settings.json`.
+Only the visible run-state fields, recent conversation, and a small set of
+retrieved knowledge chunks are sent to the configured model; screenshots are
+not uploaded automatically.
+
+Build the Windows directory distribution with:
+
+```powershell
+.\build_companion_windows.ps1
+```
+
+Then run `dist\BlackFlowCompanion\BlackFlowCompanion.exe` and keep the complete
+distribution directory together.
