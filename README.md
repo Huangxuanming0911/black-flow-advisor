@@ -2,8 +2,10 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-Independent, read-only recognition baseline for the map phase of Arknights
-Integrated Strategies: Black Flow.
+A screen-based, read-only desktop decision aid for the map phase of Arknights
+Integrated Strategies: Black Flow. It converts recognized map UI into a graph
+and compares routes under action-point, processed-part, reward, and user
+preference constraints.
 
 This repository intentionally does **not** copy, fork, or depend on any existing
 Black Flow route-planning project. MaaFramework is treated only as an optional
@@ -22,13 +24,15 @@ official capture/orchestration host.
 - Inspect a fixed parts-panel grid and classify occupied slots from local
   templates.
 - Emit JSON, an annotated PNG, confidence scores, and validation issues.
+- Build an undirected graph and simulate walking, processed-part movement, and
+  forced tunnel transfers in an interactive planner.
+- Compare combat, conservative, balanced, and exploration route candidates.
 - Merge overlapping partial graph observations only when at least two
   compatible nodes establish a safe grid translation.
 - Refuse to mark a result as planner-ready without human verification.
 
-No planner, game input, ADB clicking, account automation, or bundled game
-assets are included in this milestone. Real screenshots stay under ignored
-`data/private/`.
+No game input, ADB clicking, account automation, or bundled game assets are
+included. Real screenshots stay under ignored `data/private/`.
 
 ## Run locally
 
@@ -50,6 +54,34 @@ python -m blackflow_vision.cli synthesize-parts `
   --templates examples/synthetic-part-templates
 python -m unittest discover -s tests -v
 ```
+
+## Accept the six calibrated screenshots
+
+The six current screenshots have a manually reviewed baseline covering visible
+HUD state, screen type, parts/movement choices, map nodes, and undirected
+edges. Build the local acceptance report with:
+
+```powershell
+python tools/build_acceptance_report.py
+start data/output/acceptance/index.html
+```
+
+The report switches among source images, toggles paths/nodes/labels, lists the
+structured result, and exports per-frame approval or correction notes as JSON.
+
+For deterministic regression output on one of the calibrated source images:
+
+```powershell
+python -m blackflow_vision.cli recognize-calibrated `
+  data/private/raw/2026-07-26/layer03_map_normal_full.png `
+  --manifest data/private/raw/2026-07-26/manifest.json `
+  --annotations data/private/annotations/2026-07-26/recognized-scenes.json `
+  --output data/output/acceptance/scenes/layer03-map-full.json
+```
+
+This command uses an exact SHA-256 match against the annotated set. It is an
+acceptance/regression path, not evidence that the CV model generalizes to new
+screenshots. Results remain `planner_ready: false` until user acceptance.
 
 Outputs:
 
@@ -81,12 +113,66 @@ are offered together so the framework can select a compatible method.
 $env:PYTHONPATH = "src;."
 python -m integration.maafw.live_capture `
   --window-title "明日方舟" `
-  --output data/output/live
+  --output data/output/live `
+  --map-only
 ```
 
-The loop samples every 250 ms, waits for three stable frames, classifies the UI
-state, and writes only the latest accepted screenshot and state JSON. It does
+The loop uses adaptive polling: 250 ms briefly after visible motion and 1 s
+while the frame stays idle. It waits for three stable frames, classifies the UI
+state, and runs direct path recognition on stable map frames. It atomically
+publishes the latest path JSON, mask, skeleton and annotated image alongside
+the accepted screenshot. The live graph currently has
+`graph_scope: all_visible_nodes_geometry` and remains
+`planner_ready: false`. It does
 not issue input events.
+
+## Offline node semantics
+
+Capture and analysis are separate. `latest.png` is the normalized read-only
+capture; path masks, graph annotations, OCR results and semantic annotations
+are derived artifacts. Existing captures can therefore be reprocessed without
+opening or recapturing the game window.
+
+Install the optional offline OCR dependency and analyze a saved frame:
+
+```powershell
+python -m pip install -e ".[ocr]"
+$env:PYTHONPATH = "src;."
+python tools/analyze_node_semantics.py `
+  data/output/live-full-node/latest.png `
+  --output data/output/node-semantics
+```
+
+The recognizer runs Chinese OCR once over the complete frame, associates text
+boxes with node geometry, corrects close matches against a node-label
+vocabulary, and optionally validates the resulting type against icon templates
+derived from the private reviewed dataset. Text remains authoritative: a
+strong text/icon conflict is reported as `conflict_text_kept` and
+`needs_review: true`; the icon never silently overwrites readable text.
+
+The command writes:
+
+- `node-semantics-annotated.png`: clean node labels and semantic types.
+- `unified-map-graph.png`: paths, stable node IDs and semantic labels together.
+- `node-semantics.json`: OCR and icon cross-validation details.
+- `unified-map-graph.json`: planner-facing nodes, undirected edges, adjacency
+  lists, connected components, isolated nodes and ambiguity diagnostics.
+
+The unified graph joins the two stages by stable node ID. Its edges still come
+only from direct path-UI evidence; semantic labels, grid proximity and global
+connectivity never create a path. Connectivity is reported as a diagnostic
+rather than enforced, so partial screenshots may legitimately contain several
+components. Private screenshots and extracted icon templates remain under
+`data/private/` and are not published.
+
+## Black Flow planning knowledge base
+
+`data/knowledge/black-flow-rules.v0.1.json` contains planner-facing node
+effects, all currently documented parts, movement models, the three ending
+routes and stage-to-region assignments. Its `vision_bridge` maps recognized
+Chinese node labels to rule IDs while preserving ambiguity for unrevealed
+nodes. See `docs/black-flow-knowledge.zh-CN.md` for the Chinese review and
+sources; run `python tools/validate_knowledge_base.py` to validate the data.
 
 ## Controlled V0 assumptions and hard stops
 
@@ -96,9 +182,14 @@ not issue input events.
 - Cropped viewport boundaries remain unresolved until another overlapping
   observation supplies evidence.
 - Recognition is advisory; uncertain fields require correction.
-- The current circle/road detector is a synthetic baseline. On the six-image
-  calibration seed it identifies the UI state, but does not yet reconstruct
-  reliable real-map roads. `planner_ready` therefore remains false.
+- The fast path detector runs paired-bank and translucent-centre filters on a
+  half-resolution map crop. The acceptance page exposes its response maps,
+  directional candidates, mask and skeleton. Extremely faint paths and long
+  background structures can still be confused, especially in partial views,
+  so `planner_ready` remains false.
+- Global connectivity is not a recognition constraint. Local tangent
+  continuity suppresses short visual interference but never invents an edge
+  to join separate components.
 
 Real game screenshots and derived crops belong under `data/private/`, which is
 ignored by Git. Do not commit proprietary game assets or user screenshots.
@@ -132,3 +223,90 @@ The next milestone needs lossless frame sequences, not just isolated images:
 - 10-20 toolbox and movement-selector screenshots.
 - At least 5 examples for each common node/part class.
 - Separate runs for train/tuning and final holdout evaluation.
+
+## Interactive route simulation
+
+The first controlled planner consumes the recognized
+`unified-map-graph.json` without changing or inventing its edges. Build the
+local review page with:
+
+```powershell
+$env:PYTHONPATH = "src;."
+python tools/build_route_planner.py
+start data/output/route-planner/index.html
+```
+
+A fresh clone builds from `examples/route-planner-demo-graph.json` and the
+synthetic map by default, so private screenshots are not required. Pass
+`--graph data/output/node-semantics/unified-map-graph.json` to load a real
+recognized result.
+
+Click nodes in order to construct a route. Each step can use walking or a
+recognized processed part. Reaching a paired tunnel forces an immediate
+zero-action-point transfer to its other end. The
+simulator keeps three ledgers separate:
+
+- exact action-point and deterministic resource changes;
+- post-completion rewards across seven dimensions, separating exact values,
+  known expectations, ranges, and unresolved components;
+- current part-box valuation, including consumed movement parts and documented
+  dynamic valuation rules.
+
+Pursuit is modeled as a forced encounter rather than a map node. It is
+triggered when action points reach zero away from an exit; the normal variant
+adds its fixed recruitment-ticket reward, while the boss variant remains an
+  explicit placeholder until the current zone endpoint is known. Normal and
+  emergency combat now use difficulty- and floor-specific, manually reviewed
+  clean samples as confidence-weighted recommendation priors. Sparse exact
+  groups are shrunk toward same-floor or same-difficulty evidence instead of
+  being treated as stable averages. Chest/unowned-wealth rewards and
+  collectible-granted parts remain separate from the base result.
+
+The page proposes combat, conservative, balanced, and exploration routes.
+Every strategy may use processed parts and obeys the same reserve, forced
+tunnel-transfer, and portal-entry constraints. Run
+`python tools/build_empirical_rewards.py` after collecting more reviewed runs,
+then rebuild the planner to refresh the empirical snapshot.
+
+The current snapshot contains 31 planner-usable samples from 44 confirmed
+records and exposes difficulty N0-N18 in the planner. Twelve legacy samples
+without a stored difficulty are explicitly treated as N6. See
+[`docs/reward-data-analysis-2026-08-11.zh-CN.md`](docs/reward-data-analysis-2026-08-11.zh-CN.md)
+for the data-quality audit, representative groups, and collection priorities.
+
+Route recommendations count node preference rewards only on first completion,
+penalize unnecessary node/edge revisits, and check whether the remaining state
+can still reach an exit by walking or with an available movement part. This
+prevents high-scoring loops while retaining necessary backtracking.
+
+The planner opens as a compact desktop-style workspace. Its default map is an
+abstract graph, but every semantic node uses a small game-native icon cropped
+once from the recognized source frame. Forest clearings remain unobtrusive
+junction dots. The full screenshot is available only as an optional diagnostic
+overlay. Icon crops are embedded into the generated local HTML and are not
+committed or downloaded while the planner is running.
+
+Processed parts and ingots also use a configurable floor-aware lifecycle
+heuristic. Early floors preserve more carryable mobility, while floors 5-6
+reduce the reserve target and value merchant/box-capacity conversion more
+strongly. The user can enter current ingots and box capacity, enforce a hard
+minimum-use reserve, or bias the soft policy toward conserving or spending.
+Part sale value is now separated from an intrinsic per-use option value based
+on reach, action-point savings, unfinished-node traversal, side effects, and
+pursuit avoidance. Expiring processed parts are encouraged to be used before a
+real region exit without forcing a bad node solely to empty the box. Optional
+-5 to +5 node-preference controls apply consistently to all four strategies.
+
+`data/knowledge/node-rewards.v0.1.json` records the current Black Flow node
+reward matrix. Exact, choice-based, conditional, transaction, and
+region/stage-dependent rewards remain distinguishable. Older Integrated
+Strategies data is used only to shape the schema, never to fill missing Black
+Flow numbers.
+
+The page also supports manual semantic corrections for a previously visited
+overlook and resident-occupied nodes. Normal completed nodes are treated as
+ordinary forest clearings; their previous event identity is not retained by
+the planner.
+
+The local demo starts with several editable sample parts. Pass
+`--no-sample-parts` to start with an empty part box.

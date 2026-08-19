@@ -1,0 +1,76 @@
+{
+  "schema_version": "0.1.0",
+  "source_image": "examples/synthetic-map.png",
+  "floor": 3,
+  "difficulty": 6,
+  "planner_ready": true,
+  "nodes": [
+    {
+      "node_id": "r0c0",
+      "center": [240, 170],
+      "label": "诡意行商",
+      "kind": "rogue_trader",
+      "confidence": 1.0
+    },
+    {
+      "node_id": "r0c1",
+      "center": [390, 170],
+      "label": "作战",
+      "kind": "combat",
+      "confidence": 1.0
+    },
+    {
+      "node_id": "r0c2",
+      "center": [540, 170],
+      "label": "险路尽头",
+      "kind": "exit_end",
+      "confidence": 1.0
+    },
+    {
+      "node_id": "r1c0",
+      "center": [240, 320],
+      "label": "羽瞰点",
+      "kind": "overlook",
+      "confidence": 1.0
+    },
+    {
+      "node_id": "r1c1",
+      "center": [390, 320],
+      "label": "林间空地",
+      "kind": "forest",
+      "confidence": 1.0
+    },
+    {
+      "node_id": "r1c2",
+      "center": [540, 320],
+      "label": "紧急作战",
+      "kind": "emergency_combat",
+      "confidence": 1.0
+    },
+    {
+      "node_id": "r2c1",
+      "center": [390, 470],
+      "label": "当前位置",
+      "kind": "current",
+      "confidence": 1.0
+    },
+    {
+      "node_id": "r2c2",
+      "center": [540, 470],
+      "label": "不期而遇",
+      "kind": "event",
+      "confidence": 1.0
+    }
+  ],
+  "edges": [
+    {"first": "r0c0", "second": "r0c1", "confidence": 1.0},
+    {"first": "r0c0", "second": "r1c0", "confidence": 1.0},
+    {"first": "r0c1", "second": "r0c2", "confidence": 1.0},
+    {"first": "r0c1", "second": "r1c1", "confidence": 1.0},
+    {"first": "r1c0", "second": "r1c1", "confidence": 1.0},
+    {"first": "r1c1", "second": "r1c2", "confidence": 1.0},
+    {"first": "r1c1", "second": "r2c1", "confidence": 1.0},
+    {"first": "r1c2", "second": "r2c2", "confidence": 1.0},
+    {"first": "r2c1", "second": "r2c2", "confidence": 1.0}
+  ]
+}

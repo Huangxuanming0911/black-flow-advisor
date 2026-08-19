@@ -1,0 +1,3601 @@
+{
+  "schema_version": "0.2.0",
+  "generated_at": "2026-08-20",
+  "source": {
+    "repository": "black-flow-reward-collector",
+    "path": "data/records/rewards.jsonl",
+    "snapshot_note": "rewards.jsonl"
+  },
+  "scope": "人工确认且无额外奖励来源的战后基础结算；源石锭使用正常奖励栏，零件不含藏品附带零件，希望暂不纳入。",
+  "sample_policy": {
+    "included": 31,
+    "excluded": 13,
+    "excluded_sample_ids": [
+      "20260728T153453-3d0e63f0",
+      "20260728T201726-3b0dee42",
+      "20260728T203401-2a232fc1",
+      "20260728T203749-beb47985",
+      "20260729T070856-65d375f1",
+      "20260729T083458-cb165437",
+      "20260729T090340-361fa1ca",
+      "20260729T090442-d65d1d46",
+      "20260802T165224-cb1cf6dd",
+      "20260805T103758-a61b383a",
+      "20260805T105438-e68a9578",
+      "20260805T111202-d2b3e6cb",
+      "20260805T111601-534db145"
+    ],
+    "minimum_stable_samples": 5,
+    "legacy_default_difficulty": 6,
+    "legacy_default_sample_count": 12,
+    "observed_difficulties": [
+      6,
+      7,
+      11
+    ],
+    "confidence_note": "样本不足5条时只作为推荐先验；按难度和层数优先匹配，稀疏组向同层跨难度或同难度跨层样本收缩。"
+  },
+  "profiles": [
+    {
+      "id": "difficulty-11:floor-1:main_map:combat",
+      "difficulty": 11,
+      "floor": 1,
+      "location_context": "main_map",
+      "node_kind": "combat",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.65,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "猎犬病原",
+        "遗忘时间"
+      ],
+      "sample_ids": [
+        "20260805T103223-3c14dbc8",
+        "20260805T103530-fd2f00bb"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 12,
+          "maximum": 12,
+          "expected": 12.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5,
+          "standard_deviation": 0.5,
+          "nonzero_rate": 0.5,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-1:main_map:emergency_combat",
+      "difficulty": 11,
+      "floor": 1,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "猎犬病原"
+      ],
+      "sample_ids": [
+        "20260805T104054-318ef06e"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 14,
+          "maximum": 14,
+          "expected": 14.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "target_life": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-2:main_map:emergency_combat",
+      "difficulty": 11,
+      "floor": 2,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.65,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "无主地",
+        "本性难移"
+      ],
+      "sample_ids": [
+        "20260805T104551-38973f05",
+        "20260805T105038-6f9cb2f5"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 14,
+          "maximum": 14,
+          "expected": 14.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5,
+          "standard_deviation": 0.5,
+          "nonzero_rate": 0.5,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-3:main_map:combat",
+      "difficulty": 11,
+      "floor": 3,
+      "location_context": "main_map",
+      "node_kind": "combat",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "黑色逆流"
+      ],
+      "sample_ids": [
+        "20260805T110909-cf64e3c2"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 3,
+          "expected": 3.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 30,
+          "maximum": 30,
+          "expected": 30.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-3:main_map:emergency_combat",
+      "difficulty": 11,
+      "floor": 3,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "焦土之家"
+      ],
+      "sample_ids": [
+        "20260805T110523-130d5c74"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 3,
+          "expected": 3.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 30,
+          "maximum": 30,
+          "expected": 30.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-3:main_map:enemy",
+      "difficulty": 11,
+      "floor": 3,
+      "location_context": "main_map",
+      "node_kind": "enemy",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.65,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "辟路行进",
+        "铁腕迷思"
+      ],
+      "sample_ids": [
+        "20260805T110022-659462a8",
+        "20260805T111918-a11ca39a"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 5,
+          "expected": 3.5,
+          "standard_deviation": 1.5,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 15,
+          "maximum": 38,
+          "expected": 26.5,
+          "standard_deviation": 11.5,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5,
+          "standard_deviation": 0.5,
+          "nonzero_rate": 0.5,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5,
+          "standard_deviation": 0.5,
+          "nonzero_rate": 0.5,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-4:main_map:combat",
+      "difficulty": 11,
+      "floor": 4,
+      "location_context": "main_map",
+      "node_kind": "combat",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "长刀寒夜"
+      ],
+      "sample_ids": [
+        "20260805T112315-b19966e0"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 18,
+          "maximum": 18,
+          "expected": 18.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-4:main_map:emergency_combat",
+      "difficulty": 11,
+      "floor": 4,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "暴力押运"
+      ],
+      "sample_ids": [
+        "20260805T112702-99b2c33a"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 4,
+          "maximum": 4,
+          "expected": 4.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 36,
+          "maximum": 36,
+          "expected": 36.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-4:main_map:encounter",
+      "difficulty": 11,
+      "floor": 4,
+      "location_context": "main_map",
+      "node_kind": "encounter",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "搏杀"
+      ],
+      "sample_ids": [
+        "20260805T114052-4a98c03c"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 3,
+          "expected": 3.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 15,
+          "maximum": 15,
+          "expected": 15.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-4:portal_internal:emergency_combat",
+      "difficulty": 11,
+      "floor": 4,
+      "location_context": "portal_internal",
+      "node_kind": "emergency_combat",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.65,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "侵占家园",
+        "湖中魔"
+      ],
+      "sample_ids": [
+        "20260805T113402-89944530",
+        "20260805T113757-5b6fb6c8"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 8,
+          "expected": 5.5,
+          "standard_deviation": 2.5,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 36,
+          "maximum": 43,
+          "expected": 39.5,
+          "standard_deviation": 3.5,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 2,
+          "expected": 1.0,
+          "standard_deviation": 1.0,
+          "nonzero_rate": 0.5,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-5:main_map:emergency_combat",
+      "difficulty": 11,
+      "floor": 5,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "过度繁殖"
+      ],
+      "sample_ids": [
+        "20260805T115055-ea580a1b"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 5,
+          "maximum": 5,
+          "expected": 5.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 43,
+          "maximum": 43,
+          "expected": 43.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-5:portal_internal:encounter",
+      "difficulty": 11,
+      "floor": 5,
+      "location_context": "portal_internal",
+      "node_kind": "encounter",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.65,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "共斗"
+      ],
+      "sample_ids": [
+        "20260805T115352-be1e1c8c",
+        "20260805T115546-0d6b2aa2"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 3,
+          "expected": 3.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 19,
+          "maximum": 19,
+          "expected": 19.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-all:main_map:combat",
+      "difficulty": 11,
+      "floor": null,
+      "location_context": "main_map",
+      "node_kind": "combat",
+      "sample_count": 4,
+      "confidence": "preliminary_stable",
+      "confidence_zh": "初步稳定",
+      "confidence_weight": 0.585,
+      "fallback_scope": "same_difficulty_cross_floor",
+      "cross_floor_fallback": true,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 4
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "猎犬病原",
+        "遗忘时间",
+        "长刀寒夜",
+        "黑色逆流"
+      ],
+      "sample_ids": [
+        "20260805T103223-3c14dbc8",
+        "20260805T103530-fd2f00bb",
+        "20260805T110909-cf64e3c2",
+        "20260805T112315-b19966e0"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 1,
+          "maximum": 3,
+          "expected": 1.75,
+          "standard_deviation": 0.8292,
+          "nonzero_rate": 1.0,
+          "observations": 4
+        },
+        "command_xp": {
+          "minimum": 12,
+          "maximum": 30,
+          "expected": 18.0,
+          "standard_deviation": 7.3485,
+          "nonzero_rate": 1.0,
+          "observations": 4
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 2,
+          "expected": 0.5,
+          "standard_deviation": 0.866,
+          "nonzero_rate": 0.25,
+          "observations": 4
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 4
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5,
+          "standard_deviation": 0.5,
+          "nonzero_rate": 0.5,
+          "observations": 4
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 4
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-all:main_map:emergency_combat",
+      "difficulty": 11,
+      "floor": null,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 6,
+      "confidence": "moderate",
+      "confidence_zh": "中等",
+      "confidence_weight": 0.675,
+      "fallback_scope": "same_difficulty_cross_floor",
+      "cross_floor_fallback": true,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 6
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "无主地",
+        "暴力押运",
+        "本性难移",
+        "焦土之家",
+        "猎犬病原",
+        "过度繁殖"
+      ],
+      "sample_ids": [
+        "20260805T104054-318ef06e",
+        "20260805T104551-38973f05",
+        "20260805T105038-6f9cb2f5",
+        "20260805T110523-130d5c74",
+        "20260805T112702-99b2c33a",
+        "20260805T115055-ea580a1b"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 5,
+          "expected": 3.0,
+          "standard_deviation": 1.1547,
+          "nonzero_rate": 1.0,
+          "observations": 6
+        },
+        "command_xp": {
+          "minimum": 14,
+          "maximum": 43,
+          "expected": 25.1667,
+          "standard_deviation": 11.7816,
+          "nonzero_rate": 1.0,
+          "observations": 6
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 2,
+          "expected": 1.0,
+          "standard_deviation": 0.8165,
+          "nonzero_rate": 0.6667,
+          "observations": 6
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 6
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 2,
+          "expected": 1.0,
+          "standard_deviation": 0.5774,
+          "nonzero_rate": 0.8333,
+          "observations": 6
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.1667,
+          "standard_deviation": 0.3727,
+          "nonzero_rate": 0.1667,
+          "observations": 6
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-all:main_map:enemy",
+      "difficulty": 11,
+      "floor": null,
+      "location_context": "main_map",
+      "node_kind": "enemy",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.4875,
+      "fallback_scope": "same_difficulty_cross_floor",
+      "cross_floor_fallback": true,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "辟路行进",
+        "铁腕迷思"
+      ],
+      "sample_ids": [
+        "20260805T110022-659462a8",
+        "20260805T111918-a11ca39a"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 5,
+          "expected": 3.5,
+          "standard_deviation": 1.5,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 15,
+          "maximum": 38,
+          "expected": 26.5,
+          "standard_deviation": 11.5,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5,
+          "standard_deviation": 0.5,
+          "nonzero_rate": 0.5,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5,
+          "standard_deviation": 0.5,
+          "nonzero_rate": 0.5,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-all:portal_internal:emergency_combat",
+      "difficulty": 11,
+      "floor": null,
+      "location_context": "portal_internal",
+      "node_kind": "emergency_combat",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.4875,
+      "fallback_scope": "same_difficulty_cross_floor",
+      "cross_floor_fallback": true,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "侵占家园",
+        "湖中魔"
+      ],
+      "sample_ids": [
+        "20260805T113402-89944530",
+        "20260805T113757-5b6fb6c8"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 8,
+          "expected": 5.5,
+          "standard_deviation": 2.5,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 36,
+          "maximum": 43,
+          "expected": 39.5,
+          "standard_deviation": 3.5,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 2,
+          "expected": 1.0,
+          "standard_deviation": 1.0,
+          "nonzero_rate": 0.5,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-11:floor-all:portal_internal:encounter",
+      "difficulty": 11,
+      "floor": null,
+      "location_context": "portal_internal",
+      "node_kind": "encounter",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.4875,
+      "fallback_scope": "same_difficulty_cross_floor",
+      "cross_floor_fallback": true,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "共斗"
+      ],
+      "sample_ids": [
+        "20260805T115352-be1e1c8c",
+        "20260805T115546-0d6b2aa2"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 3,
+          "expected": 3.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 19,
+          "maximum": 19,
+          "expected": 19.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-6:floor-3:main_map:combat",
+      "difficulty": 6,
+      "floor": 3,
+      "location_context": "main_map",
+      "node_kind": "combat",
+      "sample_count": 3,
+      "confidence": "preliminary_stable",
+      "confidence_zh": "初步稳定",
+      "confidence_weight": 0.78,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 3
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "趁火打劫",
+        "预算否决",
+        "黑色逆流"
+      ],
+      "sample_ids": [
+        "20260728T182236-a4b17ad1",
+        "20260728T183620-4c23a7e7",
+        "20260728T191631-7743a2ad"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "command_xp": {
+          "minimum": 15,
+          "maximum": 15,
+          "expected": 15.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 3
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.3333,
+          "standard_deviation": 0.4714,
+          "nonzero_rate": 0.3333,
+          "observations": 3
+        }
+      }
+    },
+    {
+      "id": "difficulty-6:floor-3:main_map:emergency_combat",
+      "difficulty": 6,
+      "floor": 3,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "辟路行进"
+      ],
+      "sample_ids": [
+        "20260728T190102-7eb507aa"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 3,
+          "expected": 3.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 30,
+          "maximum": 30,
+          "expected": 30.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-6:floor-3:main_map:enemy",
+      "difficulty": 6,
+      "floor": 3,
+      "location_context": "main_map",
+      "node_kind": "enemy",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "铁腕迷思"
+      ],
+      "sample_ids": [
+        "20260728T195347-f6e7a3bc"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 5,
+          "maximum": 5,
+          "expected": 5.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 38,
+          "maximum": 38,
+          "expected": 38.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-6:floor-4:main_map:encounter",
+      "difficulty": 6,
+      "floor": 4,
+      "location_context": "main_map",
+      "node_kind": "encounter",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "共斗"
+      ],
+      "sample_ids": [
+        "20260728T202113-27f1b6ad"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 4,
+          "maximum": 4,
+          "expected": 4.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 19,
+          "maximum": 19,
+          "expected": 19.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-6:floor-5:main_map:combat",
+      "difficulty": 6,
+      "floor": 5,
+      "location_context": "main_map",
+      "node_kind": "combat",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "湖中魔"
+      ],
+      "sample_ids": [
+        "20260729T073018-75b864e8"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 3,
+          "expected": 3.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 30,
+          "maximum": 30,
+          "expected": 30.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-6:floor-5:main_map:emergency_combat",
+      "difficulty": 6,
+      "floor": 5,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.65,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "丛林法则",
+        "送别仪式"
+      ],
+      "sample_ids": [
+        "20260729T080539-3023c22b",
+        "20260729T091736-329503f2"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 5,
+          "maximum": 5,
+          "expected": 5.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 43,
+          "maximum": 43,
+          "expected": 43.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5,
+          "standard_deviation": 0.5,
+          "nonzero_rate": 0.5,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-6:floor-5:main_map:encounter",
+      "difficulty": 6,
+      "floor": 5,
+      "location_context": "main_map",
+      "node_kind": "encounter",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "共斗"
+      ],
+      "sample_ids": [
+        "20260729T091301-a59edfd7"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 4,
+          "maximum": 4,
+          "expected": 4.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 19,
+          "maximum": 19,
+          "expected": 19.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-6:floor-5:main_map:resident_occupied",
+      "difficulty": 6,
+      "floor": 5,
+      "location_context": "main_map",
+      "node_kind": "resident_occupied",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "进退趋同"
+      ],
+      "sample_ids": [
+        "20260729T074828-3daca7bb"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 5,
+          "maximum": 5,
+          "expected": 5.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 21,
+          "maximum": 21,
+          "expected": 21.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-6:floor-5:portal_internal:combat",
+      "difficulty": 6,
+      "floor": 5,
+      "location_context": "portal_internal",
+      "node_kind": "combat",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "丛林法则"
+      ],
+      "sample_ids": [
+        "20260729T085624-5ec3f821"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 24,
+          "maximum": 24,
+          "expected": 24.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-6:floor-all:main_map:combat",
+      "difficulty": 6,
+      "floor": null,
+      "location_context": "main_map",
+      "node_kind": "combat",
+      "sample_count": 4,
+      "confidence": "preliminary_stable",
+      "confidence_zh": "初步稳定",
+      "confidence_weight": 0.585,
+      "fallback_scope": "same_difficulty_cross_floor",
+      "cross_floor_fallback": true,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 4
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "湖中魔",
+        "趁火打劫",
+        "预算否决",
+        "黑色逆流"
+      ],
+      "sample_ids": [
+        "20260728T182236-a4b17ad1",
+        "20260728T183620-4c23a7e7",
+        "20260728T191631-7743a2ad",
+        "20260729T073018-75b864e8"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 3,
+          "expected": 2.25,
+          "standard_deviation": 0.433,
+          "nonzero_rate": 1.0,
+          "observations": 4
+        },
+        "command_xp": {
+          "minimum": 15,
+          "maximum": 30,
+          "expected": 18.75,
+          "standard_deviation": 6.4952,
+          "nonzero_rate": 1.0,
+          "observations": 4
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.25,
+          "standard_deviation": 0.433,
+          "nonzero_rate": 0.25,
+          "observations": 4
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 4
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5,
+          "standard_deviation": 0.5,
+          "nonzero_rate": 0.5,
+          "observations": 4
+        }
+      }
+    },
+    {
+      "id": "difficulty-6:floor-all:main_map:emergency_combat",
+      "difficulty": 6,
+      "floor": null,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 3,
+      "confidence": "preliminary_stable",
+      "confidence_zh": "初步稳定",
+      "confidence_weight": 0.585,
+      "fallback_scope": "same_difficulty_cross_floor",
+      "cross_floor_fallback": true,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 3
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "丛林法则",
+        "辟路行进",
+        "送别仪式"
+      ],
+      "sample_ids": [
+        "20260728T190102-7eb507aa",
+        "20260729T080539-3023c22b",
+        "20260729T091736-329503f2"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 5,
+          "expected": 4.3333,
+          "standard_deviation": 0.9428,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "command_xp": {
+          "minimum": 30,
+          "maximum": 43,
+          "expected": 38.6667,
+          "standard_deviation": 6.1283,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5,
+          "standard_deviation": 0.5,
+          "nonzero_rate": 0.5,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-6:floor-all:main_map:encounter",
+      "difficulty": 6,
+      "floor": null,
+      "location_context": "main_map",
+      "node_kind": "encounter",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.4875,
+      "fallback_scope": "same_difficulty_cross_floor",
+      "cross_floor_fallback": true,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "共斗"
+      ],
+      "sample_ids": [
+        "20260728T202113-27f1b6ad",
+        "20260729T091301-a59edfd7"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 4,
+          "maximum": 4,
+          "expected": 4.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 19,
+          "maximum": 19,
+          "expected": 19.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-7:floor-5:main_map:enemy",
+      "difficulty": 7,
+      "floor": 5,
+      "location_context": "main_map",
+      "node_kind": "enemy",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "永无安宁"
+      ],
+      "sample_ids": [
+        "20260802T163148-f37a17de"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 8,
+          "maximum": 8,
+          "expected": 8.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 60,
+          "maximum": 60,
+          "expected": 60.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-7:floor-6:main_map:combat",
+      "difficulty": 7,
+      "floor": 6,
+      "location_context": "main_map",
+      "node_kind": "combat",
+      "sample_count": 1,
+      "confidence": "anecdotal",
+      "confidence_zh": "单例",
+      "confidence_weight": 0.45,
+      "fallback_scope": "exact",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": false,
+      "difficulty_source_counts": {
+        "manual": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "命运共享"
+      ],
+      "sample_ids": [
+        "20260802T164602-054eb761"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 5,
+          "maximum": 5,
+          "expected": 5.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "command_xp": {
+          "minimum": 24,
+          "maximum": 24,
+          "expected": 24.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 1
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-1:main_map:combat",
+      "difficulty": null,
+      "floor": 1,
+      "location_context": "main_map",
+      "node_kind": "combat",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.5525,
+      "fallback_scope": "same_floor_cross_difficulty",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "猎犬病原",
+        "遗忘时间"
+      ],
+      "sample_ids": [
+        "20260805T103223-3c14dbc8",
+        "20260805T103530-fd2f00bb"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 12,
+          "maximum": 12,
+          "expected": 12.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5,
+          "standard_deviation": 0.5,
+          "nonzero_rate": 0.5,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-2:main_map:emergency_combat",
+      "difficulty": null,
+      "floor": 2,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.5525,
+      "fallback_scope": "same_floor_cross_difficulty",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "无主地",
+        "本性难移"
+      ],
+      "sample_ids": [
+        "20260805T104551-38973f05",
+        "20260805T105038-6f9cb2f5"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 14,
+          "maximum": 14,
+          "expected": 14.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5,
+          "standard_deviation": 0.5,
+          "nonzero_rate": 0.5,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-3:main_map:combat",
+      "difficulty": null,
+      "floor": 3,
+      "location_context": "main_map",
+      "node_kind": "combat",
+      "sample_count": 4,
+      "confidence": "preliminary_stable",
+      "confidence_zh": "初步稳定",
+      "confidence_weight": 0.663,
+      "fallback_scope": "same_floor_cross_difficulty",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 3,
+        "manual": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "趁火打劫",
+        "预算否决",
+        "黑色逆流"
+      ],
+      "sample_ids": [
+        "20260728T182236-a4b17ad1",
+        "20260728T183620-4c23a7e7",
+        "20260728T191631-7743a2ad",
+        "20260805T110909-cf64e3c2"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 3,
+          "expected": 2.25,
+          "standard_deviation": 0.433,
+          "nonzero_rate": 1.0,
+          "observations": 4
+        },
+        "command_xp": {
+          "minimum": 15,
+          "maximum": 30,
+          "expected": 18.75,
+          "standard_deviation": 6.4952,
+          "nonzero_rate": 1.0,
+          "observations": 4
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 2,
+          "expected": 0.5,
+          "standard_deviation": 0.866,
+          "nonzero_rate": 0.25,
+          "observations": 4
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 4
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5,
+          "standard_deviation": 0.5,
+          "nonzero_rate": 0.5,
+          "observations": 4
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-3:main_map:emergency_combat",
+      "difficulty": null,
+      "floor": 3,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.5525,
+      "fallback_scope": "same_floor_cross_difficulty",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 1,
+        "manual": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "焦土之家",
+        "辟路行进"
+      ],
+      "sample_ids": [
+        "20260728T190102-7eb507aa",
+        "20260805T110523-130d5c74"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 3,
+          "expected": 3.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 30,
+          "maximum": 30,
+          "expected": 30.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-3:main_map:enemy",
+      "difficulty": null,
+      "floor": 3,
+      "location_context": "main_map",
+      "node_kind": "enemy",
+      "sample_count": 3,
+      "confidence": "preliminary_stable",
+      "confidence_zh": "初步稳定",
+      "confidence_weight": 0.663,
+      "fallback_scope": "same_floor_cross_difficulty",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 1,
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "辟路行进",
+        "铁腕迷思"
+      ],
+      "sample_ids": [
+        "20260728T195347-f6e7a3bc",
+        "20260805T110022-659462a8",
+        "20260805T111918-a11ca39a"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 5,
+          "expected": 4.0,
+          "standard_deviation": 1.4142,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "command_xp": {
+          "minimum": 15,
+          "maximum": 38,
+          "expected": 30.3333,
+          "standard_deviation": 10.8423,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 2,
+          "expected": 1.0,
+          "standard_deviation": 0.8165,
+          "nonzero_rate": 0.6667,
+          "observations": 3
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.6667,
+          "standard_deviation": 0.4714,
+          "nonzero_rate": 0.6667,
+          "observations": 3
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-4:main_map:encounter",
+      "difficulty": null,
+      "floor": 4,
+      "location_context": "main_map",
+      "node_kind": "encounter",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.5525,
+      "fallback_scope": "same_floor_cross_difficulty",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 1,
+        "manual": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "共斗",
+        "搏杀"
+      ],
+      "sample_ids": [
+        "20260728T202113-27f1b6ad",
+        "20260805T114052-4a98c03c"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 4,
+          "expected": 3.5,
+          "standard_deviation": 0.5,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 15,
+          "maximum": 19,
+          "expected": 17.0,
+          "standard_deviation": 2.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 1
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-4:portal_internal:emergency_combat",
+      "difficulty": null,
+      "floor": 4,
+      "location_context": "portal_internal",
+      "node_kind": "emergency_combat",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.5525,
+      "fallback_scope": "same_floor_cross_difficulty",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "侵占家园",
+        "湖中魔"
+      ],
+      "sample_ids": [
+        "20260805T113402-89944530",
+        "20260805T113757-5b6fb6c8"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 8,
+          "expected": 5.5,
+          "standard_deviation": 2.5,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 36,
+          "maximum": 43,
+          "expected": 39.5,
+          "standard_deviation": 3.5,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 2,
+          "expected": 1.0,
+          "standard_deviation": 1.0,
+          "nonzero_rate": 0.5,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-5:main_map:emergency_combat",
+      "difficulty": null,
+      "floor": 5,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 3,
+      "confidence": "preliminary_stable",
+      "confidence_zh": "初步稳定",
+      "confidence_weight": 0.663,
+      "fallback_scope": "same_floor_cross_difficulty",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 2,
+        "manual": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "丛林法则",
+        "过度繁殖",
+        "送别仪式"
+      ],
+      "sample_ids": [
+        "20260729T080539-3023c22b",
+        "20260729T091736-329503f2",
+        "20260805T115055-ea580a1b"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 5,
+          "maximum": 5,
+          "expected": 5.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "command_xp": {
+          "minimum": 43,
+          "maximum": 43,
+          "expected": 43.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 2,
+          "expected": 1.3333,
+          "standard_deviation": 0.4714,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.3333,
+          "standard_deviation": 0.4714,
+          "nonzero_rate": 0.3333,
+          "observations": 3
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-5:portal_internal:encounter",
+      "difficulty": null,
+      "floor": 5,
+      "location_context": "portal_internal",
+      "node_kind": "encounter",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.5525,
+      "fallback_scope": "same_floor_cross_difficulty",
+      "cross_floor_fallback": false,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "共斗"
+      ],
+      "sample_ids": [
+        "20260805T115352-be1e1c8c",
+        "20260805T115546-0d6b2aa2"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 3,
+          "expected": 3.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 19,
+          "maximum": 19,
+          "expected": 19.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-all:main_map:combat",
+      "difficulty": null,
+      "floor": null,
+      "location_context": "main_map",
+      "node_kind": "combat",
+      "sample_count": 9,
+      "confidence": "moderate",
+      "confidence_zh": "中等",
+      "confidence_weight": 0.54,
+      "fallback_scope": "global",
+      "cross_floor_fallback": true,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 4,
+        "manual": 5
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "命运共享",
+        "湖中魔",
+        "猎犬病原",
+        "趁火打劫",
+        "遗忘时间",
+        "长刀寒夜",
+        "预算否决",
+        "黑色逆流"
+      ],
+      "sample_ids": [
+        "20260728T182236-a4b17ad1",
+        "20260728T183620-4c23a7e7",
+        "20260728T191631-7743a2ad",
+        "20260729T073018-75b864e8",
+        "20260802T164602-054eb761",
+        "20260805T103223-3c14dbc8",
+        "20260805T103530-fd2f00bb",
+        "20260805T110909-cf64e3c2",
+        "20260805T112315-b19966e0"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 1,
+          "maximum": 5,
+          "expected": 2.3333,
+          "standard_deviation": 1.1547,
+          "nonzero_rate": 1.0,
+          "observations": 9
+        },
+        "command_xp": {
+          "minimum": 12,
+          "maximum": 30,
+          "expected": 19.0,
+          "standard_deviation": 6.7823,
+          "nonzero_rate": 1.0,
+          "observations": 9
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 2,
+          "expected": 0.3333,
+          "standard_deviation": 0.6667,
+          "nonzero_rate": 0.2222,
+          "observations": 9
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 9
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.5556,
+          "standard_deviation": 0.4969,
+          "nonzero_rate": 0.5556,
+          "observations": 9
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 5
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-all:main_map:emergency_combat",
+      "difficulty": null,
+      "floor": null,
+      "location_context": "main_map",
+      "node_kind": "emergency_combat",
+      "sample_count": 9,
+      "confidence": "moderate",
+      "confidence_zh": "中等",
+      "confidence_weight": 0.54,
+      "fallback_scope": "global",
+      "cross_floor_fallback": true,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 3,
+        "manual": 6
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "丛林法则",
+        "无主地",
+        "暴力押运",
+        "本性难移",
+        "焦土之家",
+        "猎犬病原",
+        "辟路行进",
+        "过度繁殖",
+        "送别仪式"
+      ],
+      "sample_ids": [
+        "20260728T190102-7eb507aa",
+        "20260729T080539-3023c22b",
+        "20260729T091736-329503f2",
+        "20260805T104054-318ef06e",
+        "20260805T104551-38973f05",
+        "20260805T105038-6f9cb2f5",
+        "20260805T110523-130d5c74",
+        "20260805T112702-99b2c33a",
+        "20260805T115055-ea580a1b"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 5,
+          "expected": 3.4444,
+          "standard_deviation": 1.2571,
+          "nonzero_rate": 1.0,
+          "observations": 9
+        },
+        "command_xp": {
+          "minimum": 14,
+          "maximum": 43,
+          "expected": 29.6667,
+          "standard_deviation": 12.0646,
+          "nonzero_rate": 1.0,
+          "observations": 9
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 2,
+          "expected": 1.0,
+          "standard_deviation": 0.6667,
+          "nonzero_rate": 0.7778,
+          "observations": 9
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 9
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 2,
+          "expected": 1.0,
+          "standard_deviation": 0.4714,
+          "nonzero_rate": 0.8889,
+          "observations": 9
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.25,
+          "standard_deviation": 0.433,
+          "nonzero_rate": 0.25,
+          "observations": 8
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-all:main_map:encounter",
+      "difficulty": null,
+      "floor": null,
+      "location_context": "main_map",
+      "node_kind": "encounter",
+      "sample_count": 3,
+      "confidence": "preliminary_stable",
+      "confidence_zh": "初步稳定",
+      "confidence_weight": 0.468,
+      "fallback_scope": "global",
+      "cross_floor_fallback": true,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 2,
+        "manual": 1
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "共斗",
+        "搏杀"
+      ],
+      "sample_ids": [
+        "20260728T202113-27f1b6ad",
+        "20260729T091301-a59edfd7",
+        "20260805T114052-4a98c03c"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 4,
+          "expected": 3.6667,
+          "standard_deviation": 0.4714,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "command_xp": {
+          "minimum": 15,
+          "maximum": 19,
+          "expected": 17.6667,
+          "standard_deviation": 1.8856,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "recruitment_tickets": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 3
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 3
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-all:main_map:enemy",
+      "difficulty": null,
+      "floor": null,
+      "location_context": "main_map",
+      "node_kind": "enemy",
+      "sample_count": 4,
+      "confidence": "preliminary_stable",
+      "confidence_zh": "初步稳定",
+      "confidence_weight": 0.468,
+      "fallback_scope": "global",
+      "cross_floor_fallback": true,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "legacy_default_n6": 1,
+        "manual": 3
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "永无安宁",
+        "辟路行进",
+        "铁腕迷思"
+      ],
+      "sample_ids": [
+        "20260728T195347-f6e7a3bc",
+        "20260802T163148-f37a17de",
+        "20260805T110022-659462a8",
+        "20260805T111918-a11ca39a"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 2,
+          "maximum": 8,
+          "expected": 5.0,
+          "standard_deviation": 2.1213,
+          "nonzero_rate": 1.0,
+          "observations": 4
+        },
+        "command_xp": {
+          "minimum": 15,
+          "maximum": 60,
+          "expected": 37.75,
+          "standard_deviation": 15.9119,
+          "nonzero_rate": 1.0,
+          "observations": 4
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 2,
+          "expected": 1.0,
+          "standard_deviation": 0.7071,
+          "nonzero_rate": 0.75,
+          "observations": 4
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 4
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 1,
+          "expected": 0.75,
+          "standard_deviation": 0.433,
+          "nonzero_rate": 0.75,
+          "observations": 4
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 3
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-all:portal_internal:emergency_combat",
+      "difficulty": null,
+      "floor": null,
+      "location_context": "portal_internal",
+      "node_kind": "emergency_combat",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.39,
+      "fallback_scope": "global",
+      "cross_floor_fallback": true,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "侵占家园",
+        "湖中魔"
+      ],
+      "sample_ids": [
+        "20260805T113402-89944530",
+        "20260805T113757-5b6fb6c8"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 8,
+          "expected": 5.5,
+          "standard_deviation": 2.5,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 36,
+          "maximum": 43,
+          "expected": 39.5,
+          "standard_deviation": 3.5,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 0,
+          "maximum": 2,
+          "expected": 1.0,
+          "standard_deviation": 1.0,
+          "nonzero_rate": 0.5,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    },
+    {
+      "id": "difficulty-all:floor-all:portal_internal:encounter",
+      "difficulty": null,
+      "floor": null,
+      "location_context": "portal_internal",
+      "node_kind": "encounter",
+      "sample_count": 2,
+      "confidence": "preliminary",
+      "confidence_zh": "初步",
+      "confidence_weight": 0.39,
+      "fallback_scope": "global",
+      "cross_floor_fallback": true,
+      "cross_difficulty_fallback": true,
+      "difficulty_source_counts": {
+        "manual": 2
+      },
+      "command_xp_multipliers": [
+        1.2
+      ],
+      "stage_names": [
+        "共斗"
+      ],
+      "sample_ids": [
+        "20260805T115352-be1e1c8c",
+        "20260805T115546-0d6b2aa2"
+      ],
+      "rewards": {
+        "originium_ingots": {
+          "minimum": 3,
+          "maximum": 3,
+          "expected": 3.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "command_xp": {
+          "minimum": 19,
+          "maximum": 19,
+          "expected": 19.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "collectibles": {
+          "minimum": 1,
+          "maximum": 1,
+          "expected": 1.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "recruitment_tickets": {
+          "minimum": 2,
+          "maximum": 2,
+          "expected": 2.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 1.0,
+          "observations": 2
+        },
+        "parts": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        },
+        "target_life": {
+          "minimum": 0,
+          "maximum": 0,
+          "expected": 0.0,
+          "standard_deviation": 0.0,
+          "nonzero_rate": 0.0,
+          "observations": 2
+        }
+      }
+    }
+  ]
+}

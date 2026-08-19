@@ -1,0 +1,149 @@
+{
+  "schema_version": "0.1.0",
+  "collected_at": "2026-07-28",
+  "purpose": "黑流树海战斗结算与战后奖励界面的真实截图样本",
+  "location_context_taxonomy": [
+    {
+      "id": "main_map",
+      "name_zh": "常规区域"
+    },
+    {
+      "id": "portal_internal",
+      "name_zh": "误入奇境内部"
+    }
+  ],
+  "combat_context_taxonomy": [
+    {
+      "id": "encounter",
+      "name_zh": "狭路相逢"
+    },
+    {
+      "id": "combat",
+      "name_zh": "普通作战"
+    },
+    {
+      "id": "emergency_combat",
+      "name_zh": "紧急作战"
+    },
+    {
+      "id": "boss",
+      "name_zh": "险路恶敌/Boss"
+    },
+    {
+      "id": "pursuit",
+      "name_zh": "追猎"
+    },
+    {
+      "id": "resident_occupied",
+      "name_zh": "流窜“居民”普通占领战"
+    },
+    {
+      "id": "resident_base",
+      "name_zh": "“居民”据点"
+    }
+  ],
+  "manual_bonus_taxonomy": [
+    {
+      "id": "none",
+      "name_zh": "无额外来源"
+    },
+    {
+      "id": "chest",
+      "name_zh": "局内宝箱"
+    },
+    {
+      "id": "treasure_enemy",
+      "name_zh": "宝物怪"
+    },
+    {
+      "id": "both",
+      "name_zh": "宝箱与宝物怪"
+    },
+    {
+      "id": "unknown",
+      "name_zh": "不确定"
+    }
+  ],
+  "samples": [
+    {
+      "file": "battle-settlement_combat_stage-趁火打劫.jpg",
+      "sha256": "05BE9EEA54D8535B6C8012CA28AEB6D626F83B958058C0F258F17535D7C0B03A",
+      "screen_state": "battle_settlement",
+      "visible_labels": {
+        "displayed_node_type": "作战",
+        "stage_name": "趁火打劫",
+        "command_level": 6,
+        "command_xp_progress": "19/65",
+        "battle_command_xp": 30,
+        "objective_life": "6/6",
+        "shield": 3,
+        "battle_leak": 0,
+        "perfect_tactics": 10,
+        "level_up_rewards": [
+          "希望上限+6",
+          "可携带干员数+1"
+        ]
+      },
+      "must_inherit_from_pre_battle_context": [
+        "source_floor",
+        "location_context",
+        "combat_context",
+        "resident_variant"
+      ],
+      "must_confirm_after_battle": [
+        "bonus_source",
+        "bonus_details",
+        "reward_modifiers"
+      ],
+      "notes": [
+        "“本次作战 30”是本场获得的指挥经验。",
+        "右侧希望上限与可携带干员数属于升级奖励，不应计入战斗随机掉落。"
+      ]
+    },
+    {
+      "file": "post-battle-rewards_hidden-stage-未萌生的摇篮.jpg",
+      "sha256": "18CA1B638517B969AF2D768C85863BFE985B3A46249405BC952DE3382FE541CD",
+      "screen_state": "post_battle_rewards",
+      "visible_labels": {
+        "stage_or_area_name": "未萌生的摇篮",
+        "stage_marker": "??",
+        "command_level": 5,
+        "command_xp_progress": "11/55",
+        "visible_reward_cards": [
+          {
+            "raw_name": "源石锭",
+            "raw_quantity": 3
+          },
+          {
+            "raw_name": "白模鱼",
+            "raw_quantity": 1,
+            "raw_category": "概念体"
+          },
+          {
+            "raw_name": "迷藏"
+          },
+          {
+            "raw_name": "术师招募券"
+          }
+        ]
+      },
+      "must_inherit_from_pre_battle_context": [
+        "source_floor",
+        "location_context",
+        "combat_context",
+        "stage_name",
+        "resident_variant"
+      ],
+      "must_confirm_after_battle": [
+        "offered_vs_claimed_rewards",
+        "bonus_source",
+        "bonus_details",
+        "reward_modifiers"
+      ],
+      "notes": [
+        "奖励页面负责识别展示项；战斗类别仍应以前一张地图/节点上下文为准。",
+        "采集器应区分界面展示的奖励与玩家最终实际收下的奖励。"
+      ]
+    }
+  ]
+}

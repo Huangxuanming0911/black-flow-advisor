@@ -1,0 +1,374 @@
+{
+  "schema_version": "0.1.0",
+  "retrieved": "2026-08-02",
+  "catalog_status": "route_relevant_seed_with_full_catalog_updater",
+  "sources": [
+    {
+      "id": "bwiki_collectibles",
+      "url": "https://wiki.biligame.com/arknights/沉沦者的黑流树海/拟造物质编目"
+    },
+    {
+      "id": "bwiki_ideal_domains",
+      "url": "https://wiki.biligame.com/arknights/沉沦者的黑流树海/乌托邦幸福论"
+    },
+    {
+      "id": "bwiki_main",
+      "url": "https://wiki.biligame.com/arknights/沉沦者的黑流树海"
+    }
+  ],
+  "stacking_rules": {
+    "acquisition_resources": "已由当前资源 UI 体现，不重复加到路线收益",
+    "node_score": "add",
+    "combat_risk": "add",
+    "resource_multiplier": "multiply",
+    "merchant_value_multiplier": "multiply",
+    "bonus_parts_per_combat": "add"
+  },
+  "ticket_types": [
+    "先锋",
+    "近卫",
+    "重装",
+    "狙击",
+    "术师",
+    "医疗",
+    "辅助",
+    "特种",
+    "高级资深"
+  ],
+  "operator_classes": [
+    "先锋",
+    "近卫",
+    "重装",
+    "狙击",
+    "术师",
+    "医疗",
+    "辅助",
+    "特种"
+  ],
+  "collectibles": [
+    {
+      "id": "rogue6_relic_legacy_22",
+      "number": "001",
+      "name_zh": "精选兽肉罐头",
+      "effect_text": "可携带干员+1，并随保密等级提高所有我方单位每秒回复生命的数值",
+      "planner_effects": [
+        {
+          "metric": "combat_risk",
+          "value": -0.5,
+          "note": "精选兽肉罐头提供持续恢复，降低战斗路线风险估值"
+        }
+      ],
+      "source": "bwiki_collectibles"
+    },
+    {
+      "id": "rogue6_relic_legacy_23",
+      "number": "002",
+      "name_zh": "凉拌海草",
+      "effect_text": "可携带干员+1，并随保密等级提高所有我方单位攻击速度",
+      "planner_effects": [
+        {"metric": "combat_risk", "value": -0.35}
+      ],
+      "source": "bwiki_collectibles"
+    },
+    {
+      "id": "rogue6_relic_legacy_24",
+      "number": "003",
+      "name_zh": "橙味风暴",
+      "effect_text": "可携带干员+1，并随保密等级提高所有我方单位攻击力",
+      "planner_effects": [
+        {"metric": "combat_risk", "value": -0.35}
+      ],
+      "source": "bwiki_collectibles"
+    },
+    {
+      "id": "rogue6_relic_legacy_25",
+      "number": "004",
+      "name_zh": "尖叫樱桃",
+      "effect_text": "可携带干员+2，并随保密等级提高所有我方单位攻击力",
+      "planner_effects": [
+        {"metric": "combat_risk", "value": -0.5}
+      ],
+      "source": "bwiki_collectibles"
+    },
+    {
+      "id": "rogue6_relic_legacy_26",
+      "number": "005",
+      "name_zh": "咖啡平原咖啡糖",
+      "effect_text": "可携带干员+2，并随保密等级提高所有我方单位攻击速度",
+      "planner_effects": [
+        {"metric": "combat_risk", "value": -0.5}
+      ],
+      "source": "bwiki_collectibles"
+    },
+    {
+      "id": "rogue6_relic_legacy_27",
+      "number": "006",
+      "name_zh": "皮特水果什锦",
+      "effect_text": "可携带干员+3，并随保密等级提高所有我方单位攻击力、防御力和生命值",
+      "planner_effects": [
+        {"metric": "combat_risk", "value": -1.25}
+      ],
+      "source": "bwiki_collectibles"
+    },
+    {
+      "id": "rogue6_relic_legacy_45",
+      "number": "011",
+      "name_zh": "古旧乐谱残章",
+      "effect_text": "希望+4；高保密等级额外提高攻击速度",
+      "planner_effects": [
+        {"metric": "combat_risk", "value": -0.25}
+      ],
+      "source": "bwiki_collectibles"
+    },
+    {
+      "id": "rogue6_relic_legacy_1",
+      "number": "014",
+      "name_zh": "热水壶",
+      "effect_text": "目标生命上限+2，希望+2",
+      "planner_effects": [],
+      "source": "bwiki_collectibles"
+    },
+    {
+      "id": "rogue6_relic_legacy_32",
+      "number": "015",
+      "name_zh": "特级馥郁咖啡豆",
+      "effect_text": "可携带干员+1，可同时部署人数+1，护盾值+1",
+      "planner_effects": [
+        {"metric": "combat_risk", "value": -0.25}
+      ],
+      "source": "bwiki_collectibles"
+    },
+    {
+      "id": "rogue6_relic_cargo_13",
+      "number": "210",
+      "name_zh": "源私钥",
+      "effect_text": "立刻获得99源石锭，在部分事件中能发挥特殊作用",
+      "planner_effects": [
+        {"metric": "node_score", "target": "event", "value": 2}
+      ],
+      "source": "bwiki_collectibles"
+    },
+    {
+      "id": "rogue6_relic_cargo_14",
+      "number": "211",
+      "name_zh": "黑流树海笔记",
+      "effect_text": "每探索一种新节点叠加1层，每层使作战后获得收藏品的概率提升",
+      "planner_effects": [
+        {"metric": "node_score", "target": "combat", "value": 2},
+        {"metric": "node_score", "target": "emergency_combat", "value": 2},
+        {"metric": "node_score", "target": "resident_base", "value": 2},
+        {"metric": "node_score", "target": "enemy", "value": 2},
+        {"metric": "node_score", "target": "unknown_event", "value": 1}
+      ],
+      "source": "bwiki_collectibles"
+    },
+    {
+      "id": "rogue6_relic_artifact_1",
+      "number": "212",
+      "name_zh": "基础物联终端",
+      "effect_text": "探索2个诡意行商或秘境行商后，获得高级物联终端",
+      "planner_effects": [
+        {"metric": "node_score", "target": "secret_trader", "value": 3},
+        {"metric": "node_score", "target": "rogue_trader", "value": 3}
+      ],
+      "source": "bwiki_collectibles"
+    },
+    {
+      "id": "rogue6_relic_legacy_132",
+      "number": "236",
+      "name_zh": "人事部铜印",
+      "effect_text": "随机临时招募1名5星干员，且直接为已进阶状态",
+      "planner_effects": [],
+      "source": "bwiki_collectibles"
+    },
+    {
+      "id": "rogue6_relic_legacy_133",
+      "number": "237",
+      "name_zh": "博士银印",
+      "effect_text": "随机临时招募1名6星干员，且直接为已进阶状态",
+      "planner_effects": [],
+      "source": "bwiki_collectibles"
+    }
+  ],
+  "statuses": [
+    {
+      "id": "rogue6_weather_1",
+      "name_zh": "黑流地脉",
+      "kind": "实托邦理念",
+      "positive": false,
+      "effect_text": "出现额外猎犬，敌方攻击和生命提高",
+      "planner_effects": [],
+      "planner_effects_by_phase": {
+        "early": [{"metric": "combat_risk", "value": 1.5}],
+        "middle": [{"metric": "combat_risk", "value": 3}],
+        "late": [{"metric": "combat_risk", "value": 4.5}]
+      },
+      "source": "bwiki_ideal_domains"
+    },
+    {
+      "id": "rogue6_weather_2",
+      "name_zh": "倾斜沙丘",
+      "kind": "实托邦理念",
+      "positive": false,
+      "effect_text": "沙尘暴按部署方向降低攻击力",
+      "planner_effects": [],
+      "planner_effects_by_phase": {
+        "early": [{"metric": "combat_risk", "value": 1}],
+        "middle": [{"metric": "combat_risk", "value": 2}],
+        "late": [{"metric": "combat_risk", "value": 3}]
+      },
+      "source": "bwiki_ideal_domains"
+    },
+    {
+      "id": "rogue6_weather_3",
+      "name_zh": "去温栏",
+      "kind": "实托邦理念",
+      "positive": false,
+      "effect_text": "部署时冻结并周期性施加寒冷",
+      "planner_effects": [],
+      "planner_effects_by_phase": {
+        "early": [{"metric": "combat_risk", "value": 1.5}],
+        "middle": [{"metric": "combat_risk", "value": 2.5}],
+        "late": [{"metric": "combat_risk", "value": 4}]
+      },
+      "source": "bwiki_ideal_domains"
+    },
+    {
+      "id": "rogue6_weather_4",
+      "name_zh": "微型胶囊",
+      "kind": "实托邦理念",
+      "positive": false,
+      "effect_text": "我方单位受到的物理伤害提高",
+      "planner_effects": [],
+      "planner_effects_by_phase": {
+        "early": [{"metric": "combat_risk", "value": 1.25}],
+        "middle": [{"metric": "combat_risk", "value": 2}],
+        "late": [{"metric": "combat_risk", "value": 3.5}]
+      },
+      "source": "bwiki_ideal_domains"
+    },
+    {
+      "id": "rogue6_weather_5",
+      "name_zh": "储藏室",
+      "kind": "实托邦理念",
+      "positive": false,
+      "effect_text": "降低零件售出价值，并减少行商商品栏位",
+      "planner_effects": [],
+      "planner_effects_by_phase": {
+        "early": [{"metric": "merchant_value_multiplier", "value": 0.9}],
+        "middle": [{"metric": "merchant_value_multiplier", "value": 0.7}],
+        "late": [{"metric": "merchant_value_multiplier", "value": 0.5}]
+      },
+      "source": "bwiki_ideal_domains"
+    },
+    {
+      "id": "rogue6_weather_6",
+      "name_zh": "易碎同盟",
+      "kind": "实托邦理念",
+      "positive": false,
+      "effect_text": "部署后损失一定比例生命",
+      "planner_effects": [],
+      "planner_effects_by_phase": {
+        "early": [{"metric": "combat_risk", "value": 1.5}],
+        "middle": [{"metric": "combat_risk", "value": 2.5}],
+        "late": [{"metric": "combat_risk", "value": 3.5}]
+      },
+      "source": "bwiki_ideal_domains"
+    },
+    {
+      "id": "rogue6_weather_7",
+      "name_zh": "停止点",
+      "kind": "实托邦理念",
+      "positive": false,
+      "effect_text": "费用自然回复效率降低",
+      "planner_effects": [],
+      "planner_effects_by_phase": {
+        "early": [{"metric": "combat_risk", "value": 1}],
+        "middle": [{"metric": "combat_risk", "value": 1.5}],
+        "late": [{"metric": "combat_risk", "value": 2.5}]
+      },
+      "source": "bwiki_ideal_domains"
+    },
+    {
+      "id": "rogue6_weather_8",
+      "name_zh": "希望的沃土",
+      "kind": "实托邦理念",
+      "positive": true,
+      "effect_text": "提高我方攻击与生命，战斗胜利后获得随机零件",
+      "planner_effects": [
+        {"metric": "bonus_parts_per_combat", "value": 1},
+        {"metric": "combat_risk", "value": -1}
+      ],
+      "planner_effects_by_phase": {},
+      "source": "bwiki_ideal_domains"
+    },
+    {
+      "id": "rogue6_weather_9",
+      "name_zh": "弥散虚雾",
+      "kind": "实托邦理念",
+      "positive": false,
+      "effect_text": "无法揭示已连通的节点信息",
+      "planner_effects": [
+        {"metric": "information_risk", "value": 2}
+      ],
+      "planner_effects_by_phase": {},
+      "source": "bwiki_ideal_domains"
+    },
+    {
+      "id": "rogue6_subweather_1",
+      "name_zh": "改良",
+      "kind": "实托邦方针",
+      "positive": false,
+      "effect_text": "途经受实托邦影响的节点时源石锭-2",
+      "planner_effects": [
+        {
+          "metric": "information_risk",
+          "value": 1.5,
+          "note": "尚未标注受影响节点范围，暂按全图保守估值"
+        }
+      ],
+      "planner_effects_by_phase": {},
+      "source": "bwiki_ideal_domains"
+    },
+    {
+      "id": "rogue6_subweather_2",
+      "name_zh": "修正",
+      "kind": "实托邦方针",
+      "positive": false,
+      "effect_text": "途经受实托邦影响的节点时护盾-1",
+      "planner_effects": [
+        {"metric": "information_risk", "value": 1.5}
+      ],
+      "planner_effects_by_phase": {},
+      "source": "bwiki_ideal_domains"
+    },
+    {
+      "id": "rogue6_subweather_3",
+      "name_zh": "激进",
+      "kind": "实托邦方针",
+      "positive": false,
+      "effect_text": "途经受实托邦影响的节点时生命-1",
+      "planner_effects": [
+        {"metric": "information_risk", "value": 2}
+      ],
+      "planner_effects_by_phase": {},
+      "source": "bwiki_ideal_domains"
+    },
+    {
+      "id": "detection_vanguard",
+      "name_zh": "探测先锋",
+      "kind": "追猎后遗物",
+      "positive": false,
+      "effect_text": "下一层初始行动力-1",
+      "planner_effects": [
+        {
+          "metric": "information_risk",
+          "value": 1,
+          "note": "下一层行动力降低，应提高离层与行动力保留价值"
+        }
+      ],
+      "planner_effects_by_phase": {},
+      "source": "bwiki_main"
+    }
+  ]
+}
