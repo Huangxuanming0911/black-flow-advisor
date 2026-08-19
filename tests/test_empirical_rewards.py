@@ -18,6 +18,8 @@ SPEC.loader.exec_module(MODULE)
 def _record(sample_id: str, floor: str, context: str, **overrides: object) -> dict:
     payload = {
         "sample_id": sample_id,
+        "difficulty": 6,
+        "difficulty_source": "manual",
         "source_floor": floor,
         "location_context": "main_map",
         "combat_context": context,
@@ -47,11 +49,11 @@ class EmpiricalRewardBuilderTests(unittest.TestCase):
                 / "empirical-node-rewards.v0.1.json"
             ).read_text(encoding="utf-8"),
         )
-        self.assertEqual(payload["sample_policy"]["included"], 12)
+        self.assertEqual(payload["sample_policy"]["included"], 31)
         floor_three = next(
             profile
             for profile in payload["profiles"]
-            if profile["id"] == "floor-3:main_map:combat"
+            if profile["id"] == "difficulty-6:floor-3:main_map:combat"
         )
         self.assertEqual(floor_three["sample_count"], 3)
         self.assertEqual(
@@ -75,7 +77,10 @@ class EmpiricalRewardBuilderTests(unittest.TestCase):
         self.assertEqual(payload["sample_policy"]["included"], 1)
         self.assertEqual(payload["sample_policy"]["excluded"], 2)
         profile = payload["profiles"][0]
-        self.assertEqual(profile["id"], "floor-3:main_map:combat")
+        self.assertEqual(
+            profile["id"],
+            "difficulty-6:floor-3:main_map:combat",
+        )
         self.assertEqual(profile["rewards"]["command_xp"]["expected"], 15)
 
     def test_builds_cross_floor_encounter_fallback(self) -> None:
@@ -93,10 +98,50 @@ class EmpiricalRewardBuilderTests(unittest.TestCase):
         fallback = next(
             profile
             for profile in payload["profiles"]
-            if profile["id"] == "floor-all:main_map:encounter"
+            if profile["id"]
+            == "difficulty-6:floor-all:main_map:encounter"
         )
         self.assertEqual(fallback["sample_count"], 2)
-        self.assertEqual(fallback["confidence_weight"], 0.65)
+        self.assertEqual(fallback["confidence_weight"], 0.4875)
+
+    def test_separates_difficulties_and_builds_same_floor_prior(self) -> None:
+        records = [
+            _record("n6", "3", "combat", difficulty=6, command_xp=15),
+            _record("n11", "3", "combat", difficulty=11, command_xp=30),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "rewards.jsonl"
+            path.write_text(
+                "\n".join(json.dumps(item) for item in records),
+                encoding="utf-8",
+            )
+            payload = MODULE.build_payload(path)
+        n6 = next(
+            profile
+            for profile in payload["profiles"]
+            if profile["id"] == "difficulty-6:floor-3:main_map:combat"
+        )
+        n11 = next(
+            profile
+            for profile in payload["profiles"]
+            if profile["id"] == "difficulty-11:floor-3:main_map:combat"
+        )
+        same_floor = next(
+            profile
+            for profile in payload["profiles"]
+            if profile["id"]
+            == "difficulty-all:floor-3:main_map:combat"
+        )
+        self.assertEqual(n6["rewards"]["command_xp"]["expected"], 15)
+        self.assertEqual(n11["rewards"]["command_xp"]["expected"], 30)
+        self.assertEqual(
+            same_floor["rewards"]["command_xp"]["expected"],
+            22.5,
+        )
+        self.assertEqual(
+            same_floor["fallback_scope"],
+            "same_floor_cross_difficulty",
+        )
 
 
 if __name__ == "__main__":

@@ -2,8 +2,10 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-Independent, read-only recognition baseline for the map phase of Arknights
-Integrated Strategies: Black Flow.
+A screen-based, read-only desktop decision aid for the map phase of Arknights
+Integrated Strategies: Black Flow. It converts recognized map UI into a graph
+and compares routes under action-point, processed-part, reward, and user
+preference constraints.
 
 This repository intentionally does **not** copy, fork, or depend on any existing
 Black Flow route-planning project. MaaFramework is treated only as an optional
@@ -22,13 +24,15 @@ official capture/orchestration host.
 - Inspect a fixed parts-panel grid and classify occupied slots from local
   templates.
 - Emit JSON, an annotated PNG, confidence scores, and validation issues.
+- Build an undirected graph and simulate walking, processed-part movement, and
+  forced tunnel transfers in an interactive planner.
+- Compare combat, conservative, balanced, and exploration route candidates.
 - Merge overlapping partial graph observations only when at least two
   compatible nodes establish a safe grid translation.
 - Refuse to mark a result as planner-ready without human verification.
 
-No planner, game input, ADB clicking, account automation, or bundled game
-assets are included in this milestone. Real screenshots stay under ignored
-`data/private/`.
+No game input, ADB clicking, account automation, or bundled game assets are
+included. Real screenshots stay under ignored `data/private/`.
 
 ## Run locally
 
@@ -232,6 +236,11 @@ python tools/build_route_planner.py
 start data/output/route-planner/index.html
 ```
 
+A fresh clone builds from `examples/route-planner-demo-graph.json` and the
+synthetic map by default, so private screenshots are not required. Pass
+`--graph data/output/node-semantics/unified-map-graph.json` to load a real
+recognized result.
+
 Click nodes in order to construct a route. Each step can use walking or a
 recognized processed part. Reaching a paired tunnel forces an immediate
 zero-action-point transfer to its other end. The
@@ -247,8 +256,10 @@ Pursuit is modeled as a forced encounter rather than a map node. It is
 triggered when action points reach zero away from an exit; the normal variant
 adds its fixed recruitment-ticket reward, while the boss variant remains an
   explicit placeholder until the current zone endpoint is known. Normal and
-  emergency combat now use floor-specific, manually reviewed clean samples as
-  confidence-weighted recommendation priors. Chest/unowned-wealth rewards and
+  emergency combat now use difficulty- and floor-specific, manually reviewed
+  clean samples as confidence-weighted recommendation priors. Sparse exact
+  groups are shrunk toward same-floor or same-difficulty evidence instead of
+  being treated as stable averages. Chest/unowned-wealth rewards and
   collectible-granted parts remain separate from the base result.
 
 The page proposes combat, conservative, balanced, and exploration routes.
@@ -256,6 +267,17 @@ Every strategy may use processed parts and obeys the same reserve, forced
 tunnel-transfer, and portal-entry constraints. Run
 `python tools/build_empirical_rewards.py` after collecting more reviewed runs,
 then rebuild the planner to refresh the empirical snapshot.
+
+The current snapshot contains 31 planner-usable samples from 44 confirmed
+records and exposes difficulty N0-N18 in the planner. Twelve legacy samples
+without a stored difficulty are explicitly treated as N6. See
+[`docs/reward-data-analysis-2026-08-11.zh-CN.md`](docs/reward-data-analysis-2026-08-11.zh-CN.md)
+for the data-quality audit, representative groups, and collection priorities.
+
+Route recommendations count node preference rewards only on first completion,
+penalize unnecessary node/edge revisits, and check whether the remaining state
+can still reach an exit by walking or with an available movement part. This
+prevents high-scoring loops while retaining necessary backtracking.
 
 The planner opens as a compact desktop-style workspace. Its default map is an
 abstract graph, but every semantic node uses a small game-native icon cropped

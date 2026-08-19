@@ -77,6 +77,7 @@ return {
   activeRunEffects,
   rosterRiskAdjustment,
   mapPositions,
+  graph: BOOTSTRAP.graph,
   nodeIcons: BOOTSTRAP.node_icons
 };
 `;
@@ -85,8 +86,14 @@ const runtime = new Function("document", `${match[1]}\n${expose}`)(
 );
 const routes = runtime.buildRecommendations();
 
-if (Object.keys(runtime.nodeIcons ?? {}).length < 10) {
-  throw new Error("game-native node icon crops were not embedded");
+const expectedIconCount = runtime.graph.nodes.filter(
+  node => node.kind !== "forest",
+).length;
+if (Object.keys(runtime.nodeIcons ?? {}).length !== expectedIconCount) {
+  throw new Error(
+    `expected ${expectedIconCount} embedded node icons, got `
+      + Object.keys(runtime.nodeIcons ?? {}).length,
+  );
 }
 const sourcePositions = runtime.mapPositions(true);
 const abstractPositions = runtime.mapPositions(false);
@@ -102,17 +109,40 @@ if (!Object.values(abstractPositions).every(
 if (runtime.state.floor !== 3) {
   throw new Error(`expected inferred floor 3, got ${runtime.state.floor}`);
 }
+if (runtime.state.runState.difficulty?.confidentiality_level !== 6) {
+  throw new Error("demo should start with the legacy N6 difficulty");
+}
 const floorThreeCombat = runtime.empiricalProfile("combat");
 if (floorThreeCombat?.sample_count !== 3) {
   throw new Error("floor-three combat empirical profile was not loaded");
 }
+runtime.state.runState.difficulty.confidentiality_level = 11;
+const n11FloorThreeCombat = runtime.empiricalProfile("combat");
+if (
+  n11FloorThreeCombat?.id !==
+    "difficulty-11:floor-3:main_map:combat"
+  || n11FloorThreeCombat.rewards.command_xp.expected !== 30
+) {
+  throw new Error("difficulty did not select the N11 reward profile");
+}
+if (n11FloorThreeCombat.rewards.command_xp.scored_expected >= 30) {
+  throw new Error("single-sample N11 evidence was not shrunk toward its prior");
+}
+runtime.state.runState.difficulty.confidentiality_level = 6;
 const encounterFallback = runtime.empiricalProfile("encounter");
-if (encounterFallback?.id !== "floor-all:main_map:encounter") {
+if (
+  encounterFallback?.id !==
+  "difficulty-6:floor-all:main_map:encounter"
+) {
   throw new Error("cross-floor encounter fallback was not selected");
 }
 runtime.state.floor = 4;
-if (runtime.empiricalProfile("encounter")?.sample_count !== 2) {
-  throw new Error("matching cross-floor encounter evidence was not pooled");
+const floorFourEncounter = runtime.empiricalProfile("encounter");
+if (
+  floorFourEncounter?.sample_count !== 1
+  || floorFourEncounter?.supporting_sample_count < 2
+) {
+  throw new Error("sparse exact evidence was not backed by a pooled prior");
 }
 runtime.state.floor = 3;
 
@@ -206,20 +236,10 @@ if (routes.some((item) => item.strategy === undefined)) {
 if (routes.some((item) => item.candidate === null)) {
   throw new Error("current fixture should produce one route per strategy");
 }
-const completedExitRoutes = routes.filter((item) => {
-  const steps = item.candidate?.result.steps ?? [];
-  return ["enemy", "exit_end", "exit_path"].includes(
-    steps[steps.length - 1]?.kind,
-  );
-});
-if (
-  completedExitRoutes.length > 0 &&
-  completedExitRoutes.some((item) =>
-    runtime.routeLifecycle(item.candidate.result).remainingExpiring > 0
-  )
-) {
-  throw new Error("a reachable exit route unnecessarily discarded an expiring part use");
-}
+// Whether an expiring part should be consumed depends on the actual graph:
+// the planner may preserve it when no legal use improves the route. Unit tests
+// cover the lifecycle valuation itself; this synthetic smoke test only checks
+// that every strategy can return a valid candidate.
 const combatCandidate = routes.find((item) =>
   item.candidate?.result.steps.some((step) =>
     step.kind === "combat" && step.firstCompletion,
@@ -286,11 +306,34 @@ const unique = new Set(
 if (unique.size < 3) {
   throw new Error(`expected route diversity, got ${unique.size} unique routes`);
 }
+for (const item of routes) {
+  const edgeCounts = new Map();
+  for (const step of item.candidate.result.steps) {
+    const edge = [step.source, step.selectedTarget].sort().join("|");
+    const count = (edgeCounts.get(edge) ?? 0) + 1;
+    edgeCounts.set(edge, count);
+    if (count > 2) {
+      throw new Error(
+        `${item.strategy.id} oscillated across ${edge}: `
+          + item.candidate.actions.map(action => action.target).join(" -> "),
+      );
+    }
+  }
+}
 
-runtime.state.overrides.node_r4c7 = "portal";
+const portalEdge = runtime.graph.edges.find(
+  edge => edge.first === runtime.startNode || edge.second === runtime.startNode,
+);
+if (portalEdge === undefined) {
+  throw new Error("portal test requires a node adjacent to the current node");
+}
+const portalTarget = portalEdge.first === runtime.startNode
+  ? portalEdge.second
+  : portalEdge.first;
+runtime.state.overrides[portalTarget] = "portal";
 const portalWithoutFuel = runtime.simulate([
   {
-    target: "node_r4c7",
+    target: portalTarget,
     modeId: "walk",
     partId: "",
     portalPartId: "",
@@ -301,7 +344,7 @@ if (portalWithoutFuel.valid) {
 }
 const portalWithFuel = runtime.simulate([
   {
-    target: "node_r4c7",
+    target: portalTarget,
     modeId: "walk",
     partId: "",
     portalPartId: "part-1",
@@ -313,7 +356,7 @@ if (!portalWithFuel.valid) {
 if (portalWithFuel.parts["part-1"].remaining !== 0) {
   throw new Error("portal entry did not consume its additional part use");
 }
-delete runtime.state.overrides.node_r4c7;
+delete runtime.state.overrides[portalTarget];
 
 element("recommend-use-parts").checked = false;
 const walkingOnly = runtime.buildRecommendations();

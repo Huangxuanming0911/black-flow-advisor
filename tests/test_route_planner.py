@@ -326,12 +326,12 @@ class RoutePlannerTests(unittest.TestCase):
         parts = result.resource_estimates["parts"]
         self.assertEqual(xp.expected, 15)
         self.assertEqual(xp.empirical_expected, 15)
-        self.assertAlmostEqual(xp.empirical_weighted_expected, 11.7)
+        self.assertAlmostEqual(xp.empirical_weighted_expected, 16.875)
         self.assertAlmostEqual(ingots.expected, 3.028846)
         self.assertAlmostEqual(parts.expected, 0.400608)
         self.assertEqual(
             result.empirical_evidence,
-            ["floor-3:main_map:combat"],
+            ["difficulty-6:floor-3:main_map:combat"],
         )
 
     def test_encounter_falls_back_across_floors_without_overriding_rules(self) -> None:
@@ -365,7 +365,39 @@ class RoutePlannerTests(unittest.TestCase):
         self.assertEqual(tickets.expected, 2)
         self.assertEqual(
             result.empirical_evidence,
-            ["floor-all:main_map:encounter"],
+            ["difficulty-6:floor-4:main_map:encounter"],
+        )
+
+    def test_difficulty_selects_a_separate_empirical_profile(self) -> None:
+        graph = PlannerGraph.from_unified_dict(
+            {
+                "nodes": [
+                    {"node_id": "node_r0c0", "kind": "current"},
+                    {"node_id": "node_r0c1", "kind": "combat"},
+                ],
+                "edges": [
+                    {"first": "node_r0c0", "second": "node_r0c1"},
+                ],
+            },
+        )
+        result = simulate_route(
+            graph,
+            "node_r0c0",
+            (RouteAction("node_r0c1"),),
+            RULES,
+            initial_action_points=2,
+            reward_knowledge=_reward_knowledge(),
+            empirical_knowledge=_empirical_knowledge(),
+            source_floor=3,
+            difficulty=11,
+        )
+        self.assertEqual(
+            result.resource_estimates["command_xp"].expected,
+            30,
+        )
+        self.assertEqual(
+            result.empirical_evidence,
+            ["difficulty-11:floor-3:main_map:combat"],
         )
 
     def test_shop_alias_does_not_count_inventory_as_free_income(self) -> None:

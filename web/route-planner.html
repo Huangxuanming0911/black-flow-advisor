@@ -553,6 +553,9 @@ td input { width:62px; padding:5px }
         <option value="5">第5层</option><option value="6">第6层</option>
       </select>
     </label>
+    <label class="field">难度
+      <input id="current-difficulty" type="number" min="0" max="18" value="6">
+    </label>
     <label class="field">下一步移动
       <select id="movement-select"></select>
     </label>
@@ -612,7 +615,7 @@ td input { width:62px; padding:5px }
           <label class="field">经验<input id="rs-xp" type="number" min="0" max="9999"></label>
           <label class="field">干员上限<input id="rs-operator-cap" type="number" min="1" max="99"></label>
           <label class="field">收藏品总数<input id="rs-collectible-total" type="number" min="0" max="999"></label>
-          <label class="field">保密等级<input id="rs-confidentiality" type="number" min="0" max="15"></label>
+          <label class="field">保密等级<input id="rs-confidentiality" type="number" min="0" max="18"></label>
         </div>
 
         <div class="inventory-section">
@@ -898,7 +901,8 @@ const STRATEGIES=[
       hope:2,originium_ingots:.5,command_xp:.7,
       collectibles:5,recruitment_tickets:4.5,parts:4,target_life:1
     },
-    apWeight:.8,partCost:1.2,exitBonus:24,portalBonus:2,pursuitPenalty:20
+    apWeight:.8,partCost:1.2,exitBonus:24,portalBonus:2,pursuitPenalty:20,
+    revisitPenalty:2.4,strandingPenalty:16
   },
   {
     id:"conservative",name:"保守撤离",tone:"优先安全出口、行动力余量与低风险节点",
@@ -912,7 +916,8 @@ const STRATEGIES=[
       hope:4,originium_ingots:.3,command_xp:.15,
       collectibles:2,recruitment_tickets:2,parts:3,target_life:8
     },
-    apWeight:3.2,partCost:3.2,exitBonus:38,portalBonus:-3,pursuitPenalty:55
+    apWeight:3.2,partCost:3.2,exitBonus:38,portalBonus:-3,pursuitPenalty:55,
+    revisitPenalty:5,strandingPenalty:60
   },
   {
     id:"balanced",name:"综合收益",tone:"兼顾可计算收益、风险、出口与零件成本",
@@ -926,7 +931,8 @@ const STRATEGIES=[
       hope:4,originium_ingots:.8,command_xp:.35,
       collectibles:7,recruitment_tickets:5,parts:6,target_life:3
     },
-    apWeight:1.7,partCost:2,exitBonus:30,portalBonus:5,pursuitPenalty:38
+    apWeight:1.7,partCost:2,exitBonus:30,portalBonus:5,pursuitPenalty:38,
+    revisitPenalty:3.6,strandingPenalty:36
   },
   {
     id:"exploration",name:"探索揭示",tone:"偏好未知事件、羽瞰点、密道和黑潭入口",
@@ -940,7 +946,8 @@ const STRATEGIES=[
       hope:3,originium_ingots:.3,command_xp:.1,
       collectibles:5,recruitment_tickets:2,parts:3,target_life:1.5
     },
-    apWeight:1.1,partCost:1.5,exitBonus:19,portalBonus:18,pursuitPenalty:30
+    apWeight:1.1,partCost:1.5,exitBonus:19,portalBonus:18,pursuitPenalty:30,
+    revisitPenalty:3,strandingPenalty:24
   }
 ];
 const startNode=graph.nodes.find(node=>node.kind==="current")?.node_id
@@ -991,6 +998,9 @@ const ns="http://www.w3.org/2000/svg";
 document.getElementById("map-image").src=BOOTSTRAP.image_data||"";
 document.getElementById("initial-ap").value=String(BOOTSTRAP.initial_action_points??4);
 document.getElementById("current-floor").value=String(state.floor);
+document.getElementById("current-difficulty").value=String(
+  state.runState.difficulty?.confidentiality_level??6
+);
 
 function safeStoredRunState(){
   try{
@@ -1004,6 +1014,9 @@ if(storedRunState?.schema_version==="0.1.0"){
   state.runState=storedRunState;
   state.floor=Number(storedRunState.phase?.floor||state.floor);
   document.getElementById("current-floor").value=String(state.floor);
+  document.getElementById("current-difficulty").value=String(
+    storedRunState.difficulty?.confidentiality_level??6
+  );
 }
 
 function numericValue(id,fallback=0){
@@ -1046,7 +1059,10 @@ function syncRunStateFromInputs(){
   );
   state.runState.difficulty=state.runState.difficulty||{};
   state.runState.difficulty.confidentiality_level=numericValue(
-    "rs-confidentiality",0
+    "current-difficulty",6
+  );
+  document.getElementById("rs-confidentiality").value=String(
+    state.runState.difficulty.confidentiality_level
   );
   state.runState.operators=parseOperators(document.getElementById("operator-input").value);
   state.runState.phase={...(state.runState.phase||{}),floor:state.floor,checkpoint:"map"};
@@ -1068,7 +1084,8 @@ function initializeRunStateInputs(){
     "part-box-capacity":resources.part_box_capacity??10,
     "initial-ap":resources.action_points??BOOTSTRAP.initial_action_points??4
     ,"rs-collectible-total":state.runState.observed_counts?.collectibles_total??(state.runState.collectibles||[]).length
-    ,"rs-confidentiality":state.runState.difficulty?.confidentiality_level??0
+    ,"rs-confidentiality":state.runState.difficulty?.confidentiality_level??6
+    ,"current-difficulty":state.runState.difficulty?.confidentiality_level??6
   };
   for(const [id,value] of Object.entries(pairs)){
     document.getElementById(id).value=String(value);
@@ -1230,28 +1247,59 @@ function applyRewardEntry(result,dimensionId,entry){
 function empiricalProfile(kind){
   const canonical=rewardKind(kind);
   const context=BOOTSTRAP.location_context||"main_map";
+  const difficulty=Number(
+    state.runState.difficulty?.confidentiality_level??6
+  );
+  const matches=(profile,profileDifficulty,profileFloor)=>(
+    profile.difficulty===profileDifficulty
+    &&profile.floor===profileFloor
+    &&profile.location_context===context
+    &&profile.node_kind===canonical
+  );
   const exact=EMPIRICAL_PROFILES.find(profile=>
-    Number(profile.floor)===Number(state.floor)
-    &&profile.location_context===context
-    &&profile.node_kind===canonical
+    matches(profile,difficulty,state.floor)
   )||null;
-  const fallback=EMPIRICAL_PROFILES.find(profile=>
-    profile.floor===null
-    &&profile.cross_floor_fallback
-    &&profile.location_context===context
-    &&profile.node_kind===canonical
+  const sameFloor=EMPIRICAL_PROFILES.find(profile=>
+    matches(profile,null,state.floor)
   )||null;
-  if(!exact) return fallback;
-  if(!fallback||Number(fallback.sample_count)<=Number(exact.sample_count)){
-    return exact;
-  }
-  const common=Object.keys(exact.rewards||{}).filter(
-    id=>fallback.rewards?.[id]
+  const sameDifficulty=EMPIRICAL_PROFILES.find(profile=>
+    matches(profile,difficulty,null)
+  )||null;
+  const global=EMPIRICAL_PROFILES.find(profile=>
+    matches(profile,null,null)
+  )||null;
+  const primary=exact||sameFloor||sameDifficulty||global;
+  if(!primary) return null;
+  const prior=[sameFloor,sameDifficulty,global].find(profile=>
+    profile&&profile.id!==primary.id
+  )||null;
+  const sampleCount=Math.max(1,Number(primary.sample_count||1));
+  const shrinkage=primary.fallback_scope==="exact"?3:5;
+  const reliability=prior
+    ?sampleCount/(sampleCount+shrinkage)
+    :Number(primary.confidence_weight||0.45);
+  const rewards=Object.fromEntries(
+    Object.entries(primary.rewards||{}).map(([id,reward])=>{
+      const rawExpected=Number(reward.expected||0);
+      const priorReward=prior?.rewards?.[id];
+      const scoredExpected=priorReward
+        ?rawExpected*reliability+
+          Number(priorReward.expected||0)*(1-reliability)
+        :rawExpected*reliability;
+      return [id,{
+        ...reward,
+        scored_expected:Number(scoredExpected.toFixed(4))
+      }];
+    })
   );
-  const agrees=common.every(id=>
-    Number(exact.rewards[id].expected)===Number(fallback.rewards[id].expected)
-  );
-  return agrees?fallback:exact;
+  return {
+    ...primary,
+    rewards,
+    requested_difficulty:difficulty,
+    scoring_prior_id:prior?.id||null,
+    supporting_sample_count:Number(prior?.sample_count||0),
+    score_confidence:Number(reliability.toFixed(4))
+  };
 }
 function applyKnownDistributionOnly(result,dimensionId,entry){
   const stat=result.resourceStats[dimensionId];
@@ -1274,10 +1322,12 @@ function applyEmpiricalProfile(result,profile,excludedDimensions=new Set()){
     stat.expected+=expected;
     stat.empiricalExpected+=expected;
     stat.empiricalWeightedExpected+=
-      expected*Number(profile.confidence_weight||0);
+      Number(reward.scored_expected??(
+        expected*Number(profile.confidence_weight||0)
+      ));
     addResourceNote(
       stat,
-      `实测 ${profile.sample_count} 场（${profile.confidence_zh}）`
+      `N${profile.requested_difficulty} 实测 ${profile.sample_count} 场（${profile.confidence_zh}）`
     );
   }
   result.empiricalEvidence.push(profile);
@@ -1371,6 +1421,7 @@ function simulate(actions=state.actions){
     valid:true,ap:Number(document.getElementById("initial-ap").value||0),
     hope:0,ingots:0,collectibles:0,combats:0,moves:0,
     current:startNode,steps:[],completed:new Set(),opportunities:{},
+    visited:new Set(startNode?[startNode]:[]),
     resourceStats:emptyResourceStats(),
     parts:initialPartState(),partMin:0,partMax:0,error:"",warnings:[],
     forcedEncounters:[],empiricalEvidence:[]
@@ -1421,6 +1472,12 @@ function simulate(actions=state.actions){
     }
     const kind=kindOf(action.target);
     const first=oneShot.has(kind)&&!result.completed.has(action.target);
+    const paired=kind==="tunnel"?tunnelPairs()[action.target]:null;
+    const destination=paired||action.target;
+    const firstVisit=(
+      !result.visited.has(action.target)
+      ||Boolean(paired&&!result.visited.has(paired))
+    );
     if(kind==="portal"&&first){
       const portalPart=result.parts[action.portalPartId];
       if(
@@ -1446,15 +1503,15 @@ function simulate(actions=state.actions){
     if(spec.rule.target_rule?.type==="random_any"){
       result.warnings.push("小八界目标随机，当前终点只是情景假设");
     }
-    const paired=kind==="tunnel"?tunnelPairs()[action.target]:null;
-    const destination=paired||action.target;
     if(kind==="tunnel"&&!paired) result.warnings.push("曲折密道未成功配对，无法自动传送");
+    result.visited.add(action.target);
+    result.visited.add(destination);
     result.steps.push({
       index:index+1,source:result.current,selectedTarget:action.target,
       target:destination,modeId:action.modeId,partId:action.partId,
       portalPartId:kind==="portal"&&first?action.portalPartId:"",
       cost,gain:postAp+nodeAp,apAfter:result.ap,kind,
-      firstCompletion:first,autoTeleport:Boolean(paired)
+      firstCompletion:first,firstVisit,autoTeleport:Boolean(paired)
     });
     result.current=destination;
     if(result.ap===0&&!["exit_end","exit_path","enemy","portal"].includes(kind)){
@@ -1716,17 +1773,50 @@ function userNodePreference(kind){
 function routePreferenceContribution(result){
   let contribution=0;
   for(const step of result.steps){
-    if(step.firstCompletion||["overlook","tunnel"].includes(step.kind)){
+    if(step.firstCompletion||step.firstVisit){
       contribution+=userNodePreference(step.kind);
     }
   }
   return contribution;
 }
+function exitSafety(result){
+  const exits=Object.keys(nodes).filter(id=>EXIT_KINDS.has(kindOf(id)));
+  if(!exits.length){
+    return {available:false,safe:true,walkDistance:null,directPart:false};
+  }
+  if(exits.includes(result.current)){
+    return {available:true,safe:true,walkDistance:0,directPart:false};
+  }
+  const queue=[[result.current,0]];
+  const seen=new Set([result.current]);
+  let walkDistance=null;
+  while(queue.length){
+    const [current,distance]=queue.shift();
+    if(exits.includes(current)){ walkDistance=distance; break; }
+    for(const next of adjacency[current]||[]){
+      if(seen.has(next)) continue;
+      seen.add(next); queue.push([next,distance+1]);
+    }
+  }
+  const directPart=candidateMovements(result,true).some(spec=>{
+    if(spec.modeId==="walk") return false;
+    const cost=Number(spec.rule.action_point_cost?.value||0);
+    if(result.ap<cost) return false;
+    return exits.some(exitId=>isLegal(result.current,exitId,spec)[0]);
+  });
+  const walkReachable=walkDistance!==null&&result.ap>=walkDistance;
+  return {
+    available:true,
+    safe:walkReachable||directPart,
+    walkDistance,
+    directPart
+  };
+}
 function routeScore(result,strategy){
   let score=0;
   const runEffects=activeRunEffects();
   for(const step of result.steps){
-    if(step.firstCompletion||["overlook","tunnel"].includes(step.kind)){
+    if(step.firstCompletion||step.firstVisit){
       const scoreKind={
         secret_trader:"shop",
         rogue_trader:"special_shop"
@@ -1767,6 +1857,15 @@ function routeScore(result,strategy){
     *lifecycle.policy.spendMultiplier;
   score-=lifecycle.reserveShortfall*lifecycle.policy.reservePenalty;
   score-=result.steps.length*.25;
+  const revisits=result.steps.filter(step=>!step.firstVisit).length;
+  const seenEdges=new Set();
+  let repeatedEdges=0;
+  for(const step of result.steps){
+    const edge=[step.source,step.selectedTarget].sort().join("|");
+    if(seenEdges.has(edge)) repeatedEdges+=1;
+    else seenEdges.add(edge);
+  }
+  score-=(revisits+repeatedEdges*1.5)*Number(strategy.revisitPenalty||3);
   const terminal=routeTerminalKind(result);
   if(EXIT_KINDS.has(terminal)){
     score+=strategy.exitBonus;
@@ -1791,6 +1890,14 @@ function routeScore(result,strategy){
   if(result.forcedEncounters.length){
     score-=strategy.pursuitPenalty;
   }
+  const safety=exitSafety(result);
+  if(
+    safety.available
+    &&!safety.safe
+    &&!isRouteTerminal(result)
+  ){
+    score-=Number(strategy.strandingPenalty||30);
+  }
   const tickets=retainedTicketCount();
   if(terminal==="exit_end") score+=tickets*2.5;
   else if(terminal==="exit_path") score-=tickets*4;
@@ -1802,7 +1909,8 @@ function routeStateSignature(result){
     .sort((a,b)=>a.instanceId.localeCompare(b.instanceId))
     .map(part=>`${part.instanceId}:${part.remaining}`)
     .join(",");
-  return `${result.current}|${result.ap}|${completed}|${parts}|${result.forcedEncounters.length}`;
+  const visited=[...result.visited].sort().join(",");
+  return `${result.current}|${result.ap}|${completed}|${visited}|${parts}|${result.forcedEncounters.length}`;
 }
 function routeActionSignature(actions){
   return actions.map(action=>
@@ -1897,6 +2005,9 @@ function findStrategyCandidates(strategy,options){
 function recommendationKey(){
   return JSON.stringify({
     floor:state.floor,
+    difficulty:Number(
+      state.runState.difficulty?.confidentiality_level??6
+    ),
     ap:Number(document.getElementById("initial-ap").value||0),
     ingots:Number(document.getElementById("current-ingots").value||0),
     capacity:Number(document.getElementById("part-box-capacity").value||12),
@@ -1947,6 +2058,7 @@ function buildRecommendations(){
 }
 function routeSummary(candidate){
   const result=candidate.result;
+  const safety=exitSafety(result);
   const battles=result.steps.filter(step=>
     ["combat","emergency_combat","enemy","resident_base","resident_occupied"].includes(step.kind)
     &&step.firstCompletion
@@ -1963,6 +2075,11 @@ function routeSummary(candidate){
     unknowns?`${unknowns}个未知节点`:"",
     spend.uses?`用${spend.uses}次加工品`:"全程徒步",
     EXIT_KINDS.has(terminal)?`抵达${KIND_LABEL[terminal]}`:"",
+    safety.available&&!isRouteTerminal(result)
+      ?(safety.safe
+        ?`保留出口能力${safety.walkDistance!==null?`（徒步${safety.walkDistance}格）`:"（零件直达）"}`
+        :"当前资源无法抵达出口")
+      :"",
     terminal==="portal"?"进入黑潭":"",
     result.forcedEncounters.length?"触发追猎":""
   ].filter(Boolean);
@@ -2287,9 +2404,15 @@ function renderRewardCatalog(){
   }).join("");
   const profile=empiricalProfile(id);
   const profileFloor=profile?.floor===null?"跨层":`第${profile?.floor}层`;
+  const profileDifficulty=profile?.difficulty===null
+    ?"跨难度"
+    :`N${profile?.difficulty}`;
+  const priorText=profile?.scoring_prior_id
+    ?` · 排序已向 ${profile.supporting_sample_count} 条相邻样本收缩`
+    :"";
   const observed=profile
-    ?`<p class="strategy-evidence">${profileFloor}实测 n=${profile.sample_count}（${profile.confidence_zh}）：${Object.entries(profile.rewards||{}).map(([dimensionId,reward])=>`${REWARD_DIMENSIONS.find(item=>item.id===dimensionId)?.name_zh||dimensionId} ${compactNumber(reward.expected)}`).join(" · ")}</p>`
-    :`<p class="muted">第${state.floor}层暂无干净实测基础样本。</p>`;
+    ?`<p class="strategy-evidence">${profileDifficulty} · ${profileFloor}实测 n=${profile.sample_count}（${profile.confidence_zh}）${priorText}：${Object.entries(profile.rewards||{}).map(([dimensionId,reward])=>`${REWARD_DIMENSIONS.find(item=>item.id===dimensionId)?.name_zh||dimensionId} ${compactNumber(reward.expected)}`).join(" · ")}</p>`
+    :`<p class="muted">N${state.runState.difficulty?.confidentiality_level??6} · 第${state.floor}层暂无可用实测基础样本。</p>`;
   detail.innerHTML=`<p><strong>${rule.name_zh}</strong></p><p class="muted">${rule.summary}</p>${observed}<div class="catalog-dimensions">${dimensions}</div>`;
 }
 function renderRoute(result){
@@ -2552,6 +2675,14 @@ document.getElementById("current-floor").addEventListener("change",event=>{
   render();
   renderRewardCatalog();
 });
+document.getElementById("current-difficulty").addEventListener("change",event=>{
+  const difficulty=Math.max(0,Math.min(18,Number(event.target.value||6)));
+  event.target.value=String(difficulty);
+  document.getElementById("rs-confidentiality").value=String(difficulty);
+  syncRunStateFromInputs();
+  render();
+  renderRewardCatalog();
+});
 document.getElementById("recommend-use-parts").addEventListener("change",render);
 document.getElementById("recommend-reserve-uses").addEventListener("change",render);
 document.getElementById("current-ingots").addEventListener("change",()=>{
@@ -2605,12 +2736,20 @@ document.getElementById("node-kind-select").addEventListener("change",event=>{
 for(const id of [
   "rs-life","rs-life-cap","rs-shield","rs-hope","rs-hope-cap",
   "rs-level","rs-xp","rs-operator-cap","rs-collectible-total",
-  "rs-confidentiality","operator-input"
+  "operator-input"
 ]){
   document.getElementById(id).addEventListener("change",()=>{
     syncRunStateFromInputs(); render();
   });
 }
+document.getElementById("rs-confidentiality").addEventListener("change",event=>{
+  const difficulty=Math.max(0,Math.min(18,Number(event.target.value||6)));
+  event.target.value=String(difficulty);
+  document.getElementById("current-difficulty").value=String(difficulty);
+  syncRunStateFromInputs();
+  render();
+  renderRewardCatalog();
+});
 document.getElementById("add-ticket").addEventListener("click",()=>{
   syncRunStateFromInputs();
   const type=document.getElementById("ticket-select").value;

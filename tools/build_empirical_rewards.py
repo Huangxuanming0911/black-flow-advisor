@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import date
 import json
 from pathlib import Path
-from statistics import fmean
+from statistics import fmean, pstdev
 from typing import Any
 
 
@@ -35,7 +35,8 @@ REWARD_FIELDS = {
 NODE_KIND_ALIASES = {
     "boss": "enemy",
 }
-FLOOR_FALLBACK_KINDS = {"encounter"}
+LEGACY_DEFAULT_DIFFICULTY = 6
+MIN_FALLBACK_SAMPLES = 2
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -57,6 +58,13 @@ def _load_records(path: Path) -> list[dict[str, Any]]:
     ]
 
 
+def _record_difficulty(record: dict[str, Any]) -> int:
+    raw = record.get("difficulty")
+    if raw in (None, ""):
+        return LEGACY_DEFAULT_DIFFICULTY
+    return int(raw)
+
+
 def _is_clean_base_sample(record: dict[str, Any]) -> bool:
     return (
         record.get("review_status") == "confirmed"
@@ -68,6 +76,8 @@ def _is_clean_base_sample(record: dict[str, Any]) -> bool:
 
 
 def _confidence(sample_count: int) -> tuple[str, str, float]:
+    if sample_count >= 10:
+        return "moderate_high", "中高", 0.95
     if sample_count >= 5:
         return "moderate", "中等", 0.9
     if sample_count >= 3:
@@ -94,6 +104,11 @@ def _reward_stats(
             "minimum": int(min(values)),
             "maximum": int(max(values)),
             "expected": round(mean, 4),
+            "standard_deviation": round(pstdev(values), 4),
+            "nonzero_rate": round(
+                sum(value > 0 for value in values) / len(values),
+                4,
+            ),
             "observations": len(values),
         }
     return rewards
@@ -102,15 +117,28 @@ def _reward_stats(
 def _profile(
     records: list[dict[str, Any]],
     *,
+    difficulty: int | None,
     floor: int | None,
     location_context: str,
     node_kind: str,
-    fallback: bool = False,
+    fallback_scope: str = "exact",
 ) -> dict[str, Any]:
-    confidence, confidence_zh, weight = _confidence(len(records))
+    confidence, confidence_zh, base_weight = _confidence(len(records))
+    scope_weight = {
+        "exact": 1.0,
+        "same_floor_cross_difficulty": 0.85,
+        "same_difficulty_cross_floor": 0.75,
+        "global": 0.6,
+    }[fallback_scope]
+    weight = round(base_weight * scope_weight, 4)
+    difficulty_id = "all" if difficulty is None else str(difficulty)
     floor_id = "all" if floor is None else str(floor)
     return {
-        "id": f"floor-{floor_id}:{location_context}:{node_kind}",
+        "id": (
+            f"difficulty-{difficulty_id}:floor-{floor_id}:"
+            f"{location_context}:{node_kind}"
+        ),
+        "difficulty": difficulty,
         "floor": floor,
         "location_context": location_context,
         "node_kind": node_kind,
@@ -118,7 +146,26 @@ def _profile(
         "confidence": confidence,
         "confidence_zh": confidence_zh,
         "confidence_weight": weight,
-        "cross_floor_fallback": fallback,
+        "fallback_scope": fallback_scope,
+        "cross_floor_fallback": floor is None,
+        "cross_difficulty_fallback": difficulty is None,
+        "difficulty_source_counts": {
+            source: sum(
+                1
+                for record in records
+                if str(record.get("difficulty_source") or "legacy_default_n6")
+                == source
+            )
+            for source in sorted(
+                {
+                    str(
+                        record.get("difficulty_source")
+                        or "legacy_default_n6"
+                    )
+                    for record in records
+                },
+            )
+        },
         "command_xp_multipliers": sorted(
             {
                 float(record.get("command_xp_multiplier", 1.0))
@@ -141,49 +188,90 @@ def build_payload(records_path: Path) -> dict[str, Any]:
         for record in records
         if not _is_clean_base_sample(record)
     ]
-    groups: dict[tuple[int, str, str], list[dict[str, Any]]] = defaultdict(list)
+    groups: dict[
+        tuple[int, int, str, str],
+        list[dict[str, Any]],
+    ] = defaultdict(list)
     for record in clean:
+        difficulty = _record_difficulty(record)
         floor = int(record["source_floor"])
         context = str(record.get("location_context", "main_map"))
         node_kind = NODE_KIND_ALIASES.get(
             str(record["combat_context"]),
             str(record["combat_context"]),
         )
-        groups[(floor, context, node_kind)].append(record)
+        groups[(difficulty, floor, context, node_kind)].append(record)
 
     profiles = [
         _profile(
             rows,
+            difficulty=difficulty,
             floor=floor,
             location_context=context,
             node_kind=node_kind,
         )
-        for (floor, context, node_kind), rows in sorted(groups.items())
+        for (
+            difficulty,
+            floor,
+            context,
+            node_kind,
+        ), rows in sorted(groups.items())
     ]
 
-    for node_kind in sorted(FLOOR_FALLBACK_KINDS):
-        rows = [
-            record
-            for record in clean
-            if NODE_KIND_ALIASES.get(
-                str(record["combat_context"]),
-                str(record["combat_context"]),
-            ) == node_kind
-            and record.get("location_context", "main_map") == "main_map"
-        ]
-        if len(rows) >= 2:
-            profiles.append(
-                _profile(
-                    rows,
-                    floor=None,
-                    location_context="main_map",
-                    node_kind=node_kind,
-                    fallback=True,
+    normalized: list[tuple[dict[str, Any], int, int, str, str]] = []
+    for record in clean:
+        normalized.append(
+            (
+                record,
+                _record_difficulty(record),
+                int(record["source_floor"]),
+                str(record.get("location_context", "main_map")),
+                NODE_KIND_ALIASES.get(
+                    str(record["combat_context"]),
+                    str(record["combat_context"]),
                 ),
-            )
+            ),
+        )
+
+    fallback_groups: dict[
+        tuple[int | None, int | None, str, str, str],
+        list[dict[str, Any]],
+    ] = defaultdict(list)
+    for record, difficulty, floor, context, node_kind in normalized:
+        fallback_groups[
+            (None, floor, context, node_kind, "same_floor_cross_difficulty")
+        ].append(record)
+        fallback_groups[
+            (difficulty, None, context, node_kind, "same_difficulty_cross_floor")
+        ].append(record)
+        fallback_groups[(None, None, context, node_kind, "global")].append(
+            record,
+        )
+    for (
+        difficulty,
+        floor,
+        context,
+        node_kind,
+        fallback_scope,
+    ), rows in sorted(
+        fallback_groups.items(),
+        key=lambda item: tuple(str(value) for value in item[0]),
+    ):
+        if len(rows) < MIN_FALLBACK_SAMPLES:
+            continue
+        profiles.append(
+            _profile(
+                rows,
+                difficulty=difficulty,
+                floor=floor,
+                location_context=context,
+                node_kind=node_kind,
+                fallback_scope=fallback_scope,
+            ),
+        )
 
     return {
-        "schema_version": "0.1.0",
+        "schema_version": "0.2.0",
         "generated_at": date.today().isoformat(),
         "source": {
             "repository": "black-flow-reward-collector",
@@ -199,8 +287,19 @@ def build_payload(records_path: Path) -> dict[str, Any]:
             "excluded": len(excluded),
             "excluded_sample_ids": excluded,
             "minimum_stable_samples": 5,
+            "legacy_default_difficulty": LEGACY_DEFAULT_DIFFICULTY,
+            "legacy_default_sample_count": sum(
+                record.get("difficulty") in (None, "") for record in clean
+            ),
+            "observed_difficulties": sorted(
+                {
+                    _record_difficulty(record)
+                    for record in clean
+                },
+            ),
             "confidence_note": (
-                "样本不足5条时只作为推荐先验；显示原始均值，排序时按置信权重折扣。"
+                "样本不足5条时只作为推荐先验；按难度和层数优先匹配，"
+                "稀疏组向同层跨难度或同难度跨层样本收缩。"
             ),
         },
         "profiles": sorted(profiles, key=lambda item: item["id"]),
@@ -211,7 +310,7 @@ def main() -> int:
     args = _parser().parse_args()
     payload = build_payload(args.records)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.output.open("w", encoding="utf-8", newline="\r\n") as stream:
+    with args.output.open("w", encoding="utf-8", newline="\n") as stream:
         stream.write(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
     print(
         f"wrote {len(payload['profiles'])} profiles from "

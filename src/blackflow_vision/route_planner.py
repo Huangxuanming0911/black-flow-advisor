@@ -277,6 +277,7 @@ def simulate_route(
     reward_knowledge: Mapping[str, Any] | None = None,
     empirical_knowledge: Mapping[str, Any] | None = None,
     source_floor: int | None = None,
+    difficulty: int | None = None,
     location_context: str = "main_map",
 ) -> RouteSimulation:
     overrides = overrides or {}
@@ -409,6 +410,7 @@ def simulate_route(
                 reward_knowledge=reward_knowledge,
                 empirical_knowledge=empirical_knowledge,
                 source_floor=source_floor,
+                difficulty=difficulty,
                 location_context=location_context,
             )
         combat_count += combat_delta
@@ -527,6 +529,7 @@ def _settle_reward_catalog(
     reward_knowledge: Mapping[str, Any] | None,
     empirical_knowledge: Mapping[str, Any] | None,
     source_floor: int | None,
+    difficulty: int | None,
     location_context: str,
 ) -> None:
     if not reward_knowledge:
@@ -540,6 +543,7 @@ def _settle_reward_catalog(
     node_rule = catalog.get(canonical_kind)
     profile = _find_empirical_profile(
         empirical_knowledge,
+        difficulty=difficulty,
         floor=source_floor,
         location_context=location_context,
         node_kind=canonical_kind,
@@ -571,6 +575,7 @@ def _settle_reward_catalog(
 def _find_empirical_profile(
     empirical_knowledge: Mapping[str, Any] | None,
     *,
+    difficulty: int | None,
     floor: int | None,
     location_context: str,
     node_kind: str,
@@ -578,61 +583,91 @@ def _find_empirical_profile(
     if not empirical_knowledge:
         return None
     profiles = empirical_knowledge.get("profiles", ())
-    exact = next(
-        (
-            profile
-            for profile in profiles
-            if profile.get("floor") == floor
+    requested_difficulty = (
+        difficulty
+        if difficulty is not None
+        else int(
+            empirical_knowledge.get("sample_policy", {}).get(
+                "legacy_default_difficulty",
+                6,
+            ),
+        )
+    )
+
+    def match(
+        profile: Mapping[str, Any],
+        profile_difficulty: int | None,
+        profile_floor: int | None,
+    ) -> bool:
+        return (
+            profile.get("difficulty") == profile_difficulty
+            and profile.get("floor") == profile_floor
             and profile.get("location_context") == location_context
             and profile.get("node_kind") == node_kind
-        ),
-        None,
-    )
-    if exact is not None:
-        fallback = next(
+        )
+
+    def find(
+        profile_difficulty: int | None,
+        profile_floor: int | None,
+    ) -> Mapping[str, Any] | None:
+        return next(
             (
                 profile
                 for profile in profiles
-                if profile.get("floor") is None
-                and profile.get("cross_floor_fallback") is True
-                and profile.get("location_context") == location_context
-                and profile.get("node_kind") == node_kind
+                if match(profile, profile_difficulty, profile_floor)
             ),
             None,
         )
-        if (
-            fallback is not None
-            and int(fallback.get("sample_count", 0))
-            > int(exact.get("sample_count", 0))
-            and _empirical_profiles_agree(exact, fallback)
-        ):
-            return fallback
-        return exact
-    return next(
+
+    exact = find(requested_difficulty, floor)
+    same_floor = find(None, floor)
+    same_difficulty = find(requested_difficulty, None)
+    global_profile = find(None, None)
+    primary = exact or same_floor or same_difficulty or global_profile
+    if primary is None:
+        return None
+    prior = next(
         (
             profile
-            for profile in profiles
-            if profile.get("floor") is None
-            and profile.get("cross_floor_fallback") is True
-            and profile.get("location_context") == location_context
-            and profile.get("node_kind") == node_kind
+            for profile in (same_floor, same_difficulty, global_profile)
+            if profile is not None and profile.get("id") != primary.get("id")
         ),
         None,
     )
-
-
-def _empirical_profiles_agree(
-    first: Mapping[str, Any],
-    second: Mapping[str, Any],
-) -> bool:
-    first_rewards = first.get("rewards", {})
-    second_rewards = second.get("rewards", {})
-    common = set(first_rewards).intersection(second_rewards)
-    return all(
-        float(first_rewards[resource].get("expected", 0))
-        == float(second_rewards[resource].get("expected", 0))
-        for resource in common
+    sample_count = max(1, int(primary.get("sample_count", 1)))
+    shrinkage = 3 if primary.get("fallback_scope") == "exact" else 5
+    reliability = (
+        sample_count / (sample_count + shrinkage)
+        if prior is not None
+        else float(primary.get("confidence_weight", 0.45))
     )
+    rewards: dict[str, dict[str, Any]] = {}
+    for resource, raw in primary.get("rewards", {}).items():
+        reward = dict(raw)
+        expected = float(raw.get("expected", 0))
+        prior_reward = (
+            prior.get("rewards", {}).get(resource)
+            if prior is not None
+            else None
+        )
+        scored_expected = (
+            expected * reliability
+            + float(prior_reward.get("expected", 0)) * (1 - reliability)
+            if prior_reward is not None
+            else expected * reliability
+        )
+        reward["scored_expected"] = round(scored_expected, 4)
+        rewards[str(resource)] = reward
+    return {
+        **dict(primary),
+        "rewards": rewards,
+        "requested_difficulty": requested_difficulty,
+        "scoring_prior_id": prior.get("id") if prior is not None else None,
+        "supporting_sample_count": (
+            int(prior.get("sample_count", 0)) if prior is not None else 0
+        ),
+        "score_confidence": round(reliability, 4),
+    }
 
 
 def _settle_known_distribution(
@@ -673,7 +708,9 @@ def _settle_empirical_profile(
         estimate.maximum += int(raw.get("maximum", 0))
         estimate.expected += expected
         estimate.empirical_expected += expected
-        estimate.empirical_weighted_expected += expected * weight
+        estimate.empirical_weighted_expected += float(
+            raw.get("scored_expected", expected * weight),
+        )
         note = (
             f"实测 {profile.get('sample_count', 0)} 场"
             f"（{profile.get('confidence_zh', '低样本')}）"

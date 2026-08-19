@@ -42,11 +42,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--graph",
         type=Path,
-        default=PROJECT_ROOT
-        / "data"
-        / "output"
-        / "node-semantics"
-        / "unified-map-graph.json",
+        default=PROJECT_ROOT / "examples" / "route-planner-demo-graph.json",
+        help=(
+            "Recognized unified graph JSON. Defaults to the committed "
+            "synthetic demo so a fresh clone can build immediately."
+        ),
     )
     parser.add_argument(
         "--knowledge",
@@ -270,7 +270,7 @@ def main() -> int:
     run_state = {
         "schema_version": "0.1.0",
         "phase": {"floor": inferred_floor, "checkpoint": "map"},
-        "difficulty": {"confidentiality_level": 0},
+        "difficulty": {"confidentiality_level": 6},
         "resources": {
             "target_life": 8,
             "target_life_cap": 8,
